@@ -1,0 +1,8 @@
+{
+  "1": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1];", "text": false},
+  "2": {"statement": "SELECT [Auflistung aller Spalten] FROM [Tabelle1];", "text": false},
+  "3": {"statement": "SELECT [Spalte1] FROM [Tabelle1]>;", "text": true},
+  "4": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1];", "text": true},
+  "5": {"statement": "SELECT [Spalte1], [Spalte2], [Spalte3] FROM [Tabelle1];", "text": true},
+  "6": {"statement": "SELECT [Spalte1], [Spalte2], [Spalte3], [Spalte4] FROM [Tabelle1];", "text": true}
+}

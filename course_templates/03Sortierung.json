@@ -1,0 +1,5 @@
+{
+  "1": {"statement": "SELECT [Spalte1], [Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Spalte2];", "text": false},
+  "2": {"statement": "SELECT [Spalte1], [Spalte2 Typ Int] FROM [Tabelle1] ORDER BY [Spalte2] DESC;", "text": true},
+  "3": {"statement": "SELECT [Spalte1 Typ Int], [Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Spalte1] ASC, [Spalte2] DESC;", "text": true}
+}

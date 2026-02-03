@@ -1,0 +1,9 @@
+{
+  "1": "Liste [Auflistung aller Spalten] von [Tabelle] auf.",
+  "2": "Nutze statt der Auflistung der Spalten das *-Symbol.",
+  "3": "Liste [2 Spalten] von [Tabelle] auf.",
+  "4": "[Textaufgabe: Formuliere eine Aufgabe, bei der die korrekte Antwort in der Form <SELECT (Spalte1) FROM (Tabelle)> ist.]",
+  "5": "[Textaufgabe: Formuliere eine Aufgabe, bei der die korrekte Antwort in der Form <SELECT (Spalte1, Spalte2) FROM (Tabelle)> ist.]",
+  "6": "[Textaufgabe: Formuliere eine Aufgabe, bei der die korrekte Antwort in der Form <SELECT (Spalte1, Spalte2, Spalte3) FROM (Tabelle)> ist.]",
+  "7": "[Textaufgabe: Schreibe 2-3 Sätze, die einen fiktiven Hintergrund erläutern, wieso der Anwender eine Datenbank-Abfrage erstellen muss, die in der Form <SELECT (Spalte1, Spalte2, Spalte3, Spalte4) FROM (Tabelle)> ist.]"
+}

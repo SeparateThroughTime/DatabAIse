@@ -1,0 +1,7 @@
+{
+  "1": {"statement": "SELECT MAX([Spalte1]) FROM [Tabelle1];", "text": false},
+  "2": {"statement": "SELECT COUNT(*) FROM [Tabelle1] WHERE [Spalte1] = [Int];", "text": false},
+  "3": {"statement": "SELECT COUNT(*) FROM [Tabelle1] GROUP BY [Spalte1];", "text": false},
+  "4": {"statement": "SELECT SUM([Spalte1]) FROM [Tabelle1] GROUP BY [Spalte2];", "text": true},
+  "5": {"statement": "SELECT AVG([Spalte1]) AS [Name] FROM [Tabelle1];", "text": true}
+}

@@ -1,0 +1,9 @@
+{
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": false},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": false},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] RIGHT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": false},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] OUTER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": false},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": true},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] OUTER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": true},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];", "text": true}
+}

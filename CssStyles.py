@@ -1,0 +1,5 @@
+button = 'bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded m-2'
+input = 'border m-2 p-2'
+form = 'border m-1 p-1 w-64'
+label = 'block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2'
+err_msg = 'color: red'

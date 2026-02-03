@@ -1,0 +1,9 @@
+{
+  "1": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1] WHERE [Spalte1] = '[Varchar]';", "text": false},
+  "2": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1] WHERE [Spalte2] > [Int];", "text": false},
+  "3": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1] WHERE [Spalte1] BETWEEN [Int] AND [Int];", "text": false},
+  "4": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1] WHERE [Spalte2] LIKE '[VARCHAR]%';", "text": true},
+  "5": {"statement": "SELECT [Spalte1], [Spalte2], [Spalte3] FROM [Tabelle1] WHERE [Spalte1] <= [Int] AND [Spalte3] LIKE '%[VARCHAR]%';", "text": false},
+  "6": {"statement": "SELECT [Spalte1], [Spalte2], [Spalte3] FROM [Tabelle1] WHERE [Spalte1] BETWEEN [Int] AND [Int] OR [Spalte1] = [Int];", "text": true},
+  "7": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1] WHERE [Spalte1] NOT LIKE '%[VARCHAR]';", "text": true}
+}
