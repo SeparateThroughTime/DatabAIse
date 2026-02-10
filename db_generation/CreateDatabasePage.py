@@ -12,7 +12,7 @@ def on_download(self, msg):
     print(msg.page)
     msg.page.redirect = "/Download"
     #msg.page.target = "_blank"
-    DatabAIse.session_data[msg.session_id] = msg.form_data
+    DatabAIse.session_data[msg.session_id]["msg_form_date"] = msg.form_data
 
 
 def on_continue(self, msg):
@@ -70,19 +70,19 @@ def get_page(request):
         return
 
     response = DatabAIse.db_generation_prompt(ai_content)
-    print(response.choices[0].message.content)
-    ai_content = "Fill the Database with 100 entries total." + response.choices[0].message.content + "Let the output fit this example: " + DatabAIse.example_json
+    print(response)
+    ai_content = "Fill the Database with 100 entries total." + response + "Let the output fit this example: " + DatabAIse.example_json
     response = DatabAIse.db_generation_prompt(ai_content, False)
-    print(response.choices[0].message.content)
+    print(response)
 
-    json_file = json.loads(response.choices[0].message.content)
+    json_file = json.loads(response)
     sql_string = create_sql(json_file)
 
-    form = justpy.Form(a=webpage, classes=CssStyles.form_classes)
+    form = justpy.Form(a=webpage, classes=CssStyles.form)
 
     topic_input = justpy.Input(a=form, type="hidden", name="topic", value=topic)
     sql_input = justpy.Input(a=form, type="hidden", name="sql", value=sql_string)
-    submit_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button_classes)
+    submit_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button)
     form.on("submit", on_download)
 
     return webpage
@@ -93,14 +93,14 @@ def test_get_page(request):
     print(webpage)
     sql_string = DatabAIse.test_sql
 
-    form = justpy.Form(a=webpage, classes=CssStyles.form_classes)
+    form = justpy.Form(a=webpage, classes=CssStyles.form)
 
     topic_input = justpy.Input(a=form, type="hidden", name="topic", value="Test")
     sql_input = justpy.Input(a=form, type="hidden", name="sql", value=sql_string)
-    download_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button_classes)
+    download_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button)
     form.on("submit", on_download)
     webpage.add()
-    continue_button = justpy.Input(value="Weiter zur Kurswahl", a=webpage, classes=CssStyles.button_classes, click=on_continue)
+    continue_button = justpy.Input(value="Weiter zur Kurswahl", a=webpage, classes=CssStyles.button, click=on_continue)
 
     return webpage
 

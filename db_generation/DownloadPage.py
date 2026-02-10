@@ -10,7 +10,7 @@ def get_page(request):
 
     topic = ""
     sql_string = ""
-    for field in DatabAIse.session_data[request.session_id]:
+    for field in DatabAIse.session_data[request.session_id]["msg_form_date"]:
         if field.name == "topic":
             topic = field.value
         if field.name == "sql":

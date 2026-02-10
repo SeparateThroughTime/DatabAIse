@@ -11,22 +11,29 @@ import CssStyles
 
 
 def next_page(self, msg):
+    print("To Courses")
     if not os.path.isdir(f'temp/{msg.session_id}'):
         os.mkdir(f'temp/{msg.session_id}')
+    print("temp creation")
 
     sql_data = None
     for field in msg.form_data:
         if field.type == "file":
             sql_data = field.files[0].file_content
 
+    print("file fetched")
+
     if sql_data is None:
         err_msg = justpy.Div(text="Keine Datei ausgewählt!", classes=CssStyles.err_msg, a=msg.page)
         return
+    print("1")
 
     sql_file = open(f'temp/{msg.session_id}/sql_file.sql', 'wb')
+    print("10")
     sql_file.write(base64.b64decode(sql_data))
     sql_file.close()
     sql_string = open(f'temp/{msg.session_id}/sql_file.sql').read()
+    print("20")
     os.remove(f'temp/{msg.session_id}/sql_file.sql')
     os.rmdir(f'temp/{msg.session_id}')
     DatabAIse.session_data[msg.session_id]["sql_string"] = sql_string

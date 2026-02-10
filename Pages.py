@@ -12,8 +12,7 @@ def build():
 
 @SetRoute("/")
 def instructions(request):
-    #return InstructionsPage.get_page(request)
-    return Course1Page.get_page(request)
+    return InstructionsPage.get_page(request)
 
 
 @SetRoute("/Themenwahl")
@@ -50,6 +49,6 @@ def upload(request):
     return ChooseCoursePage.get_page(request)
 
 
-@SetRoute("/Projektion")
+@SetRoute("/Kurs")
 def course_1(request):
     return Course1Page.get_page(request)
