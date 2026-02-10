@@ -77,7 +77,7 @@ def _prompt_deepseek(system_content, user_content, reasoner, response_format):
     return response.choices[0].message.content
 
 
-def _propmpt_openai(system_content, user_content, reasoner, response_format):
+def _prompt_openai(system_content, user_content, reasoner, response_format):
     model = "gpt-5-nano"
     ai_client = OpenAI(api_key="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")
     response = ai_client.chat.completions.create(

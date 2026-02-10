@@ -4,7 +4,11 @@ import DatabAIse
 
 def next_page(self, msg):
     msg.page.redirect = "/Tabellenwahl"
-    DatabAIse.session_data[msg.session_id] = msg.form_data
+    topic = -1
+    for field in msg.form_data:
+        if field.name == "topic":
+            topic = field.value
+    DatabAIse.session_data[msg.session_id]["topic"] = topic
 
 def get_page(request):
     webpage = justpy.WebPage()

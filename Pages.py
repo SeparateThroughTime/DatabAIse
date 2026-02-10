@@ -1,5 +1,5 @@
 from courses import ChooseCoursePage, Course1Page
-from db_generation import ChooseTopicPage, ChooseTablesPage, ChooseColumnsPage, CreateDatabasePage, DownloadPage, UploadPage
+from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, Gen05DownloadPage, UploadPage
 import InstructionsPage
 
 from justpy import justpy
@@ -17,26 +17,26 @@ def instructions(request):
 
 @SetRoute("/Themenwahl")
 def choose_topic(request):
-    return ChooseTopicPage.get_page(request)
+    return Gen01ChooseTopicPage.get_page(request)
 
 
 @SetRoute("/Tabellenwahl")
 def choose_table(request):
-    return ChooseTablesPage.get_page(request)
+    return Gen02ChooseTablesPage.get_page(request)
 
 
 @SetRoute("/Spaltenwahl")
 def choose_columns(request):
-    return ChooseColumnsPage.get_page(request)
+    return Gen03ChooseColumnsPage.get_page(request)
 
 @SetRoute("/Datenbank")
 def create_database(request):
-    return CreateDatabasePage.get_page(request)
+    return Gen04CreateDatabasePage.get_page(request)
 
 
 @SetRoute("/Download")
 def download(request):
-    return DownloadPage.get_page(request)
+    return Gen05DownloadPage.get_page(request)
 
 
 @SetRoute("/Upload")

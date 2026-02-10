@@ -6,7 +6,12 @@ import DatabAIse
 
 def next_page(self, msg):
     msg.page.redirect = "/Spaltenwahl"
-    DatabAIse.session_data[msg.session_id] = msg.form_data
+
+    tables = []
+    for field in msg.form_data:
+        if "table" in field.name:
+            tables.append(field.value)
+    DatabAIse.session_data[msg.session_id]["tables"] = tables
 
 def get_test_page(request):
     webpage = justpy.WebPage()
@@ -46,16 +51,13 @@ def get_test_page(request):
 def get_page(request):
     webpage = justpy.WebPage()
 
-    topic = -1
-    for field in DatabAIse.session_data[request.session_id]:
-        if field.name == "topic":
-            topic = field.value
+    topic = DatabAIse.session_data[request.session_id]["topic"]
 
     response = DatabAIse.db_generation_prompt("Suggest 4 table names for a database with the topic '" + topic +
                                 "'. It must be reasonable to have at least two 1-to-many relations and one"
                                 " many-to-many relation between the tables."
                                 " The suggested tables must not be relational tables."
-                                " The output only contains the table names only, as: "
+                                " The output contains the table names only, as: "
                                 '{"A": "table1", "B": "table2", "C": "table3", "D": "table4"}')
 
     instruction_text = justpy.P(a=webpage, text="Überprüfe, ob du folgende Themen für die Datenbank nutzen möchtest. "

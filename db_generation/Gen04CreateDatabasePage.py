@@ -1,7 +1,9 @@
 import json
 import re
+from io import StringIO
 
 import justpy
+import starlette
 
 import DatabAIse
 import CssStyles
@@ -9,10 +11,8 @@ import DatabAIse
 
 
 def on_download(self, msg):
-    print(msg.page)
     msg.page.redirect = "/Download"
-    #msg.page.target = "_blank"
-    DatabAIse.session_data[msg.session_id]["msg_form_date"] = msg.form_data
+
 
 
 def on_continue(self, msg):
@@ -22,32 +22,10 @@ def on_continue(self, msg):
 def get_page(request):
     webpage = justpy.WebPage()
 
-    topic = -1
-    tables = []
-    unstructured_columns = []
-    columns = [[]]
+    topic = DatabAIse.session_data[request.session_id]["topic"]
+    tables = DatabAIse.session_data[request.session_id]["tables"]
+    columns = DatabAIse.session_data[request.session_id]["columns"]
 
-    for field in DatabAIse.session_data[request.session_id]:
-        if field.name == "topic":
-            topic = re.sub("[^a-z0-9_]", "", field.value.lower().replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss").replace(" ", "_").replace("-", "_").replace(".", "_"))
-        elif "table" in field.name:
-            tables.append(field.value)
-        elif "column" in field.name:
-            unstructured_columns.append(field.value)
-    columns_per_table = 0
-    if len(unstructured_columns) > 0:
-        columns_per_table = len(unstructured_columns) // len(tables)
-    columns_total_counter = 0
-    tables_counter = 0
-    while tables_counter < len(tables):
-        columns.append([])
-        for columns_counter in range(columns_per_table):
-            columns[tables_counter].append(unstructured_columns[columns_total_counter])
-            columns_total_counter += 1
-        tables_counter += 1
-
-    # At the end of columns is an empty list. Don't know why...
-    columns.pop()
 
     ai_content = "The database has the topic: '" + topic + "'. The database has the tables: "
     for table_index in range(len(tables)):
@@ -65,10 +43,6 @@ def get_page(request):
                    "many-to-many relations are implemented with a relation-table. "
                    "The output is the database only without explanations or relations.")
 
-    if columns_per_table <= 0:
-        print("Error?")
-        return
-
     response = DatabAIse.db_generation_prompt(ai_content)
     print(response)
     ai_content = "Fill the Database with 100 entries total." + response + "Let the output fit this example: " + DatabAIse.example_json
@@ -77,30 +51,12 @@ def get_page(request):
 
     json_file = json.loads(response)
     sql_string = create_sql(json_file)
+    DatabAIse.session_data[request.session_id]["sql_string"] = sql_string
 
     form = justpy.Form(a=webpage, classes=CssStyles.form)
 
-    topic_input = justpy.Input(a=form, type="hidden", name="topic", value=topic)
-    sql_input = justpy.Input(a=form, type="hidden", name="sql", value=sql_string)
     submit_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button)
     form.on("submit", on_download)
-
-    return webpage
-
-
-def test_get_page(request):
-    webpage = justpy.WebPage()
-    print(webpage)
-    sql_string = DatabAIse.test_sql
-
-    form = justpy.Form(a=webpage, classes=CssStyles.form)
-
-    topic_input = justpy.Input(a=form, type="hidden", name="topic", value="Test")
-    sql_input = justpy.Input(a=form, type="hidden", name="sql", value=sql_string)
-    download_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button)
-    form.on("submit", on_download)
-    webpage.add()
-    continue_button = justpy.Input(value="Weiter zur Kurswahl", a=webpage, classes=CssStyles.button, click=on_continue)
 
     return webpage
 
