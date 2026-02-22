@@ -7,7 +7,7 @@ from DatabAIse import session_data
 
 def on_course_1(self, msg):
     print("Kurs1")
-    on_course_x(msg, DatabAIse.course_template_1)
+    on_course_x(msg, DatabAIse.course_template_4)
 
 
 def on_course_2(self, msg):

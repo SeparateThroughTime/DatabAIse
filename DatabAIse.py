@@ -24,7 +24,7 @@ def db_generation_prompt(user_content, reasoner=False):
                       "You are not allowed to use sql-keywords for the table names. "
                       "Replace german special characters with characters available in ASCII. "
                       "Use the naming conventions for sql.")
-    return _prompt_gemini(system_content, user_content, reasoner, "json_object")
+    return _prompt_openai(system_content, user_content, reasoner, "json_object")
 
 
 def course_generation_prompt(sql_string, course_template_string, reasoner=True):
@@ -43,7 +43,7 @@ def course_generation_prompt(sql_string, course_template_string, reasoner=True):
                       "Your response is a json in following structure:"
                       '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}')
     user_content = f'{{"sql_file": "{sql_string}", "exercise_template": {course_template_string}}}'
-    response = _prompt_gemini(system_content, user_content, reasoner, "json_object")
+    response = _prompt_openai(system_content, user_content, reasoner, "json_object")
     print(response)
 
     system_content = ("You are creating exercises for students learning SQL. "
@@ -55,9 +55,10 @@ def course_generation_prompt(sql_string, course_template_string, reasoner=True):
                       "but a description a non-technical person would give and a fictive reason for why the SQL-Statement is to be done. "
                       "The exercises must be in german. Pay attention to a correct german grammar. "
                       "All names of tables or columns should be in single quotation marks. "
+                      "You create an interesting, catchy and motivating underlying story line. "
                       "Your response is only the resulting exercise as json in following structue:"
-                      '{"1": task_1, "2": task_2, ..., "n": task_n}\n')
-    return _prompt_gemini(system_content, response, reasoner, "json_object")
+                      '{"0": underlying_story, "1": task_1, "2": task_2, ..., "n": task_n}\n')
+    return _prompt_openai(system_content, response, reasoner, "json_object")
 
 
 def _prompt_deepseek(system_content, user_content, reasoner, response_format):
