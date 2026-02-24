@@ -1,64 +1,35 @@
 import json
-import re
-from io import StringIO
+from nicegui import ui, app
 
-import justpy
-import starlette
-
-import DatabAIse
 import CssStyles
 import DatabAIse
 
 
-def on_download(self, msg):
-    msg.page.redirect = "/Download"
+def get_page():
+    topic = app.storage.user["topic"]
+    tables = app.storage.user["tables"]
+    columns = app.storage.user["columns"]
+
+    download_button = ui.button("Warte auf KI-Antwort").classes(CssStyles.button)
+    course_button = ui.button("Warte auf KI-Antwort").classes(CssStyles.button)
+
+    ui.timer(0.1, lambda: start_prompt(topic, tables, columns, download_button, course_button), once=True)
 
 
-
-def on_continue(self, msg):
-    msg.page.redirect = "/Kurswahl"
-
-
-def get_page(request):
-    webpage = justpy.WebPage()
-
-    topic = DatabAIse.session_data[request.session_id]["topic"]
-    tables = DatabAIse.session_data[request.session_id]["tables"]
-    columns = DatabAIse.session_data[request.session_id]["columns"]
-
-
-    ai_content = "The database has the topic: '" + topic + "'. The database has the tables: "
-    for table_index in range(len(tables)):
-        ai_content += tables[table_index] + "("
-        for column in columns[table_index]:
-            ai_content += column + ","
-        ai_content = ai_content[:-1]
-        ai_content += "), "
-    ai_content = ai_content[:-2]
-    ai_content += (". Add primary keys to every table as IDs. "
-                   "Create reasonable relations between the tables. "
-                   "There as to be at least one many-to-many relation and two 1-to-many relations."
-                   "You are not allowed to add any table to the database. "
-                   "1-to-many relations are implemented with foreign keys. "
-                   "many-to-many relations are implemented with a relation-table. "
-                   "The output is the database only without explanations or relations.")
-
-    response = DatabAIse.db_generation_prompt(ai_content)
+async def start_prompt(topic, tables, columns, download_button, course_button):
+    response = await DatabAIse.db_create_relations_keys_agent(topic, tables, columns)
     print(response)
-    ai_content = "Fill the Database with 100 entries total." + response + "Let the output fit this example: " + DatabAIse.example_json
-    response = DatabAIse.db_generation_prompt(ai_content, False)
+    response = await DatabAIse.db_fill_agent(response)
     print(response)
 
     json_file = json.loads(response)
     sql_string = create_sql(json_file)
-    DatabAIse.session_data[request.session_id]["sql_string"] = sql_string
+    app.storage.user["sql_string"] = sql_string
 
-    form = justpy.Form(a=webpage, classes=CssStyles.form)
-
-    submit_button = justpy.Input(value="Download", type="submit", a=form, classes=CssStyles.button)
-    form.on("submit", on_download)
-
-    return webpage
+    download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql")).classes(CssStyles.button)
+    download_button.text = "Download SQL"
+    course_button.on("click", lambda: ui.navigate.to("/Kurswahl")).classes(CssStyles.button)
+    course_button.text = "Zur Kurswahl"
 
 
 def create_sql(json_obj):

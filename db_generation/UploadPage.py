@@ -1,51 +1,20 @@
-import os
+from nicegui import ui, app
 
-import justpy
-import base64
-
-from aiofiles.tempfile import TemporaryFile
-
-import DatabAIse
-from DatabAIse import session_data
 import CssStyles
 
 
-def next_page(self, msg):
-    print("To Courses")
-    if not os.path.isdir(f'temp/{msg.session_id}'):
-        os.mkdir(f'temp/{msg.session_id}')
-    print("temp creation")
-
-    sql_data = None
-    for field in msg.form_data:
-        if field.type == "file":
-            sql_data = field.files[0].file_content
-
-    print("file fetched")
-
-    if sql_data is None:
-        err_msg = justpy.Div(text="Keine Datei ausgewählt!", classes=CssStyles.err_msg, a=msg.page)
+def next_page():
+    if "sql_string" not in app.storage.user:
+        ui.label("Keine Datei ausgewählt!").classes(CssStyles.err_msg)
         return
-    print("1")
 
-    sql_file = open(f'temp/{msg.session_id}/sql_file.sql', 'wb')
-    print("10")
-    sql_file.write(base64.b64decode(sql_data))
-    sql_file.close()
-    sql_string = open(f'temp/{msg.session_id}/sql_file.sql').read()
-    print("20")
-    os.remove(f'temp/{msg.session_id}/sql_file.sql')
-    os.rmdir(f'temp/{msg.session_id}')
-    DatabAIse.session_data[msg.session_id]["sql_string"] = sql_string
-    msg.page.redirect = "/Kurswahl"
+    ui.navigate.to("/Kurswahl")
 
 
-def get_page(request):
-    webpage = justpy.WebPage()
-    form = justpy.Form(a=webpage, classes=CssStyles.form)
-    input = justpy.Input(type="file", classes=CssStyles.input, name="sql_file", a=form, multiple=False, accept=".sql")
-    choose_course_button = justpy.Input(value="Zur Kurswahl", type="submit", classes=CssStyles.button, a=form)
-    form.on("submit", next_page)
+def on_upload(sql_string):
+    app.storage.user["sql_string"] = sql_string
 
 
-    return webpage
+def get_page():
+    upload_input = ui.upload(label="SQL-File", max_file_size=16384, on_click=lambda e: on_upload(e.file.text)).props('accept=".sql"').classes(CssStyles.upload)
+    ui.button("Zur Kurswahl", on_click=next_page)

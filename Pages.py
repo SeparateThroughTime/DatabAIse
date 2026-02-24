@@ -1,54 +1,44 @@
-from courses import ChooseCoursePage, Course1Page
-from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, Gen05DownloadPage, UploadPage
+import Test
+from courses import ChooseCoursePage, CoursePage
+from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, UploadPage
 import InstructionsPage
 
-from justpy import justpy
-from justpy import SetRoute
+from nicegui import ui
 
 
 def build():
-    justpy()
+    ui.run(host="127.0.0.1", port=8000, title="DatabAIse", favicon="/images/favicon.png", language="de-DE",
+           storage_secret="A>dQ@KgXnXQD0iXs")
 
 
-@SetRoute("/")
-def instructions(request):
-    return InstructionsPage.get_page(request)
+@ui.page("/")
+def instructions():
+    InstructionsPage.get_page()
 
+@ui.page("/Themenwahl")
+def choose_topic():
+    Gen01ChooseTopicPage.get_page()
 
-@SetRoute("/Themenwahl")
-def choose_topic(request):
-    return Gen01ChooseTopicPage.get_page(request)
+@ui.page("/Tabellenwahl")
+def choose_table():
+    Gen02ChooseTablesPage.get_page()
 
+@ui.page("/Spaltenwahl")
+async def choose_columns():
+    Gen03ChooseColumnsPage.get_page()
 
-@SetRoute("/Tabellenwahl")
-def choose_table(request):
-    return Gen02ChooseTablesPage.get_page(request)
+@ui.page("/Datenbank")
+def create_database():
+    Gen04CreateDatabasePage.get_page()
 
+@ui.page("/Upload")
+def upload():
+    UploadPage.get_page()
 
-@SetRoute("/Spaltenwahl")
-def choose_columns(request):
-    return Gen03ChooseColumnsPage.get_page(request)
+@ui.page("/Kurswahl")
+def upload():
+    ChooseCoursePage.get_page()
 
-@SetRoute("/Datenbank")
-def create_database(request):
-    return Gen04CreateDatabasePage.get_page(request)
-
-
-@SetRoute("/Download")
-def download(request):
-    return Gen05DownloadPage.get_page(request)
-
-
-@SetRoute("/Upload")
-def upload(request):
-    return UploadPage.get_page(request)
-
-
-@SetRoute("/Kurswahl")
-def upload(request):
-    return ChooseCoursePage.get_page(request)
-
-
-@SetRoute("/Kurs")
-def course_1(request):
-    return Course1Page.get_page(request)
+@ui.page("/Kurs")
+def course():
+    CoursePage.get_page()
