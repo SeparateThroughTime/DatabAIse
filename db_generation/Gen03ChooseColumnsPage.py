@@ -24,38 +24,49 @@ def next_page(column_inputs):
 def get_page():
     topic = app.storage.user["topic"]
     tables = app.storage.user["tables"]
-    (ui.restructured_text("Überprüfe, ob die Spalten für die Tabellen sinnvoll sind. "
-                          "Du kannst sie auch noch anpassen vor dem nächsten Schritt.").classes(CssStyles.text))
 
-    column_inputs = []
-    column_inputs.append([])
-    ui.label(tables[0]).classes(CssStyles.label)
-    column_inputs[0].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[0].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[0].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs.append([])
-    ui.label(tables[1]).classes(CssStyles.label)
-    column_inputs[1].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[1].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[1].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs.append([])
-    ui.label(tables[2]).classes(CssStyles.label)
-    column_inputs[2].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[2].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[2].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs.append([])
-    ui.label(tables[3]).classes(CssStyles.label)
-    column_inputs[3].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[3].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
-    column_inputs[3].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+    with ui.card().classes(CssStyles.card):
+        with ui.column().classes(CssStyles.column):
+            ui.markdown("Attribute der Tabellen").classes(CssStyles.markdown)
+            ui.restructured_text("Überprüfe, ob die Attribute für die Tabellen sinnvoll sind. "
+                                  "Du kannst sie auch noch anpassen vor dem nächsten Schritt.").classes(CssStyles.text)
+            column_inputs = []
+            with ui.card().classes(CssStyles.card):
+                ui.label(tables[0]).classes(CssStyles.label)
+                with ui.row().classes(CssStyles.row):
+                    column_inputs.append([])
+                    column_inputs[0].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[0].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[0].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+            with ui.card().classes(CssStyles.card):
+                ui.label(tables[1]).classes(CssStyles.label)
+                with ui.row().classes(CssStyles.row):
+                    column_inputs.append([])
+                    column_inputs[1].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[1].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[1].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+            with ui.card().classes(CssStyles.card):
+                ui.label(tables[2]).classes(CssStyles.label)
+                with ui.row().classes(CssStyles.row):
+                    column_inputs.append([])
+                    column_inputs[2].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[2].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[2].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+            with ui.card().classes(CssStyles.card):
+                ui.label(tables[3]).classes(CssStyles.label)
+                with ui.row().classes(CssStyles.row):
+                    column_inputs.append([])
+                    column_inputs[3].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[3].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
+                    column_inputs[3].append(ui.input(value="Warte auf KI-Antwort").classes(CssStyles.input))
 
-    button = ui.button("Warte auf KI-Antwort").classes(CssStyles.button)
+            button = ui.button("Warte auf KI-Antwort").classes(CssStyles.button)
     ui.timer(0.1, lambda: start_prompt(topic, tables, column_inputs, button), once=True)
 
 
 async def start_prompt(topic, tables, column_inputs, button):
     response = await DatabAIse.db_create_columns_agent(topic, tables)
-    print(response)
+    print("Gen03:\n", response)
     tables = json.loads(response)
 
     table_counter = 0

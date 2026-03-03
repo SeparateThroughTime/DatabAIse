@@ -1,4 +1,3 @@
-import Test
 from courses import ChooseCoursePage, CoursePage
 from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, UploadPage
 import InstructionsPage

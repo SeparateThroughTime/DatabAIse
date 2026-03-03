@@ -1,8 +1,11 @@
+import re
+
 from openai import OpenAI, AsyncOpenAI
 from google import genai
 from google.genai import types
 
 import Pages
+import json
 
 
 example_json = open("db_generation/Example.json").read()
@@ -30,7 +33,7 @@ async def db_create_tables_agent(topic):
                       " All data must be german or be loanwords for german language."
                       " The output contains the table names only, as:"
                       ' {"A": "table1", "B": "table2", "C": "table3", "D": "table4"}')
-    return await _current_prompt(system_content, topic, 0, "json")
+    return await _current_prompt(system_content, topic, 3, "json")
 
 
 async def db_create_columns_agent(topic, tables):
@@ -43,21 +46,21 @@ async def db_create_columns_agent(topic, tables):
                       "one table with one column with type Integer and one column with type Varchar. "
                       "All data must be german or be loanwords for german language. "
                       "The output is a json with following structure: "
-                      '{"table1": ["column1, column2, column3], ..., "table4": ["column1, column2, column3"]} ')
+                      '{"table1": ["column1", "column2", "column3"], ..., "table4": ["column1", "column2", "column3"]} ')
     user_content = '{topic: ' + topic + "', tables: '" + str(tables) + "'}"
-    return await _current_prompt(system_content, user_content, 0, "json")
+    return await _current_prompt(system_content, user_content, 3, "json")
 
 
 async def db_create_relations_keys_agent(topic, tables, columns):
-    system_content= ("You get the topic, tables and columns for a database. "
-                     "Add primary keys to every table as IDs. "
-                     "Create reasonable relations between the tables. "
-                     "There has to be at least one many-to-many relation and two 1-to-many relations."
-                     "You are not allowed to add any table to the database. "
-                     "1-to-many relations are implemented with foreign keys. "
-                     "many-to-many relations are implemented with a relation-table. "
-                     "All data must be german or be loanwords for german language. "
-                     "The output is the database only without explanations or relations.")
+    system_content = ("You get the topic, tables and columns for a database. "
+                      "Add primary keys to every table as IDs. "
+                      "Create reasonable relations between the tables. "
+                      "There has to be at least one many-to-many relation and two 1-to-many relations."
+                      "You are not allowed to add any table to the database. "
+                      "1-to-many relations are implemented with foreign keys. "
+                      "many-to-many relations are implemented with a relation-table. "
+                      "All data must be german or be loanwords for german language. "
+                      "The output is the database only without explanations or relations.")
     user_content = "{topic: '" + topic + "', tables: {"
     for i in range(len(tables)):
         user_content += tables[i] + ": ["
@@ -65,27 +68,31 @@ async def db_create_relations_keys_agent(topic, tables, columns):
             user_content += columns[i][j] + ", "
         user_content = user_content[:-2] + "], "
     user_content = user_content[:-2] + "}}"
-    return await _current_prompt(system_content, user_content, 0, "json")
+    result = await _current_prompt(system_content, user_content, 3, "json")
+    return await _db_verify_relations_keys_agent(result)
+
+
+async def _db_verify_relations_keys_agent(db_json):
+    system_content = ("You get the topic, tables and columns for a database. "
+                      "Verify if the database contains at least one many-to-many relation "
+                      "and two 1-to-many relations. "
+                      "If something is missing, add that relation type in the most reasonable way possible. "
+                      "1-to-many relations are implemented with foreign keys. "
+                      "many-to-many relations are implemented with a relation-table. "
+                      "All data must be german or be loanwords for german language. "
+                      "The output is the database only without explanations or relations.")
+    return await _current_prompt(system_content, db_json, 3, "json")
 
 
 async def db_fill_agent(database):
     system_content = "You get an empty database. Fill it with 100 entries total. Let the output fit this example: " + example_json
-    return await _current_prompt(system_content, database, 0, "json")
+    return await _current_prompt(system_content, database, 3, "json")
 
 
-async def db_generation_agent(user_content, reasoner=False):
-    system_content = ("You are helping to create a database. All data must be in german."
-                      "The output is a json file. "
-                      "You are not allowed to use sql-keywords for the table names. "
-                      "Replace german special characters with characters available in ASCII. "
-                      "Use the naming conventions for sql.")
-    return await _current_prompt(system_content, user_content, reasoner, "json")
-
-
-async def course_create_sql_statements(sql_string, course_template_string):
+async def course_create_sql_statements(db_json, course_template_string):
     system_content = ("You are filling SQL-statements with informations from a database. "
                       "The prompts have following structure:\n"
-                      '{"sql_file": sql_file, '
+                      '{"database": database, '
                       '"sql_statements": '
                       '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}\n'
                       "The SQL-statements contain instructions inside of square brackets. "
@@ -93,12 +100,26 @@ async def course_create_sql_statements(sql_string, course_template_string):
                       "Example-statement: 'SELECT [Spalte1], [Spalte2] FROM [Tabelle1];' "
                       "Your modification: 'SELECT benutzername, level FROM spieler;' "
                       "You must not add any other additions to the statements. "
-                      "Executing the SQL-statements must return at least one value. "
-                      "If it contains ordering it must return at least 4 values."
-                      "Your response is a json in following structure:"
+                      "Executing the SQL statements must return at least 1 entry. "
+                      "If it contains ordering it must return at least 3 entries. "
+                      "Your response is a json in following structure: "
                       '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}')
-    user_content = f'{{"sql_file": "{sql_string}", "exercise_template": {course_template_string}}}'
-    return await _current_prompt(system_content, user_content, 0, "json")
+    user_content = f'{{"sql_file": "{db_json}", "exercise_template": {course_template_string}}}'
+    result = await _current_prompt(system_content, user_content, 0, "json")
+    print("SQL Statements:\n", result)
+    return await _course_verify_sql_statements(db_json, result)
+
+
+async def _course_verify_sql_statements(db_json, course_json):
+    system_content = ("You get a json containing a database and a json with a series of SQL queries. "
+                      "Verify if the result for the queries that contain ordering return at least 3 entries "
+                      "and the result of the other queries return at least 1 entry with the given database. "
+                      "Replace the queries that do not fulfill the condition with similar queries that fulfill it. "
+                      "Your response is the altered json in unchanged structure. ")
+    user_content = f'sql_file: "{db_json}", query_json: {course_json}'
+    result = await _current_prompt(system_content, user_content, 3, "json")
+    print("Verification:\n", result)
+    return result
 
 
 async def course_create_exercise(sql_statements):
@@ -111,10 +132,23 @@ async def course_create_exercise(sql_statements):
                       "but a description a non-technical person would give and a fictive reason for why the SQL-Statement is to be done. "
                       "The exercises must be in german. Pay attention to a correct german grammar. "
                       "All names of tables or columns should be in single quotation marks. "
-                      "You create an interesting, catchy and motivating underlying story line. "
+                      "You create a motivating underlying story line which is also explaining the structure of the database. "
                       "Your response is only the resulting exercise as json in following structue:"
-                      '{"0": underlying_story, "1": task_1, "2": task_2, ..., "n": task_n}\n')
-    return await _current_prompt(system_content, sql_statements, 0, "json")
+                      '{"0": underlying_story, "1": task_description_1, "2": task_description_2, ..., "n": task_description_n}\n')
+    result = await _current_prompt(system_content, sql_statements, 3, "json")
+    print("Exercises:\n", result)
+    return await _course_verify_exercise(sql_statements, result)
+
+
+async def _course_verify_exercise(sql_statements, exercises):
+    system_content = ("You get a json containing exercises and a json with the sample solutions. "
+                      "Verify if the exercise fits the corresponding sample solution. "
+                      "If it does not fit, change the exercise to fit the sample solution. "
+                      "Your response is only the altered json with the exercises in unchanged structure. ")
+    user_content = f'exercises: {exercises}, sample_solutions: {sql_statements}'
+    result = await _current_prompt(system_content, user_content, 3, "json")
+    print("Verification:\n", result)
+    return result
 
 
 async def _prompt_deepseek(system_content, user_content, reasoner, response_format):
@@ -221,3 +255,106 @@ async def _prompt_gemini(system_content, user_content, reasoner, response_format
         )
     )
     return response.candidates[0].content.parts[0].text
+
+
+def json_to_sql(json_obj):
+    sql_list = []
+    sql_list.append("CREATE DATABASE '" + json_obj["database"]["topic"] + "'")
+    sql_list.append("USE '" + json_obj["database"]["topic"] + "'")
+
+    foreign_keys = []
+    for table in json_obj["database"]["tables"]:
+        create_table_string = "CREATE TABLE '" + table["name"] + "' ("
+        for column in table["columns"]:
+            create_table_string += "'" + column["name"] + "' " + column["type"]
+            if "primary_key" in column:
+                create_table_string += " PRIMARY KEY"
+            #if "foreign_key" in column:
+            #    foreign_key = column["foreign_key"]
+            #    foreign_keys.append((table["name"], column["name"], foreign_key["table"], foreign_key["column"]))
+            create_table_string += ", "
+        create_table_string = create_table_string[:-2]
+        create_table_string += ")"
+        sql_list.append(create_table_string)
+
+        for entry in table["data"]:
+            insert_entry_string = "INSERT INTO '" + table["name"] + "' VALUES ("
+            for value_key in entry:
+                value = entry[value_key]
+                insert_entry_string += "'" + str(value) + "', "
+            insert_entry_string = insert_entry_string[:-2]
+            insert_entry_string += ")"
+            sql_list.append(insert_entry_string)
+
+    #for foreign_key in foreign_keys:
+    #    table, column, foreign_table, foreign_column = foreign_key
+    #    add_key_string = "ALTER TABLE '" + table + "' ADD FOREIGN KEY ('" + column + "') REFERENCES '" + foreign_table + "'('" + foreign_column + "')"
+    #    sql_list.append(add_key_string)
+
+    sql_string = ""
+    for sql_command in sql_list:
+        sql_string += sql_command + ";\n"
+    return sql_string
+
+
+def sql_to_json(sql_string):
+    json_obj = {}
+    database = {}
+    json_obj["database"] = database
+    tables = []
+    database["topic"] = ""
+    database["tables"] = tables
+
+    queries = sql_string.splitlines()
+    query_pointer = 0
+    while query_pointer < len(queries):
+        query = queries[query_pointer]
+        words = query.split()
+
+        if words[0] == "CREATE" and words[1] == "DATABASE":
+            database["topic"] = re.sub("'", "", words[2])
+            query_pointer = query_pointer + 2
+
+        elif words[0] == "CREATE" and words[1] == "TABLE":
+            table = {}
+            tables.append(table)
+            table["name"] = words[2].replace("'", "")
+            columns = []
+            table["columns"] = columns
+
+            word_pointer = 3
+            while word_pointer < len(words):
+                column = {}
+                columns.append(column)
+                column["name"] = re.sub("['(]", "", words[word_pointer])
+                column_type = words[word_pointer + 1]
+                column_type = column_type[:-1] if column_type.endswith(";") else column_type
+                column_type = column_type[:-1] if column_type.endswith(")") else column_type
+                column_type = column_type[:-1] if column_type.endswith(",") else column_type
+                column["type"] = column_type
+                if word_pointer + 2 >= len(words):
+                    word_pointer = word_pointer + 2
+                elif words[word_pointer + 2] == "PRIMARY":
+                    column["primary"] = "true"
+                    word_pointer = word_pointer + 4
+                else:
+                    word_pointer = word_pointer + 2
+
+            data = []
+            table["data"] = data
+            while True:
+                query_pointer = query_pointer + 1
+                if query_pointer >= len(queries):
+                    break
+                query = queries[query_pointer]
+                words = query.split()
+                if words[0] != "INSERT":
+                    break
+
+                entry = {}
+                data.append(entry)
+                for word_pointer in range(4, len(columns) + 4):
+                    column_name = columns[word_pointer - 4]["name"]
+                    entry[column_name] = re.sub("[()',;]", "", words[word_pointer])
+
+    return json_obj
