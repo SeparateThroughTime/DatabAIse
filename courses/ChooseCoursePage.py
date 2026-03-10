@@ -1,3 +1,5 @@
+import sqlite3
+
 from nicegui import ui, app
 
 import CssStyles
@@ -12,16 +14,17 @@ def on_course_x(course_template_string, course_name):
 
 
 def get_page():
-    with ui.card().classes(CssStyles.card):
-        with ui.column().classes(CssStyles.column):
-            ui.markdown("Kurswahl").classes(CssStyles.markdown)
+
+    with ui.card():
+        with ui.column():
+            ui.markdown("Kurswahl")
             ui.restructured_text("Du kannst jetzt einen Kurs auswählen. Die KI wird dann Aufgaben passend zu deiner Datenbank erstellen.\n"
                                  "Falls du noch nie mit Datenbanken gearbeitet hast, solltest du die Kurse der Reihe nach bearbeiten. "
                                  "Falls du bereits Erfahrungen hast, mache da weiter, wo du gerade stehst oder über die Themen, mit denen du noch "
-                                 "die größten Schwierigkeiten hast.").classes(CssStyles.text)
-            with ui.row().classes(CssStyles.row):
-                ui.button("Kurs 1: Projektion", on_click=lambda: on_course_x(DatabAIse.course_template_1, "Kurs 1: Projektion")).classes(CssStyles.button)
-                ui.button("Kurs 2: Selektion", on_click=lambda: on_course_x(DatabAIse.course_template_2, "Kurs 2: Selektion")).classes(CssStyles.button)
-                ui.button("Kurs 3: Sortierung", on_click=lambda: on_course_x(DatabAIse.course_template_3, "Kurs 3: Sortierung")).classes(CssStyles.button)
-                ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: on_course_x(DatabAIse.course_template_4, "Kurs 4: Aggregatsfunktionen")).classes(CssStyles.button)
-                ui.button("Kurs 5: Join", on_click=lambda: on_course_x(DatabAIse.course_template_5, "Kurs 5: Join")).classes(CssStyles.button)
+                                 "die größten Schwierigkeiten hast.")
+            with ui.row():
+                ui.button("Kurs 1: Projektion", on_click=lambda: on_course_x(DatabAIse.course_template_1, "Kurs 1: Projektion"))
+                ui.button("Kurs 2: Selektion", on_click=lambda: on_course_x(DatabAIse.course_template_2, "Kurs 2: Selektion"))
+                ui.button("Kurs 3: Sortierung", on_click=lambda: on_course_x(DatabAIse.course_template_3, "Kurs 3: Sortierung"))
+                ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: on_course_x(DatabAIse.course_template_4, "Kurs 4: Aggregatsfunktionen"))
+                ui.button("Kurs 5: Join", on_click=lambda: on_course_x(DatabAIse.course_template_5, "Kurs 5: Join"))

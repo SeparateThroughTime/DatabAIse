@@ -16,11 +16,11 @@ async def on_upload(sql_file):
 
 
 def get_page():
-    with ui.card().classes(CssStyles.card):
-        with ui.column().classes(CssStyles.column):
-            ui.markdown("Datenbank hochladen").classes(CssStyles.markdown)
-            ui.restructured_text("Hier kannst du deine bereits erstellte Datenbank hochladen. Bitte beachte, dass nur Datenbanken funktionieren, die mit diesem Tool erstellt wurden.").classes(CssStyles.text)
-            upload_input = ui.upload(label="SQL-File", max_file_size=16384, on_upload=lambda e: on_upload(e.file), auto_upload=True).props('accept=".sql"').classes(CssStyles.upload)
-            err_label = ui.label("Keine Datei ausgewählt!").classes(CssStyles.err_msg)
+    with ui.card():
+        with ui.column():
+            ui.markdown("Datenbank hochladen")
+            ui.restructured_text("Hier kannst du deine bereits erstellte Datenbank hochladen. Bitte beachte, dass nur Datenbanken funktionieren, die mit diesem Tool erstellt wurden.")
+            upload_input = ui.upload(label="SQL-File", max_file_size=16384, on_upload=lambda e: on_upload(e.file), auto_upload=True).props('accept=".sql"')
+            err_label = ui.label("Keine Datei ausgewählt!")
             err_label.visible = False
             ui.button("Zur Kurswahl", on_click=lambda: next_page(err_label))

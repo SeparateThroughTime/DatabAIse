@@ -8,13 +8,13 @@ def next_page(topic):
 
 
 def get_page():
-    with ui.card().classes(CssStyles.card):
-        with ui.column().classes(CssStyles.column):
-            ui.markdown("Thema der Datenbank").classes(CssStyles.markdown)
-            ui.label("Gib zuerst das Thema der Datenbank an.").classes(CssStyles.label)
+    with ui.card():
+        with ui.column():
+            ui.markdown("Thema der Datenbank")
+            ui.label("Gib zuerst das Thema der Datenbank an.")
 
-            with ui.row().classes(CssStyles.row):
-                ui.label("Thema:").classes(CssStyles.label)
-                topic_input = ui.input(placeholder="Thema der Datenbank").classes(CssStyles.input)
+            with ui.row():
+                ui.label("Thema:")
+                topic_input = ui.input(placeholder="Thema der Datenbank")
 
-            ui.button("Senden", on_click=lambda: next_page(topic_input.value)).classes(CssStyles.button)
+            ui.button("Senden", on_click=lambda: next_page(topic_input.value))

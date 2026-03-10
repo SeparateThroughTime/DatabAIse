@@ -12,15 +12,15 @@ def get_page():
     tables = app.storage.user["tables"]
     columns = app.storage.user["columns"]
 
-    with ui.card().classes(CssStyles.card):
-        with ui.column().classes(CssStyles.column):
-            ui.markdown("Erstellen der Datenbank").classes(CssStyles.markdown)
+    with ui.card():
+        with ui.column():
+            ui.markdown("Erstellen der Datenbank")
             ui.restructured_text("""Du hast es fast geschafft!
                                     Die KI hat nun alle Informationen zum Erstellen der Datenbank. Es werden jetzt Relationen zwischen den Tabellen erzeugt und Daten in die Datenbank eingepflegt.
-                                    Dieser Schritt kann unter Umständen 1-2 Minuten brauchen.""").classes(CssStyles.text)
-            with ui.row().classes(CssStyles.row):
-                download_button = ui.button("Warte auf KI-Antwort").classes(CssStyles.button)
-                course_button = ui.button("Warte auf KI-Antwort").classes(CssStyles.button)
+                                    Dieser Schritt kann unter Umständen 1-2 Minuten brauchen.""")
+            with ui.row():
+                download_button = ui.button("Warte auf KI-Antwort")
+                course_button = ui.button("Warte auf KI-Antwort")
 
     ui.timer(0.1, lambda: start_prompt(topic, tables, columns, download_button, course_button), once=True)
 
@@ -36,9 +36,9 @@ async def start_prompt(topic, tables, columns, download_button, course_button):
     sql_string = DatabAIse.json_to_sql(json_obj)
     app.storage.user["sql_string"] = sql_string
 
-    download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql")).classes(CssStyles.button)
+    download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
     download_button.text = "Download SQL"
-    course_button.on("click", lambda: ui.navigate.to("/Kurswahl")).classes(CssStyles.button)
+    course_button.on("click", lambda: ui.navigate.to("/Kurswahl"))
     course_button.text = "Zur Kurswahl"
 
 

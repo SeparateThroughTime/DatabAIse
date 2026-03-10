@@ -4,8 +4,9 @@ from openai import OpenAI, AsyncOpenAI
 from google import genai
 from google.genai import types
 
+import CssStyles
 import Pages
-import json
+from nicegui import ui, context
 
 
 example_json = open("db_generation/Example.json").read()
@@ -152,6 +153,8 @@ async def _course_verify_exercise(sql_statements, exercises):
 
 
 async def _prompt_deepseek(system_content, user_content, reasoner, response_format):
+    notification = ui.notification("Warte auf KI Antwort...")
+    notification.spinner = True
     model = "deepseek-reasoner" if reasoner else "deepseek-chat"
     ai_client = OpenAI(api_key="sk-d24693c00eac446db4ee589be6eb496e", base_url="https://api.deepseek.com")
     response = ai_client.chat.completions.create(
@@ -165,10 +168,13 @@ async def _prompt_deepseek(system_content, user_content, reasoner, response_form
         response_format={'type': response_format},
         stream=False
     )
+    notification.dismiss()
     return response.choices[0].message.content
 
 
 async def _prompt_openai(system_content, user_content, reasoner, response_format):
+    notification = ui.notification("Warte auf KI Antwort...")
+    notification.spinner = True
     model = "gpt-5-mini-2025-08-07"
     ai_client = AsyncOpenAI(api_key="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")
     response = await ai_client.chat.completions.create(
@@ -182,12 +188,13 @@ async def _prompt_openai(system_content, user_content, reasoner, response_format
         response_format={'type': response_format},
         stream=False
     )
+    notification.dismiss()
     return response.choices[0].message.content
 
 
 async def _prompt_gemini(system_content, user_content, reasoner, response_format):
-    thinking_config = None
-    model = None
+    notification = ui.notification("Warte auf KI Antwort...")
+    notification.spinner = True
     match reasoner:
         case 0:
             thinking_config = types.ThinkingConfig(thinking_budget=0)
@@ -254,6 +261,7 @@ async def _prompt_gemini(system_content, user_content, reasoner, response_format
             ]
         )
     )
+    notification.dismiss()
     return response.candidates[0].content.parts[0].text
 
 
@@ -358,3 +366,34 @@ def sql_to_json(sql_string):
                     entry[column_name] = re.sub("[()',;]", "", words[word_pointer])
 
     return json_obj
+
+
+def header():
+    ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#80acff", dark="#1d1d1d", dark_page="#0d347a")
+
+    ui.button.default_classes('text-center bg-primary q-pa-sm shadow-1')
+    ui.input.default_classes('')
+    ui.label.default_classes('text-left')
+    ui.restructured_text.default_classes('text-center')
+    ui.restructured_text.default_style('margin-left: 10%; margin-right: 10%')
+    ui.upload.default_classes('text-center shadow-1')
+    ui.table.default_classes('text-left shadow-1')
+    ui.markdown.default_classes('text-h3')
+    ui.card.default_classes('items-center')
+    ui.image.default_classes('')
+    ui.header.default_classes('bg-primary fixed-top justify-between')
+    ui.footer.default_classes('bg-secondary fixed-bottom justify-between')
+    ui.column.default_classes('items-center')
+    ui.row.default_classes('items-center')
+
+    with ui.header(elevated=True):
+        ui.image("images/favicon.png").classes('w-8')
+        ui.label("DatabAIse").classes('text-h5')
+        ui.label(" ")
+
+
+
+def footer():
+    with ui.footer(elevated=True):
+        ui.link("released under the MIT-License", "https://opensource.org/license/mit")
+        ui.label("published by David Seßner")
