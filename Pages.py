@@ -7,7 +7,7 @@ from nicegui import ui, context, Client
 
 
 def build():
-    ui.run(host="127.0.0.1", port=8000, title="DatabAIse", favicon="/images/favicon.png", language="de-DE",
+    ui.run(port=8080, title="DatabAIse", favicon="/images/favicon.png", language="de-DE",
            storage_secret="A>dQ@KgXnXQD0iXs")
     #q_page = context.client.page_container.default_slot.children[0]
     #q_page.default_classes('items-center')
