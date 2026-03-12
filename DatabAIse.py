@@ -1,12 +1,17 @@
 import re
+import sys
+import logging
 
 from openai import OpenAI, AsyncOpenAI
 from google import genai
 from google.genai import types
 
-import CssStyles
 import Pages
-from nicegui import ui, context
+from nicegui import ui
+
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(stream=sys.stdout)
+logger.addHandler(handler)
 
 
 example_json = open("db_generation/Example.json").read()
@@ -18,8 +23,11 @@ course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
 course_template_5 = open("course_templates/05Join.json").read()
 
 
-if __name__ in {"__main__", "__mp_main__"}:
-    Pages.build()
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 
 
 async def _current_prompt(system_content, user_content, reasoner, response_format):
@@ -397,3 +405,8 @@ def footer():
     with ui.footer(elevated=True):
         ui.link("released under the MIT-License", "https://opensource.org/license/mit")
         ui.label("published by David Seßner")
+
+
+if __name__ in {"__main__", "__mp_main__"}:
+    sys.excepthook = handle_exception
+    Pages.build()
