@@ -1,6 +1,7 @@
 from nicegui import ui, app
 
 import CssStyles
+import DatabAIse
 
 
 def next_page(err_label):
@@ -13,10 +14,11 @@ def next_page(err_label):
 
 async def on_upload(sql_file):
     app.storage.user["sql_string"] = await sql_file.text()
+    app.storage.user["db_json"] = DatabAIse.sql_to_json(app.storage.user["sql_string"])
 
 
 def get_page():
-    with ui.card():
+    with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Datenbank hochladen")
             ui.restructured_text("Hier kannst du deine bereits erstellte Datenbank hochladen. Bitte beachte, dass nur Datenbanken funktionieren, die mit diesem Tool erstellt wurden.")

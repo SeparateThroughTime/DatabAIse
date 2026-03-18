@@ -4,7 +4,6 @@ import re
 
 import CssStyles
 import DatabAIse
-from CssStyles import markdown
 
 
 def get_page():
@@ -12,7 +11,7 @@ def get_page():
     tables = app.storage.user["tables"]
     columns = app.storage.user["columns"]
 
-    with ui.card():
+    with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Erstellen der Datenbank")
             ui.restructured_text("""Du hast es fast geschafft!
@@ -35,6 +34,7 @@ async def start_prompt(topic, tables, columns, download_button, course_button):
     format_json_strings(json_obj)
     sql_string = DatabAIse.json_to_sql(json_obj)
     app.storage.user["sql_string"] = sql_string
+    app.storage.user["db_json"] = DatabAIse.sql_to_json(sql_string)
 
     download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
     download_button.text = "Download SQL"

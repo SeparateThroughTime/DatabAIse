@@ -15,7 +15,7 @@ def on_course_x(course_template_string, course_name):
 
 def get_page():
 
-    with ui.card():
+    with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Kurswahl")
             ui.restructured_text("Du kannst jetzt einen Kurs auswählen. Die KI wird dann Aufgaben passend zu deiner Datenbank erstellen.\n"
@@ -28,3 +28,4 @@ def get_page():
                 ui.button("Kurs 3: Sortierung", on_click=lambda: on_course_x(DatabAIse.course_template_3, "Kurs 3: Sortierung"))
                 ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: on_course_x(DatabAIse.course_template_4, "Kurs 4: Aggregatsfunktionen"))
                 ui.button("Kurs 5: Join", on_click=lambda: on_course_x(DatabAIse.course_template_5, "Kurs 5: Join"))
+                ui.button("Kurs 6: Unterabfragen", on_click=lambda: on_course_x(DatabAIse.course_template_6, "Kurs 6: Unterabfragen"))

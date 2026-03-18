@@ -1,0 +1,47 @@
+{
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] > (SELECT AVG([Tabelle1].[Spalte1]));", "text": false},
+  "2": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Tabelle2 ID] IN (SELECT [Tabelle2].[Tabelle2 ID] FROM [Tabelle2]);", "text": false},
+  "3": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], (SELECT count(*) AS [NeuerName1] FROM [Tabelle2] WHERE [Tabelle1].[Tabelle1 ID] = [Tabelle2].[Tabelle1 ID]) FROM [Tabelle1];", "text": false},
+  "4": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE EXISTS (SELECT * FROM [Tabelle2] WHERE [Tabelle2].[Tabelle1 ID] = [Tabelle1].[Tabelle1 ID];"},
+  "5": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [NeuerName1].[Spalte3] FROM [Tabelle1] JOIN (SELECT [Tabelle1].[Tabelle1 ID], SUM([NeuerName1]) AS [Tabelle2] FROM [Tabelle2] GROUP BY [Tabelle2].[Tabelle1 ID]) AS [NeuerName1] ON [Tabelle1].[Tabelle1 ID] = [NeuerName1].[Tabelle1 ID];", "text": false},
+  "6": {
+    "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] = (SELECT MAX([Tabelle1].[Spalte1]) FROM [Tabelle1]);",
+    "text": true
+  },
+  "7": {
+    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] < ANY (SELECT [Tabelle2].[Spalte1] FROM [Tabelle2]);",
+    "text": true
+  },
+  "8": {
+    "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE [Tabelle1].[Tabelle2 ID] NOT IN (SELECT [Tabelle2].[Tabelle2 ID] FROM [Tabelle2] WHERE [Tabelle2].[Spalte2] = [String]);",
+    "text": true
+  },
+  "9": {
+    "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE (SELECT COUNT(*) FROM [Tabelle2] WHERE [Tabelle2].[Tabelle1 ID] = [Tabelle1].[Tabelle1 ID]) > [Int];",
+    "text": true
+  },
+  "10": {
+    "statement": "SELECT [Tabelle1].[Spalte1], (SELECT [Tabelle2].[Spalte1] FROM [Tabelle2] WHERE [Tabelle2].[Tabelle2 ID] = [Tabelle1].[Tabelle2 ID]) AS [Name] FROM [Tabelle1];",
+    "text": true
+  },
+  "11": {
+    "statement": "SELECT * FROM (SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] > [Int]) AS [TempTabelle] WHERE [TempTabelle].[Spalte2] LIKE '[Buchstabe]%';",
+    "text": true
+  },
+  "12": {
+    "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] > ALL (SELECT [Tabelle2].[Spalte1] FROM [Tabelle2] WHERE [Tabelle2].[Spalte2] = [String]);",
+    "text": true
+  },
+  "13": {
+    "statement": "UPDATE [Tabelle1] SET [Tabelle1].[Spalte1] = [Tabelle1].[Spalte1] * 1.1 WHERE [Tabelle1].[Tabelle1 ID] IN (SELECT [Tabelle2].[Tabelle1 ID] FROM [Tabelle2] WHERE [Tabelle2].[Spalte2] = [String]);",
+    "text": true
+  },
+  "14": {
+    "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE NOT EXISTS (SELECT 1 FROM [Tabelle2] WHERE [Tabelle2].[Tabelle1 ID] = [Tabelle1].[Tabelle1 ID]);",
+    "text": true
+  },
+  "15": {
+    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] > (SELECT AVG([NeuerName1].[Spalte1]) FROM [Tabelle1] AS [NeuerName1] WHERE [NeuerName1].[Tabelle1 ID] = [Tabelle1].[Tabelle1 ID]);",
+    "text": true
+  }
+}

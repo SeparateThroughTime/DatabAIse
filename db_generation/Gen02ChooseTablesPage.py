@@ -1,5 +1,6 @@
 from nicegui import ui, app
 import json
+
 import CssStyles
 import DatabAIse
 
@@ -16,7 +17,7 @@ def next_page(table_inputs):
 def get_page():
     topic = app.storage.user["topic"]
 
-    with ui.card():
+    with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Tabellen der Datenbank")
             ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "

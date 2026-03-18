@@ -1,6 +1,7 @@
-import CssStyles
-import DatabAIse
 from nicegui import ui, app
+
+import CssStyles
+
 
 def next_page(topic):
     app.storage.user["topic"] = topic
@@ -8,7 +9,7 @@ def next_page(topic):
 
 
 def get_page():
-    with ui.card():
+    with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Thema der Datenbank")
             ui.label("Gib zuerst das Thema der Datenbank an.")

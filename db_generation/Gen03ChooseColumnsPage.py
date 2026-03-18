@@ -1,8 +1,8 @@
 from nicegui import ui, app
 import json
 
-import DatabAIse
 import CssStyles
+import DatabAIse
 
 
 def next_page(column_inputs):
@@ -25,7 +25,7 @@ def get_page():
     topic = app.storage.user["topic"]
     tables = app.storage.user["tables"]
 
-    with ui.card():
+    with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Attribute der Tabellen")
             ui.restructured_text("Überprüfe, ob die Attribute für die Tabellen sinnvoll sind. "

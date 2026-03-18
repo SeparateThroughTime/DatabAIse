@@ -1,8 +1,17 @@
 {
-  "1": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1];", "text": false},
+  "1": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];", "text": false},
   "2": {"statement": "SELECT [Auflistung aller Spalten] FROM [Tabelle1];", "text": false},
-  "3": {"statement": "SELECT [Spalte1] FROM [Tabelle1]>;", "text": true},
-  "4": {"statement": "SELECT [Spalte1], [Spalte2] FROM [Tabelle1];", "text": true},
-  "5": {"statement": "SELECT [Spalte1], [Spalte2], [Spalte3] FROM [Tabelle1];", "text": true},
-  "6": {"statement": "SELECT [Spalte1], [Spalte2], [Spalte3], [Spalte4] FROM [Tabelle1];", "text": true}
+  "3": {"statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1];", "text": true},
+  "4": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];", "text": true},
+  "5": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1];", "text": true},
+  "6": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3], [Tabelle1].[Spalte4] FROM [Tabelle1];", "text": true},
+  "7": {"statement": "SELECT * FROM [Tabelle1];", "text": false},
+  "8": {"statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1];", "text": true},
+  "9": {"statement": "SELECT [Tabelle1].[Spalte1] AS [NeuerName] FROM [Tabelle1];", "text": true},
+  "10": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];", "text": true},
+  "11": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];", "text": true},
+  "12": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1];", "text": true},
+  "13": {"statement": "SELECT * FROM [Tabelle1];", "text": true},
+  "14": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];", "text": true},
+  "15": {"statement": "SELECT [Spalte1], [Spalte1] FROM [Tabelle1];", "text": true}
 }

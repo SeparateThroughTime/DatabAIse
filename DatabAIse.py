@@ -1,7 +1,11 @@
+import os
 import re
 import sys
 import logging
+from io import StringIO
 
+import pandas
+from pandas import DataFrame
 from openai import OpenAI, AsyncOpenAI
 from google import genai
 from google.genai import types
@@ -21,6 +25,7 @@ course_template_2 = open("course_templates/02Selektion.json").read()
 course_template_3 = open("course_templates/03Sortierung.json").read()
 course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
 course_template_5 = open("course_templates/05Join.json").read()
+course_template_6 = open("course_templates/06Unterabfragen.json").read()
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -31,13 +36,32 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 
 async def _current_prompt(system_content, user_content, reasoner, response_format):
-    return await _prompt_gemini(system_content, user_content, reasoner, response_format)
+    try:
+        response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
+    except Exception as e:
+        logger.error(e)
+        try:
+            response = await _prompt_deepseek(system_content, user_content, reasoner, response_format)
+        except Exception as e:
+            logger.error(e)
+            try:
+                response = await _prompt_openai(system_content, user_content, reasoner, response_format)
+            except Exception as e:
+                logger.error(e)
+                response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
+                with ui.dialog() as dialog:
+                    ui.label(response)
+                    ui.button("Ok :(", on_click=dialog.close)
+                dialog.open()
+                logger.error("No AI could be used.")
+    return response
+
 
 
 async def db_create_tables_agent(topic):
     system_content = ("Suggest 4 table names for a database with a specific topic."
-                      " It must be reasonable to have at least two 1-to-many relations and one"
-                      " many-to-many relation between the tables."
+                      " It must be reasonable to have at least two 1-to-many relations, one"
+                      " many-to-many relation an on recursive relation between the tables."
                       " The suggested tables must not be relational tables."
                       " All data must be german or be loanwords for german language."
                       " The output contains the table names only, as:"
@@ -62,7 +86,7 @@ async def db_create_columns_agent(topic, tables):
 
 async def db_create_relations_keys_agent(topic, tables, columns):
     system_content = ("You get the topic, tables and columns for a database. "
-                      "Add primary keys to every table as IDs. "
+                      "Add primary keys to every table as IDs with sql naming convention. "
                       "Create reasonable relations between the tables. "
                       "There has to be at least one many-to-many relation and two 1-to-many relations."
                       "You are not allowed to add any table to the database. "
@@ -98,7 +122,7 @@ async def db_fill_agent(database):
     return await _current_prompt(system_content, database, 3, "json")
 
 
-async def course_create_sql_statements(db_json, course_template_string):
+async def course_create_sql_statements(db_json, course_template_json):
     system_content = ("You are filling SQL-statements with informations from a database. "
                       "The prompts have following structure:\n"
                       '{"database": database, '
@@ -113,22 +137,32 @@ async def course_create_sql_statements(db_json, course_template_string):
                       "If it contains ordering it must return at least 3 entries. "
                       "Your response is a json in following structure: "
                       '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}')
-    user_content = f'{{"sql_file": "{db_json}", "exercise_template": {course_template_string}}}'
-    result = await _current_prompt(system_content, user_content, 0, "json")
+    user_content = f'{{"sql_file": "{db_json}", "exercise_template": {course_template_json}}}'
+    result = await _current_prompt(system_content, user_content, 4, "json")
     print("SQL Statements:\n", result)
-    return await _course_verify_sql_statements(db_json, result)
+    #return await _course_verify_sql_statements(db_json, result, course_template_json)
+    return result
 
 
-async def _course_verify_sql_statements(db_json, course_json):
+async def _course_verify_sql_statements(db_json, course_json, course_template_json):
+    system_content = ("You get a json with a template for SQL queries and a json with corresponding SQL queries. "
+                      "Verify if the SQL queries in the second json fit the template and its instructions. "
+                      "The second json must not have any additions to the template. "
+                      "Alter queries that do not fulfill the condition with similar queries that fulfill it. "
+                      "Your response is the altered json in unchanged structure. ")
+    user_content = f'template: "{course_template_json}", query_json: {course_json}'
+    result1 = await _current_prompt(system_content, user_content, 4, "json")
+    print("Verify template = exercise:\n", _compare(course_json, result1))
+
     system_content = ("You get a json containing a database and a json with a series of SQL queries. "
                       "Verify if the result for the queries that contain ordering return at least 3 entries "
                       "and the result of the other queries return at least 1 entry with the given database. "
                       "Replace the queries that do not fulfill the condition with similar queries that fulfill it. "
                       "Your response is the altered json in unchanged structure. ")
-    user_content = f'sql_file: "{db_json}", query_json: {course_json}'
-    result = await _current_prompt(system_content, user_content, 3, "json")
-    print("Verification:\n", result)
-    return result
+    user_content = f'sql_file: "{db_json}", query_json: {result1}'
+    result2 = await _current_prompt(system_content, user_content, 4, "json")
+    print("Verify solutions return entries:\n", _compare(result1, result2))
+    return result2
 
 
 async def course_create_exercise(sql_statements):
@@ -142,9 +176,9 @@ async def course_create_exercise(sql_statements):
                       "The exercises must be in german. Pay attention to a correct german grammar. "
                       "All names of tables or columns should be in single quotation marks. "
                       "You create a motivating underlying story line which is also explaining the structure of the database. "
-                      "Your response is only the resulting exercise as json in following structue:"
+                      "Your response is only the resulting exercise as json in following structure:"
                       '{"0": underlying_story, "1": task_description_1, "2": task_description_2, ..., "n": task_description_n}\n')
-    result = await _current_prompt(system_content, sql_statements, 3, "json")
+    result = await _current_prompt(system_content, sql_statements, 4, "json")
     print("Exercises:\n", result)
     return await _course_verify_exercise(sql_statements, result)
 
@@ -155,16 +189,15 @@ async def _course_verify_exercise(sql_statements, exercises):
                       "If it does not fit, change the exercise to fit the sample solution. "
                       "Your response is only the altered json with the exercises in unchanged structure. ")
     user_content = f'exercises: {exercises}, sample_solutions: {sql_statements}'
-    result = await _current_prompt(system_content, user_content, 3, "json")
-    print("Verification:\n", result)
+    result = await _current_prompt(system_content, user_content, 4, "json")
+    print("Verify exercise = sample solutions:\n", _compare(exercises, result))
     return result
 
 
 async def _prompt_deepseek(system_content, user_content, reasoner, response_format):
-    notification = ui.notification("Warte auf KI Antwort...")
-    notification.spinner = True
-    model = "deepseek-reasoner" if reasoner else "deepseek-chat"
-    ai_client = OpenAI(api_key="sk-d24693c00eac446db4ee589be6eb496e", base_url="https://api.deepseek.com")
+    model = "deepseek-reasoner" if reasoner > 5 else "deepseek-chat"
+    response_format = "json_object" if response_format == "json" else "text"
+    ai_client = OpenAI(api_key=os.environ.get('DEEPSEEK_API_KEY'), base_url="https://api.deepseek.com")
     response = ai_client.chat.completions.create(
         model=model,
         messages=[
@@ -176,33 +209,48 @@ async def _prompt_deepseek(system_content, user_content, reasoner, response_form
         response_format={'type': response_format},
         stream=False
     )
-    notification.dismiss()
     return response.choices[0].message.content
 
 
 async def _prompt_openai(system_content, user_content, reasoner, response_format):
-    notification = ui.notification("Warte auf KI Antwort...")
-    notification.spinner = True
-    model = "gpt-5-mini-2025-08-07"
-    ai_client = AsyncOpenAI(api_key="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")
-    response = await ai_client.chat.completions.create(
+    if reasoner <= 5:
+        model = "gpt-5-mini"
+        effort = "medium"
+    elif reasoner <= 7:
+        model = "gpt-5"
+        effort = "low"
+    elif reasoner <= 8:
+        model = "gpt-5"
+        effort = "medium"
+    elif reasoner <= 9:
+        model = "gpt-5"
+        effort = "high"
+    elif reasoner <= 10:
+        model = "gpt-5.4"
+        effort = "medium"
+    elif reasoner <= 11:
+        model = "gpt-5.4"
+        effort = "high"
+    else:
+        model = "gpt-5.4"
+        effort = "xhigh"
+    ai_client = AsyncOpenAI()
+    response = await ai_client.responses.parse(
         model=model,
-        messages=[
+        reasoning={"effort": effort},
+        input=[
             {"role": "system",
              "content": system_content},
             {"role": "user",
              "content": user_content},
         ],
-        response_format={'type': response_format},
+        text_format={'type': response_format},
         stream=False
     )
-    notification.dismiss()
     return response.choices[0].message.content
 
 
 async def _prompt_gemini(system_content, user_content, reasoner, response_format):
-    notification = ui.notification("Warte auf KI Antwort...")
-    notification.spinner = True
     match reasoner:
         case 0:
             thinking_config = types.ThinkingConfig(thinking_budget=0)
@@ -253,7 +301,7 @@ async def _prompt_gemini(system_content, user_content, reasoner, response_format
         case _:
             raise Exception("Unexpected value '" + str(response_format) + "' for response format!")
 
-    ai_client = genai.Client(api_key="AIzaSyD6u0WvtR3YtElrfS0k96gDbl3YWT6S70A")
+    ai_client = genai.Client()
     response = await ai_client.aio.models.generate_content(
         model=model,
         contents=user_content,
@@ -269,7 +317,6 @@ async def _prompt_gemini(system_content, user_content, reasoner, response_format
             ]
         )
     )
-    notification.dismiss()
     return response.candidates[0].content.parts[0].text
 
 
@@ -376,35 +423,13 @@ def sql_to_json(sql_string):
     return json_obj
 
 
-def header():
-    ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#80acff", dark="#1d1d1d", dark_page="#0d347a")
-
-    ui.button.default_classes('text-center bg-primary q-pa-sm shadow-1')
-    ui.input.default_classes('')
-    ui.label.default_classes('text-left')
-    ui.restructured_text.default_classes('text-center')
-    ui.restructured_text.default_style('margin-left: 10%; margin-right: 10%')
-    ui.upload.default_classes('text-center shadow-1')
-    ui.table.default_classes('text-left shadow-1')
-    ui.markdown.default_classes('text-h3')
-    ui.card.default_classes('items-center')
-    ui.image.default_classes('')
-    ui.header.default_classes('bg-primary fixed-top justify-between')
-    ui.footer.default_classes('bg-secondary fixed-bottom justify-between')
-    ui.column.default_classes('items-center')
-    ui.row.default_classes('items-center')
-
-    with ui.header(elevated=True):
-        ui.image("images/favicon.png").classes('w-8')
-        ui.label("DatabAIse").classes('text-h5')
-        ui.label(" ")
-
-
-
-def footer():
-    with ui.footer(elevated=True):
-        ui.link("released under the MIT-License", "https://opensource.org/license/mit")
-        ui.label("published by David Seßner")
+def _compare(a, b):
+    try:
+        return DataFrame.compare(pandas.read_json(StringIO(a)), pandas.read_json(StringIO(b)), 0, result_names=('before', 'after')).to_string()
+    except Exception as e:
+        pass
+        logger.error("Error on comparing prompt results:\n" + str(e))
+        print("for dataframe:\n", str(a), "and\n", str(b))
 
 
 if __name__ in {"__main__", "__mp_main__"}:

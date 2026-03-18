@@ -1,7 +1,17 @@
 {
-  "1": {"statement": "SELECT MAX([Spalte1]) FROM [Tabelle1];", "text": true},
-  "2": {"statement": "SELECT COUNT(*) FROM [Tabelle1] WHERE [Spalte1] = [Int];", "text": true},
-  "3": {"statement": "SELECT COUNT(*) FROM [Tabelle1] GROUP BY [Spalte1];", "text": true},
-  "4": {"statement": "SELECT SUM([Spalte1]) FROM [Tabelle1] GROUP BY [Spalte2];", "text": true},
-  "5": {"statement": "SELECT AVG([Spalte1]) AS [Name] FROM [Tabelle1];", "text": true}
+  "1": {"statement": "SELECT MAX([Tabelle1].[Spalte1]) FROM [Tabelle1];", "text": false},
+  "2": {"statement": "SELECT COUNT(*) FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] = [Int];", "text": false},
+  "3": {"statement": "SELECT COUNT(*) FROM [Tabelle1] GROUP BY [Tabelle1].[Spalte1];", "text": false},
+  "4": {"statement": "SELECT SUM([Tabelle1].[Spalte1]) FROM [Tabelle1] GROUP BY [Tabelle1].[Spalte2];", "text": false},
+  "5": {"statement": "SELECT AVG([Tabelle1].[Spalte1]) AS [Name] FROM [Tabelle1];", "text": false},
+  "6": {"statement": "SELECT MIN([Tabelle1].[Spalte1]) FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] > [Int];", "text": true},
+  "7": {"statement": "SELECT [Tabelle1].[Spalte1], COUNT(*) FROM [Tabelle1] GROUP BY [Tabelle1].[Spalte1] HAVING COUNT(*) > [Int];", "text": false},
+  "8": {"statement": "SELECT SUM([Tabelle1].[Spalte1]) FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] LIKE '[String]%';", "text": true},
+  "9": {"statement": "SELECT [Tabelle1].[Spalte1], AVG([Tabelle1].[Spalte2]) FROM [Tabelle1] GROUP BY [Tabelle1].[Spalte1] ORDER BY AVG([Tabelle1].[Spalte2]) DESC;", "text": true},
+  "10": {"statement": "SELECT COUNT([Tabelle1].[Spalte1]) FROM [Tabelle1];", "text": true},
+  "11": {"statement": "SELECT [Tabelle1].[Spalte1], SUM([Tabelle1].[Spalte2]) AS [Gesamtsumme] FROM [Tabelle1] WHERE [Tabelle1].[Spalte3] <> [Int] GROUP BY [Tabelle1].[Spalte1];", "text": true},
+  "12": {"statement": "SELECT MAX([Tabelle1].[Spalte1]) - MIN([Tabelle1].[Spalte1]) AS [Differenz] FROM [Tabelle1];", "text": true},
+  "13": {"statement": "SELECT [Tabelle1].[Spalte1], COUNT([Tabelle1].[Spalte2]) FROM [Tabelle1] GROUP BY [Tabelle1].[Spalte1] HAVING SUM([Tabelle1].[Spalte2]) > [Int];", "text": true},
+  "14": {"statement": "SELECT ROUND(AVG([Tabelle1].[Spalte1]), 2) FROM [Tabelle1];", "text": true},
+  "15": {"statement": "SELECT [Tabelle1].[Spalte1], MIN([Tabelle1].[Spalte2]), MAX([Tabelle1].[Spalte2]) FROM [Tabelle1] GROUP BY [Tabelle1].[Spalte1];", "text": true}
 }
