@@ -151,7 +151,6 @@ def get_page():
         app.storage.user["solutions_json"] = json.loads(solutions_string)
         exercise_string = await DatabAIse.course_create_exercise(solutions_string)
         app.storage.user["exercise_json"] = json.loads(exercise_string)
-        print("exercise json:", app.storage.user["exercise_json"])
 
         story_textfield.content = app.storage.user["exercise_json"]["0"]
 

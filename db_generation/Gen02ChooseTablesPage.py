@@ -50,7 +50,6 @@ def get_page():
 async def start_prompt(topic, table_inputs, button):
     response = await DatabAIse.db_create_tables_agent(topic)
 
-    print(response)
     tables = json.loads(response)
     i = 0
     for key in tables:

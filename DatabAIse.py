@@ -144,7 +144,6 @@ async def course_create_sql_statements(db_json, course_template_json):
                       '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}')
     user_content = f'{{"sql_file": "{db_json}", "exercise_template": {course_template_json}}}'
     result = await _current_prompt(system_content, user_content, 4, "json")
-    print("SQL Statements:\n", result)
     #return await _course_verify_sql_statements(db_json, result, course_template_json)
     return result
 
@@ -157,7 +156,6 @@ async def _course_verify_sql_statements(db_json, course_json, course_template_js
                       "Your response is the altered json in unchanged structure. ")
     user_content = f'template: "{course_template_json}", query_json: {course_json}'
     result1 = await _current_prompt(system_content, user_content, 4, "json")
-    print("Verify template = exercise:\n", _compare(course_json, result1))
 
     system_content = ("You get a json containing a database and a json with a series of SQL queries. "
                       "Verify if the result for the queries that contain ordering return at least 3 entries "
@@ -166,7 +164,6 @@ async def _course_verify_sql_statements(db_json, course_json, course_template_js
                       "Your response is the altered json in unchanged structure. ")
     user_content = f'sql_file: "{db_json}", query_json: {result1}'
     result2 = await _current_prompt(system_content, user_content, 4, "json")
-    print("Verify solutions return entries:\n", _compare(result1, result2))
     return result2
 
 
@@ -184,7 +181,6 @@ async def course_create_exercise(sql_statements):
                       "Your response is only the resulting exercise as json in following structure:"
                       '{"0": underlying_story, "1": task_description_1, "2": task_description_2, ..., "n": task_description_n}\n')
     result = await _current_prompt(system_content, sql_statements, 4, "json")
-    print("Exercises:\n", result)
     return await _course_verify_exercise(sql_statements, result)
 
 
@@ -195,7 +191,6 @@ async def _course_verify_exercise(sql_statements, exercises):
                       "Your response is only the altered json with the exercises in unchanged structure. ")
     user_content = f'exercises: {exercises}, sample_solutions: {sql_statements}'
     result = await _current_prompt(system_content, user_content, 4, "json")
-    print("Verify exercise = sample solutions:\n", _compare(exercises, result))
     return result
 
 
@@ -434,7 +429,7 @@ def _compare(a, b):
     except Exception as e:
         pass
         logger.error("Error on comparing prompt results:\n" + str(e))
-        print("for dataframe:\n", str(a), "and\n", str(b))
+        logger.error("for dataframe:\n", str(a), "and\n", str(b))
 
 
 if __name__ in {"__main__", "__mp_main__"}:

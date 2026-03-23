@@ -26,9 +26,7 @@ def get_page():
 
 async def start_prompt(topic, tables, columns, download_button, course_button):
     response = await DatabAIse.db_create_relations_keys_agent(topic, tables, columns)
-    print("Gen04-1:\n", response)
     response = await DatabAIse.db_fill_agent(response)
-    print("Gen04-2:\n", response)
 
     json_obj = json.loads(response)
     format_json_strings(json_obj)

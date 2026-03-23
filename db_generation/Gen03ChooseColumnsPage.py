@@ -14,8 +14,6 @@ def next_page(column_inputs):
         for j in range(len(column_inputs[i])):
             columns[i].append(column_inputs[i][j].value)
 
-    print("Columns:")
-    print(columns)
     app.storage.user["columns"] = columns
 
     ui.navigate.to("/Datenbank")
@@ -71,7 +69,6 @@ def get_page():
 
 async def start_prompt(topic, tables, column_inputs, button):
     response = await DatabAIse.db_create_columns_agent(topic, tables)
-    print("Gen03:\n", response)
     tables = json.loads(response)
 
     table_counter = 0
