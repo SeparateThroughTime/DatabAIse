@@ -1,4 +1,4 @@
-from nicegui import ui, app
+from nicegui import ui, app, events
 
 import CssStyles
 import DatabAIse
@@ -26,3 +26,8 @@ def get_page():
             err_label = ui.label("Keine Datei ausgewählt!")
             err_label.visible = False
             ui.button("Zur Kurswahl", on_click=lambda: next_page(err_label))
+
+    def handle_key(e: events.KeyEventArguments):
+        if e.action.keydown and e.key.enter:
+            next_page(err_label)
+    ui.keyboard(on_key=handle_key)

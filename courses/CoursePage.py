@@ -1,10 +1,7 @@
 import json
 import sqlite3
-import time
-
 import pandas
-
-from nicegui import ui, app
+from nicegui import ui, app, events
 
 import CssStyles
 import DatabAIse
@@ -20,6 +17,9 @@ def get_page():
     database.commit()
 
     with ui.card().style(CssStyles.maincard_style):
+        with ui.column().classes("items-start", remove="items-center"):
+            choose_course_button = ui.button("Zurück zu Kurswahl", on_click=lambda: ui.navigate.to("/Kurswahl2") if app.storage.user["is_control_group"] else ui.navigate.to("/Kurswahl"))
+
         with ui.column():
             topic_markdown = ui.markdown(app.storage.user["course_name"])
             with ui.card().classes(CssStyles.subcard_classes):
@@ -167,3 +167,8 @@ def get_page():
         next_button.text = "Nächste Aufgabe"
         next_button.on("click", next_exercise)
     ui.timer(0.21, start_prompt, once=True)
+
+    def handle_key(e: events.KeyEventArguments):
+        if e.action.keydown and e.key.enter:
+            run_sql()
+    ui.keyboard(on_key=handle_key)

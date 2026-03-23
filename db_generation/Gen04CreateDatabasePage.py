@@ -1,5 +1,5 @@
 import json
-from nicegui import ui, app
+from nicegui import ui, app, events
 import re
 
 import CssStyles

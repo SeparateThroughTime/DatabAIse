@@ -1,13 +1,12 @@
-import DatabAIse
-from courses import ChooseCoursePage, CoursePage
+from licenses import Licenses
+from courses import ChooseCoursePage, CoursePage, ControlChooseCoursePage
 from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, UploadPage
 import InstructionsPage
-
-from nicegui import ui, context, Client
+from nicegui import ui, Client, app
 
 
 def build():
-    ui.run(port=8080, title="DatabAIse", favicon="/images/favicon.png", language="de-DE",
+    ui.run(port=8080, title="DatabAIse", language="de-DE",
            storage_secret="A>dQ@KgXnXQD0iXs", reconnect_timeout=10.0, reload=False)
 
 
@@ -31,7 +30,7 @@ def header():
     ui.textarea.default_style('width: 90%; background-color: gainsboro')
 
     with ui.header(elevated=True):
-        ui.image("images/favicon.png").classes('w-8')
+        ui.image("images/favicon.png").classes('w-8 cursor-pointer').on("click", lambda: ui.navigate.to("/"))
         ui.label("DatabAIse").classes('text-h5')
         ui.label(" ")
 
@@ -39,7 +38,9 @@ def header():
 
 def footer():
     with ui.footer(elevated=True):
-        ui.link("released under the MIT-License", "https://opensource.org/license/mit")
+        app.add_static_file(local_file="LICENSE", url_path="/Lizenz")
+        ui.link("released under the MIT-License", "/Lizenz", new_tab=True)
+        ui.link("utilized software", "/Lizenzen")
         ui.label("published by David Seßner")
 
 
@@ -104,4 +105,20 @@ def course(client: Client):
     client.content.classes('items-center')
     header()
     CoursePage.get_page()
+    footer()
+
+
+@ui.page("/Lizenzen")
+def licenses(client: Client):
+    client.content.classes("items-center")
+    header()
+    Licenses.get_page()
+    footer()
+
+
+@ui.page("/Kurswahl2")
+def control_choose_course(client: Client):
+    client.content.classes("items-center")
+    header()
+    ControlChooseCoursePage.get_page()
     footer()

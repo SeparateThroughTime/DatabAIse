@@ -1,4 +1,4 @@
-from nicegui import ui, app
+from nicegui import ui, app, events
 import json
 
 import CssStyles
@@ -62,6 +62,11 @@ def get_page():
 
             button = ui.button("Warte auf KI-Antwort")
     ui.timer(0.1, lambda: start_prompt(topic, tables, column_inputs, button), once=True)
+
+    def handle_key(e: events.KeyEventArguments):
+        if e.action.keydown and e.key.enter:
+            next_page(column_inputs)
+    ui.keyboard(on_key=handle_key)
 
 
 async def start_prompt(topic, tables, column_inputs, button):

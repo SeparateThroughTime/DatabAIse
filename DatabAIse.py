@@ -19,13 +19,18 @@ logger.addHandler(handler)
 
 
 example_json = open("db_generation/Example.json").read()
-test_sql = open("db_generation/Test.sql").read()
 course_template_1 = open("course_templates/01Projektion.json").read()
 course_template_2 = open("course_templates/02Selektion.json").read()
 course_template_3 = open("course_templates/03Sortierung.json").read()
 course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
 course_template_5 = open("course_templates/05Join.json").read()
 course_template_6 = open("course_templates/06Unterabfragen.json").read()
+course_1_db = open("course_db/01Kochbuch.sql").read()
+course_2_db = open("course_db/02Berufsorientierung.sql").read()
+course_3_db = open("course_db/03Nachbarschafts-Bibliothek.sql").read()
+course_4_db = open("course_db/04ÖPNV Frankfurt am Main.sql").read()
+course_5_db = open("course_db/05Musikarchiv.sql").read()
+course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):

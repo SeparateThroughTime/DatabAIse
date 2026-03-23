@@ -1,5 +1,3 @@
-import sqlite3
-
 from nicegui import ui, app
 
 import CssStyles
@@ -7,9 +5,9 @@ import DatabAIse
 
 
 def on_course_x(course_template_string, course_name):
-    print("KursX")
     app.storage.user["course_template_string"] = course_template_string
     app.storage.user["course_name"] = course_name
+    app.storage.user["is_control_group"] = True
     ui.navigate.to("/Kurs")
 
 

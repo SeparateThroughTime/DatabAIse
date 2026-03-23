@@ -1,4 +1,4 @@
-from nicegui import ui, app
+from nicegui import ui, app, events
 
 import CssStyles
 
@@ -19,3 +19,8 @@ def get_page():
                 topic_input = ui.input(placeholder="Thema der Datenbank")
 
             ui.button("Senden", on_click=lambda: next_page(topic_input.value))
+
+    def handle_key(e: events.KeyEventArguments):
+        if e.action.keydown and e.key.enter:
+            next_page(topic_input.value)
+    ui.keyboard(on_key=handle_key)
