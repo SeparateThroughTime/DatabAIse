@@ -46,11 +46,11 @@ async def _current_prompt(system_content, user_content, reasoner, response_forma
     except Exception as e:
         logger.error(e)
         try:
-            response = await _prompt_deepseek(system_content, user_content, reasoner, response_format)
+            response = await _prompt_openai(system_content, user_content, reasoner, response_format)
         except Exception as e:
             logger.error(e)
             try:
-                response = await _prompt_openai(system_content, user_content, reasoner, response_format)
+                response = await _prompt_deepseek(system_content, user_content, reasoner, response_format)
             except Exception as e:
                 logger.error(e)
                 response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
@@ -69,7 +69,7 @@ async def db_create_tables_agent(topic):
                       " many-to-many relation an on recursive relation between the tables."
                       " The suggested tables must not be relational tables."
                       " All data must be german or be loanwords for german language."
-                      " The output contains the table names only, as:"
+                      " The output is a json containing the table names only as:"
                       ' {"A": "table1", "B": "table2", "C": "table3", "D": "table4"}')
     return await _current_prompt(system_content, topic, 3, "json")
 
@@ -98,7 +98,7 @@ async def db_create_relations_keys_agent(topic, tables, columns):
                       "1-to-many relations are implemented with foreign keys. "
                       "many-to-many relations are implemented with a relation-table. "
                       "All data must be german or be loanwords for german language. "
-                      "The output is the database only without explanations or relations.")
+                      "The output is the database only as json without explanations or relations.")
     user_content = "{topic: '" + topic + "', tables: {"
     for i in range(len(tables)):
         user_content += tables[i] + ": ["
@@ -118,13 +118,13 @@ async def _db_verify_relations_keys_agent(db_json):
                       "1-to-many relations are implemented with foreign keys. "
                       "many-to-many relations are implemented with a relation-table. "
                       "All data must be german or be loanwords for german language. "
-                      "The output is the database only without explanations or relations.")
+                      "The output is the database only as json without explanations or relations.")
     return await _current_prompt(system_content, db_json, 3, "json")
 
 
 async def db_fill_agent(database):
-    system_content = "You get an empty database. Fill it with 100 entries total. Let the output fit this example: " + example_json
-    return await _current_prompt(system_content, database, 3, "json")
+    system_content = "You get an empty database. Fill it with 100 entries total. Let the output fit this json example: " + example_json + " Do not use spaces between parameters of a variable type."
+    return await _current_prompt(system_content, database, 6, "json")
 
 
 async def course_create_sql_statements(db_json, course_template_json):
@@ -272,25 +272,25 @@ async def _prompt_gemini(system_content, user_content, reasoner, response_format
             model = "gemini-2.5-flash"
         case 6:
             thinking_config = types.ThinkingConfig(thinking_level="minimal")
-            model = "gemini-3-flash"
+            model = "gemini-3-flash-preview"
         case 7:
             thinking_config = types.ThinkingConfig(thinking_level="low")
-            model = "gemini-3-flash"
+            model = "gemini-3-flash-preview"
         case 8:
             thinking_config = types.ThinkingConfig(thinking_level="medium")
-            model = "gemini-3-flash"
+            model = "gemini-3-flash-preview"
         case 9:
             thinking_config = types.ThinkingConfig(thinking_level="high")
-            model = "gemini-3-flash"
+            model = "gemini-3-flash-preview"
         case 10:
             thinking_config = types.ThinkingConfig(thinking_level="low")
-            model = "gemini-3.1-pro"
+            model = "gemini-3.1-pro-preview"
         case 11:
             thinking_config = types.ThinkingConfig(thinking_level="medium")
-            model = "gemini-3.1-pro"
+            model = "gemini-3.1-pro-preview"
         case 12:
             thinking_config = types.ThinkingConfig(thinking_level="high")
-            model = "gemini-3.1-pro"
+            model = "gemini-3.1-pro-preview"
         case _:
             raise Exception("Unexpected value '" + str(reasoner) + "' for thinking config!")
     match response_format:

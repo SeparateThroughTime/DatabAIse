@@ -21,15 +21,15 @@
         "columns": [
           {"name": "buch_id", "type": "INT", "primary_key": true},
           {"name": "titel", "type": "VARCHAR(255)"},
-          {"name": "veroeffentlichungsdatum", "type": "YEAR"},
+          {"name": "preis", "type": "DECIMAL(5,2)"},
           {"name":  "autor_id", "type": "INT", "foreign_key": {"table": "autoren", "column": "autor_id"}}
         ],
         "data": [
-          {"buch_id": 1, "titel": "Der lange dunkle Fünfuhrtee der Seele", "veroeffentlichungsdatum": "1987", "autor_id": 1},
-          {"buch_id": 2, "titel": "Einmal Rupert und zurück", "veroeffentlichungsdatum": "1992", "autor_id": 1},
-          {"buch_id": 3, "titel": "John Dies at the End", "veroeffentlichungsdatum": "2011", "autor_id": 2},
-          {"buch_id": 4, "titel": "If this book exists, you're in the wrong Universe", "veroeffentlichungsdatum": "2022", "autor_id": 2},
-          {"buch_id": 5, "titel": "Blut", "veroeffentlichungsdatum": "1985", "autor_id": 3}
+          {"buch_id": 1, "titel": "Der lange dunkle Fünfuhrtee der Seele", "preis": 9.99, "autor_id": 1},
+          {"buch_id": 2, "titel": "Einmal Rupert und zurück", "preis": 8.99, "autor_id": 1},
+          {"buch_id": 3, "titel": "John Dies at the End", "preis": 19.99, "autor_id": 2},
+          {"buch_id": 4, "titel": "If this book exists, you're in the wrong Universe", "preis": 24.99, "autor_id": 2},
+          {"buch_id": 5, "titel": "Blut", "preis": 49.87, "autor_id": 3}
         ]
       },
       {

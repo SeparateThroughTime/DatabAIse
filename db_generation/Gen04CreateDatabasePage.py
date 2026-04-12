@@ -18,7 +18,8 @@ def get_page():
             ui.restructured_text("""Du hast es fast geschafft!
                                     Die KI hat nun alle Informationen zum Erstellen der Datenbank. Es werden jetzt Relationen zwischen den Tabellen erzeugt und Daten in die Datenbank eingepflegt.
                                     Es werden möglicherweise noch weitere Tabellen hinzugefügt, damit die Datenbank für alle Aufgaben geeignet ist.
-                                    Dieser Schritt kann unter Umständen 1-2 Minuten brauchen.""")
+                                    Dieser Schritt kann unter Umständen 1-2 Minuten brauchen.
+                                    Im Anschluss kannst du die Datenbank als .sql-Datei herunterladen und zur Kurswahl weitergehen.""")
             with ui.row():
                 download_button = ui.button("Warte auf KI-Antwort")
                 course_button = ui.button("Warte auf KI-Antwort")
@@ -31,10 +32,12 @@ async def start_prompt(topic, tables, columns, download_button, course_button):
     response = await DatabAIse.db_fill_agent(response)
 
     json_obj = json.loads(response)
+    print(json.dumps(json_obj, indent=4))
     format_json_strings(json_obj)
     sql_string = DatabAIse.json_to_sql(json_obj)
     app.storage.user["sql_string"] = sql_string
     app.storage.user["db_json"] = DatabAIse.sql_to_json(sql_string)
+    print(json.dumps(app.storage.user["db_json"], indent=4))
 
     download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
     download_button.text = "Download SQL"
@@ -50,7 +53,15 @@ async def start_prompt(topic, tables, columns, download_button, course_button):
 
 
 def format_json_strings(json_obj):
-    json_obj["database"]["topic"] = namingConventions(replaceUmlaute(json_obj["database"]["topic"]))
+    # Sometime 'topic' is renamed to 'name' from AI...
+    if "topic" in json_obj["database"]:
+        topic = json_obj["database"]["topic"]
+    elif "name" in json_obj["database"]:
+        topic = json_obj["database"]["name"]
+    else:
+        topic = "unknown"
+    json_obj["database"]["topic"] = namingConventions(replaceUmlaute(topic))
+
     for table in json_obj["database"]["tables"]:
         table["name"] = namingConventions(replaceUmlaute(table["name"]))
         for column in table["columns"]:
