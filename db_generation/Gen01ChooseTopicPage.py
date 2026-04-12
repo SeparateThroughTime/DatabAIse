@@ -5,7 +5,7 @@ import CssStyles
 
 def next_page(topic):
     app.storage.user["topic"] = topic
-    ui.navigate.to("/Tabellenwahl")
+    ui.navigate.to("/a/Tabellenwahl")
 
 
 def get_page():
@@ -23,4 +23,4 @@ def get_page():
     def handle_key(e: events.KeyEventArguments):
         if e.action.keydown and e.key.enter:
             next_page(topic_input.value)
-    ui.keyboard(on_key=handle_key)
+    ui.keyboard(on_key=handle_key, ignore=[])

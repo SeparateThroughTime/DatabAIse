@@ -1,6 +1,7 @@
 import json
 from nicegui import ui, app, events
 import re
+import sqlite3
 
 import CssStyles
 import DatabAIse
@@ -16,6 +17,7 @@ def get_page():
             ui.markdown("Erstellen der Datenbank")
             ui.restructured_text("""Du hast es fast geschafft!
                                     Die KI hat nun alle Informationen zum Erstellen der Datenbank. Es werden jetzt Relationen zwischen den Tabellen erzeugt und Daten in die Datenbank eingepflegt.
+                                    Es werden möglicherweise noch weitere Tabellen hinzugefügt, damit die Datenbank für alle Aufgaben geeignet ist.
                                     Dieser Schritt kann unter Umständen 1-2 Minuten brauchen.""")
             with ui.row():
                 download_button = ui.button("Warte auf KI-Antwort")
@@ -36,8 +38,15 @@ async def start_prompt(topic, tables, columns, download_button, course_button):
 
     download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
     download_button.text = "Download SQL"
-    course_button.on("click", lambda: ui.navigate.to("/Kurswahl"))
+    course_button.on("click", lambda: ui.navigate.to("/a/Kurswahl"))
     course_button.text = "Zur Kurswahl"
+
+    con = sqlite3.connect("databases.db")
+    cur = con.cursor()
+    cur.execute(f"""INSERT INTO databases (topic, sql_file)
+                   VALUES ('{app.storage.user["topic"]}', "{app.storage.user["db_json"]}");""")
+    con.commit()
+    con.close()
 
 
 def format_json_strings(json_obj):

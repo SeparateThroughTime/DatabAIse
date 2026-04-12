@@ -9,7 +9,7 @@ def next_page(err_label):
         err_label.visible = True
         return
 
-    ui.navigate.to("/Kurswahl")
+    ui.navigate.to("/a/Kurswahl")
 
 
 async def on_upload(sql_file):

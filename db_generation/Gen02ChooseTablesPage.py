@@ -11,7 +11,7 @@ def next_page(table_inputs):
         tables.append(table_input.value)
     app.storage.user["tables"] = tables
 
-    ui.navigate.to("/Spaltenwahl")
+    ui.navigate.to("/a/Spaltenwahl")
 
 
 def get_page():
@@ -44,7 +44,7 @@ def get_page():
     def handle_key(e: events.KeyEventArguments):
         if e.action.keydown and e.key.enter:
             next_page(table_inputs)
-    ui.keyboard(on_key=handle_key)
+    ui.keyboard(on_key=handle_key, ignore=[])
 
 
 async def start_prompt(topic, table_inputs, button):

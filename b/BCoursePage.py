@@ -18,7 +18,7 @@ def get_page():
 
     with ui.card().style(CssStyles.maincard_style):
         with ui.column().classes("items-start", remove="items-center"):
-            choose_course_button = ui.button("Zurück zu Kurswahl", on_click=lambda: ui.navigate.to("/a/Kurswahl"))
+            choose_course_button = ui.button("Zurück zu Kurswahl", on_click=lambda: ui.navigate.to("/b/Kurswahl"))
 
         with ui.column():
             topic_markdown = ui.markdown(app.storage.user["course_name"])

@@ -7,8 +7,7 @@ import DatabAIse
 def on_course_x(course_template_string, course_name):
     app.storage.user["course_template_string"] = course_template_string
     app.storage.user["course_name"] = course_name
-    app.storage.user["is_control_group"] = True
-    ui.navigate.to("/Kurs")
+    ui.navigate.to("/a/Kurs")
 
 
 def get_page():

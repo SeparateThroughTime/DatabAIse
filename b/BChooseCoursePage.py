@@ -9,8 +9,7 @@ def on_course_x(course_template_string, course_name, course_db):
     app.storage.user["course_name"] = course_name
     app.storage.user["sql_string"] = course_db
     app.storage.user["db_json"] = DatabAIse.sql_to_json(app.storage.user["sql_string"])
-    app.storage.user["is_control_group"] = True
-    ui.navigate.to("/Kurs")
+    ui.navigate.to("/b/Kurs")
 
 
 def get_page():

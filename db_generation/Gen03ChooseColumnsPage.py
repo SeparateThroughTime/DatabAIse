@@ -16,7 +16,7 @@ def next_page(column_inputs):
 
     app.storage.user["columns"] = columns
 
-    ui.navigate.to("/Datenbank")
+    ui.navigate.to("/a/Datenbank")
 
 
 def get_page():
@@ -64,7 +64,7 @@ def get_page():
     def handle_key(e: events.KeyEventArguments):
         if e.action.keydown and e.key.enter:
             next_page(column_inputs)
-    ui.keyboard(on_key=handle_key)
+    ui.keyboard(on_key=handle_key, ignore=[])
 
 
 async def start_prompt(topic, tables, column_inputs, button):
