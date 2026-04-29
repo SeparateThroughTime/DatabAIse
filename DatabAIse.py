@@ -42,23 +42,19 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 async def _current_prompt(system_content, user_content, reasoner, response_format):
     try:
-        response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
+        response = await _prompt_openai(system_content, user_content, reasoner, response_format)
     except Exception as e:
         logger.error(e)
         try:
-            response = await _prompt_openai(system_content, user_content, reasoner, response_format)
+            response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
         except Exception as e:
             logger.error(e)
-            try:
-                response = await _prompt_deepseek(system_content, user_content, reasoner, response_format)
-            except Exception as e:
-                logger.error(e)
-                response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
-                with ui.dialog() as dialog:
-                    ui.label(response)
-                    ui.button("Ok :(", on_click=dialog.close)
-                dialog.open()
-                logger.error("No AI could be used.")
+            response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
+            with ui.dialog() as dialog:
+                ui.label(response)
+                ui.button("Ok :(", on_click=dialog.close)
+            dialog.open()
+            logger.error("No AI could be used.")
     return response
 
 
