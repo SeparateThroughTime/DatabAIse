@@ -31,19 +31,19 @@ course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
 
 async def _current_prompt(system_content, user_content, reasoner, response_format):
     try:
-        response = await _prompt_openai(system_content, user_content, reasoner, response_format)
+        response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
     except Exception as e:
         warnings.warn(str(e), RuntimeWarning)
-    #    try:
-    #        response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
-    #    except Exception as e:
-    #        logger.error(e)
-    #        response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
-    #        with ui.dialog() as dialog:
-    #            ui.label(response)
-    #            ui.button("Ok :(", on_click=dialog.close)
-    #        dialog.open()
-    #        logger.error("No AI could be used.")
+        try:
+            response = await _prompt_deepseek(system_content, user_content, reasoner, response_format)
+        except Exception as e:
+            warnings.warn(str(e), RuntimeWarning)
+            response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
+            with ui.dialog() as dialog:
+                ui.label(response)
+                ui.button("Ok :(", on_click=dialog.close)
+            dialog.open()
+            raise Exception("No AI could be used.")
     return response
 
 
@@ -229,7 +229,6 @@ async def _prompt_openai(system_content, user_content, reasoner, response_format
             {"role": "user",
              "content": user_content},
         ],
-        text_format={'type': response_format},
         stream=False
     )
     return response.choices[0].message.content
