@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-import logging
+import warnings
 from io import StringIO
 
 import pandas
@@ -12,10 +12,6 @@ from google.genai import types
 
 import Pages
 from nicegui import ui
-
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler(stream=sys.stdout)
-logger.addHandler(handler)
 
 
 example_json = open("db_generation/Example.json").read()
@@ -33,28 +29,21 @@ course_5_db = open("course_db/05Musikarchiv.sql").read()
 course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
 
 
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-    logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-
-
 async def _current_prompt(system_content, user_content, reasoner, response_format):
     try:
         response = await _prompt_openai(system_content, user_content, reasoner, response_format)
     except Exception as e:
-        logger.error(e)
-        try:
-            response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
-        except Exception as e:
-            logger.error(e)
-            response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
-            with ui.dialog() as dialog:
-                ui.label(response)
-                ui.button("Ok :(", on_click=dialog.close)
-            dialog.open()
-            logger.error("No AI could be used.")
+        warnings.warn(str(e), RuntimeWarning)
+    #    try:
+    #        response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
+    #    except Exception as e:
+    #        logger.error(e)
+    #        response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
+    #        with ui.dialog() as dialog:
+    #            ui.label(response)
+    #            ui.button("Ok :(", on_click=dialog.close)
+    #        dialog.open()
+    #        logger.error("No AI could be used.")
     return response
 
 
@@ -424,10 +413,8 @@ def _compare(a, b):
         return DataFrame.compare(pandas.read_json(StringIO(a)), pandas.read_json(StringIO(b)), 0, result_names=('before', 'after')).to_string()
     except Exception as e:
         pass
-        logger.error("Error on comparing prompt results:\n" + str(e))
-        logger.error("for dataframe:\n", str(a), "and\n", str(b))
+        warnings.warn("Error on comparing prompt results:\n" + str(e) + "\nfor dataframe:\n" + str(a) + "and\n" + str(b), RuntimeWarning)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    sys.excepthook = handle_exception
     Pages.build()
