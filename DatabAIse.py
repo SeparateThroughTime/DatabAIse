@@ -1,11 +1,20 @@
+"""Main Module for DatabAIse
+
+Run this to start the Server.
+Here is a collection of basic functions, that are used throughout the project.
+These are for prompting and for conversion of sql and json formats.
+The functions for prompting use strings excessively.
+This is because the AI APIs use strings as inputs and return strings.
+Probably a conversion is necessary after using them.
+"""
+
 import os
 import re
-import sys
 import warnings
-from io import StringIO
+from typing import List
+from typing import Dict
+from typing import Any
 
-import pandas
-from pandas import DataFrame
 from openai import OpenAI, AsyncOpenAI
 from google import genai
 from google.genai import types
@@ -15,21 +24,81 @@ from nicegui import ui
 
 
 example_json = open("db_generation/Example.json").read()
+"""This is how a db is formatted as json in this project.
+
+See also :doc:`/templates/example_json`
+
+:meta hide-value:"""
 course_template_1 = open("course_templates/01Projektion.json").read()
+"""Template for projection: :doc:`/templates/course_template_1`
+
+:meta hide-value:"""
 course_template_2 = open("course_templates/02Selektion.json").read()
+"""Template for selection: :doc:`/templates/course_template_2`
+
+:meta hide-value:"""
 course_template_3 = open("course_templates/03Sortierung.json").read()
+"""Template for sorting: :doc:`/templates/course_template_3`
+
+:meta hide-value:"""
 course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
+"""Template for aggregate functions: :doc:`/templates/course_template_4`
+
+:meta hide-value:"""
 course_template_5 = open("course_templates/05Join.json").read()
+"""Template for joins: :doc:`/templates/course_template_5`
+
+:meta hide-value:"""
 course_template_6 = open("course_templates/06Unterabfragen.json").read()
+"""Template for sub queries: :doc:`/templates/course_template_6`
+
+:meta hide-value:"""
 course_1_db = open("course_db/01Kochbuch.sql").read()
+"""Database for control group of study for course 1 (cookbook): 
+:doc:`/templates/course_db_1`
+
+:meta hide-value:"""
 course_2_db = open("course_db/02Berufsorientierung.sql").read()
+"""Database for control group of study for course 2 (career orientation): 
+:doc:`/templates/course_db_2`
+
+:meta hide-value:"""
 course_3_db = open("course_db/03Nachbarschafts-Bibliothek.sql").read()
+"""Database for control group of study for course 3 (library): 
+:doc:`/templates/course_db_3`
+
+:meta hide-value:"""
 course_4_db = open("course_db/04ÖPNV Frankfurt am Main.sql").read()
+"""Database for control group of study for course 4 (public transport in Ffm): 
+:doc:`/templates/course_db_4`
+
+:meta hide-value:"""
 course_5_db = open("course_db/05Musikarchiv.sql").read()
+"""Database for control group of study for course 5 (music archive): 
+:doc:`/templates/course_db_5`
+
+:meta hide-value:"""
 course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
+"""Database for control group of study for course 6 (milestones of history): 
+:doc:`/templates/course_db_6`
+
+:meta hide-value:"""
 
 
-async def _current_prompt(system_content, user_content, reasoner, response_format):
+async def _main_prompt(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
+    """This is the function for prompting that should be used by all agents.
+
+    To have multiple options if an AI call throws an exception,
+    this method tries different models in a specific order before
+    raising an exception if all attempts fail.
+
+    :param system_content: System Content for prompt
+    :param user_content: User Content for prompt
+    :param reasoner:
+        Integer between 0 and 12 determining the 'intelligence' of AI
+    :param response_format: Valid formats are "json" and "text"
+    """
+
     try:
         response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
     except Exception as e:
@@ -47,8 +116,19 @@ async def _current_prompt(system_content, user_content, reasoner, response_forma
     return response
 
 
+async def db_create_tables_agent(topic: str) -> str:
+    """Generates 4 tables to a given topic.
 
-async def db_create_tables_agent(topic):
+    .. role:: json(code)
+        :language: json
+
+    :param topic: Topic for the database.
+    :return:
+        | Tables in json format:
+        | :json:`{"A": "table1", "B": "table2", "C": "table3", "D": "table4"}`
+
+    """
+
     system_content = ("Suggest 4 table names for a database with a specific topic."
                       " It must be reasonable to have at least two 1-to-many relations, one"
                       " many-to-many relation an on recursive relation between the tables."
@@ -56,10 +136,26 @@ async def db_create_tables_agent(topic):
                       " All data must be german or be loanwords for german language."
                       " The output is a json containing the table names only as:"
                       ' {"A": "table1", "B": "table2", "C": "table3", "D": "table4"}')
-    return await _current_prompt(system_content, topic, 3, "json")
+    return await _main_prompt(system_content, topic, 3, "json")
 
 
-async def db_create_columns_agent(topic, tables):
+async def db_create_columns_agent(topic: str, tables: List[str]) -> str:
+    """Generates 3 columns to each of a collection of tables for a given topic.
+
+    .. role:: json(code)
+        :language: json
+
+    :param topic: Topic for the database
+    :param tables:
+        Tables for the database. Can be any type that can be cast to str but
+        list of strings is advised.
+    :return:
+        | Database structure in json format:
+        | :json:`{"table1": ["column1", "column2", "column3"],`
+        | ...
+        | :json:`"table4": ["column1", "column2", "column3"]}`
+    """
+
     system_content = ("You get a topic and a list of tables for a database. "
                       "Suggest for every table 3 attributes. "
                       "Primary keys will be incremental integer which must not be any of your suggestions. "
@@ -71,10 +167,20 @@ async def db_create_columns_agent(topic, tables):
                       "The output is a json with following structure: "
                       '{"table1": ["column1", "column2", "column3"], ..., "table4": ["column1", "column2", "column3"]} ')
     user_content = '{topic: ' + topic + "', tables: '" + str(tables) + "'}"
-    return await _current_prompt(system_content, user_content, 3, "json")
+    return await _main_prompt(system_content, user_content, 3, "json")
 
 
-async def db_create_relations_keys_agent(topic, tables, columns):
+async def db_create_relations_keys_agent(topic: str, tables: List[str], columns: List[List[str]]) -> str:
+    """Generates relations and keys for a given database.
+
+    :param topic: Topic for the database
+    :param tables: Tables for the database. Must be a list of strings!
+    :param columns:
+        Columns for the database. Must be a 2D list of strings! First
+        dimension determines table and second dimension determines column.
+    :return: Database in json format
+    """
+
     system_content = ("You get the topic, tables and columns for a database. "
                       "Add primary keys to every table as IDs with sql naming convention. "
                       "Create reasonable relations between the tables. "
@@ -91,11 +197,19 @@ async def db_create_relations_keys_agent(topic, tables, columns):
             user_content += columns[i][j] + ", "
         user_content = user_content[:-2] + "], "
     user_content = user_content[:-2] + "}}"
-    result = await _current_prompt(system_content, user_content, 3, "json")
+    result = await _main_prompt(system_content, user_content, 3, "json")
     return await _db_verify_relations_keys_agent(result)
 
 
-async def _db_verify_relations_keys_agent(db_json):
+async def _db_verify_relations_keys_agent(db_json: str) -> str:
+    """Helper function for db_create_relations_keys_agent.
+
+    Verifies and optimizes relation and key generation.
+
+    :param db_json: Database in json format. Can be any type that can be cast to string.
+    :return: Optimized database in json format.
+    """
+
     system_content = ("You get the topic, tables and columns for a database. "
                       "Verify if the database contains at least one many-to-many relation "
                       "and two 1-to-many relations. "
@@ -104,20 +218,48 @@ async def _db_verify_relations_keys_agent(db_json):
                       "many-to-many relations are implemented with a relation-table. "
                       "All data must be german or be loanwords for german language. "
                       "The output is the database only as json without explanations or relations.")
-    return await _current_prompt(system_content, db_json, 3, "json")
+    return await _main_prompt(system_content, db_json, 3, "json")
 
 
-async def db_fill_agent(database):
+async def db_fill_agent(db_json: str) -> str:
+    """Generates data for a given database.
+
+    :param db_json:
+        Database in json format. Can be any type that can be cast to string.
+    :return:
+        Database in json format defined by the :data:`example_json`.
+    """
+
     system_content = "You get an empty database. Fill it with 100 entries total. Let the output fit this json example: " + example_json + " Do not use spaces between parameters of a variable type."
-    return await _current_prompt(system_content, database, 6, "json")
+    return await _main_prompt(system_content, db_json, 6, "json")
 
 
-async def course_create_sql_statements(db_json, course_template_json):
+async def course_create_sql_statements(db_json: str, course_template_json: str) -> str:
+    """Generates sql statements with a given database and course template.
+
+    .. role:: json(code)
+        :language: json
+
+    :param db_json:
+        Database in json format. Can be any type that can be cast to string.
+        Should have format of :data:`example_json`.
+    :param course_template_json:
+        Json with course template. Can be any type that can be cast to string.
+        See :doc:`/templates/course_templates` for more information.
+    :return:
+        | Sample solutions for the course with json format:
+        | :json:`{"1": {"statement": "statement_1", "text": false},`
+        | :json:`"2": {"statement": "statement_2", "text": false},`
+        | ...
+        | :json:`"n": {"statement": "statement_n", "text": true}}`
+
+    """
+
     system_content = ("You are filling SQL-statements with informations from a database. "
                       "The prompts have following structure:\n"
                       '{"database": database, '
                       '"sql_statements": '
-                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}\n'
+                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}\n'
                       "The SQL-statements contain instructions inside of square brackets. "
                       "You have to analyze the sql_file and replace the instructions with whatever is asked for. "
                       "Example-statement: 'SELECT [Spalte1], [Spalte2] FROM [Tabelle1];' "
@@ -126,21 +268,36 @@ async def course_create_sql_statements(db_json, course_template_json):
                       "Executing the SQL statements must return at least 1 entry. "
                       "If it contains ordering it must return at least 3 entries. "
                       "Your response is a json in following structure: "
-                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}}')
+                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}')
     user_content = f'{{"sql_file": "{db_json}", "exercise_template": {course_template_json}}}'
-    result = await _current_prompt(system_content, user_content, 4, "json")
+    result = await _main_prompt(system_content, user_content, 4, "json")
     #return await _course_verify_sql_statements(db_json, result, course_template_json)
     return result
 
 
-async def _course_verify_sql_statements(db_json, course_json, course_template_json):
+async def _course_verify_sql_statements(db_json: str, course_json: str, course_template_json: str) -> str:
+    """Helper function for course_create_sql_statements.
+
+    Verifies and optimizes the generated sample solution.
+
+    :param db_json:
+        Database in json format. Can be any type that can be cast to string.
+        Should have format of example_json.
+    :param course_json:
+        The sample solutions generated by course_create_sql_statements.
+    :param course_template_json:
+        Database in json format. Can be any type that can be cast to string.
+        Should have format of example_json.
+    :return: Optimized sample solutions for the course with json format.
+    """
+
     system_content = ("You get a json with a template for SQL queries and a json with corresponding SQL queries. "
                       "Verify if the SQL queries in the second json fit the template and its instructions. "
                       "The second json must not have any additions to the template. "
                       "Alter queries that do not fulfill the condition with similar queries that fulfill it. "
                       "Your response is the altered json in unchanged structure. ")
     user_content = f'template: "{course_template_json}", query_json: {course_json}'
-    result1 = await _current_prompt(system_content, user_content, 4, "json")
+    result1 = await _main_prompt(system_content, user_content, 4, "json")
 
     system_content = ("You get a json containing a database and a json with a series of SQL queries. "
                       "Verify if the result for the queries that contain ordering return at least 3 entries "
@@ -148,11 +305,30 @@ async def _course_verify_sql_statements(db_json, course_json, course_template_js
                       "Replace the queries that do not fulfill the condition with similar queries that fulfill it. "
                       "Your response is the altered json in unchanged structure. ")
     user_content = f'sql_file: "{db_json}", query_json: {result1}'
-    result2 = await _current_prompt(system_content, user_content, 4, "json")
+    result2 = await _main_prompt(system_content, user_content, 4, "json")
     return result2
 
 
-async def course_create_exercise(sql_statements):
+async def course_create_exercise(sql_statements: str) -> str:
+    """Generates underlying story and exercises for a list of sql statements.
+
+    .. role:: json(code)
+        :language: json
+
+    :param sql_statements:
+        Sql statements in json format.
+        Can be any type that can be cast to string.
+        Should have format of :data:`example_json`
+    :return:
+        | Story and exercises in json format:
+        | :json:`{"0": "underlying_story",`
+        | :json:`"1": "task_description_1",`
+        | :json:`"2": "task_description_2",`
+        | ...
+        | :json:`"n": "task_description_n"}`
+
+    """
+
     system_content = ("You are creating exercises for students learning SQL. "
                       "The prompts have following structure:\n"
                       '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}\n'
@@ -165,21 +341,43 @@ async def course_create_exercise(sql_statements):
                       "You create a motivating underlying story line which is also explaining the structure of the database. "
                       "Your response is only the resulting exercise as json in following structure:"
                       '{"0": underlying_story, "1": task_description_1, "2": task_description_2, ..., "n": task_description_n}\n')
-    result = await _current_prompt(system_content, sql_statements, 4, "json")
+    result = await _main_prompt(system_content, sql_statements, 4, "json")
     return await _course_verify_exercise(sql_statements, result)
 
 
-async def _course_verify_exercise(sql_statements, exercises):
+async def _course_verify_exercise(sql_statements: str, exercises: str) -> str:
+    """Helper function for course_create_exercise.
+
+    Verifies and optimizes the generated exercises.
+
+    :param sql_statements:
+        Sql statements in json format.
+        Can be any type that can be cast to string.
+        Should have format of example_json.
+    :param exercises: Exercises generated by course_create_exercise.
+    :return: Optimized exercises in JSON format.
+    """
+
     system_content = ("You get a json containing exercises and a json with the sample solutions. "
                       "Verify if the exercise fits the corresponding sample solution. "
                       "If it does not fit, change the exercise to fit the sample solution. "
                       "Your response is only the altered json with the exercises in unchanged structure. ")
     user_content = f'exercises: {exercises}, sample_solutions: {sql_statements}'
-    result = await _current_prompt(system_content, user_content, 4, "json")
+    result = await _main_prompt(system_content, user_content, 4, "json")
     return result
 
 
-async def _prompt_deepseek(system_content, user_content, reasoner, response_format):
+async def _prompt_deepseek(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
+    """Deepseek API call.
+
+    :param system_content: System content for API call.
+    :param user_content: User content for API call.
+    :param reasoner:
+        Values <= 5 use deepseek-chat. Values > 5 use deepseek-reasoner.
+    :param response_format: Can be "json" or "text"
+    :return: Only the content of response.
+    """
+
     model = "deepseek-reasoner" if reasoner > 5 else "deepseek-chat"
     response_format = "json_object" if response_format == "json" else "text"
     ai_client = OpenAI(api_key=os.environ.get('DEEPSEEK_API_KEY'), base_url="https://api.deepseek.com")
@@ -197,7 +395,30 @@ async def _prompt_deepseek(system_content, user_content, reasoner, response_form
     return response.choices[0].message.content
 
 
-async def _prompt_openai(system_content, user_content, reasoner, response_format):
+async def _prompt_openai(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
+    """OpenAI API call.
+
+    .. attention::
+
+        Function currently uses always text mode as response format!
+        During development there was a change in API usage.
+        Due to missing time resources it was changed to only use text mode.
+        Nonetheless, it does produce correct jsons most of the time.
+
+    :param system_content: System content for API call
+    :param user_content: User content for API call
+    :param reasoner:
+        0-5 -> gpt-5-mini with medium effort
+        6,7 -> gpt-5 with low effort
+        8 -> gpt-5 with medium effort
+        9 -> gpt-5 with high effort
+        10 -> gpt-5.4 with medium effort
+        11 -> gpt-5.4 with high effort
+        12 -> gpt-5.4 with xhigh effort
+    :param response_format: Currently not used.
+    :return: Only the content of response.
+    """
+
     if reasoner <= 5:
         model = "gpt-5-mini"
         effort = "medium"
@@ -234,7 +455,29 @@ async def _prompt_openai(system_content, user_content, reasoner, response_format
     return response.choices[0].message.content
 
 
-async def _prompt_gemini(system_content, user_content, reasoner, response_format):
+async def _prompt_gemini(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
+    """Gemini API call.
+
+    :param system_content: System content for API call
+    :param user_content: User content for API call
+    :param reasoner:
+        0 -> gemini-2.5-flash-lite with 0 thinking budget
+        1 -> gemini-2.5-flash-lite with 4096 thinking budget
+        2 -> gemini-2.5-flash-lite with 24576 thinking budget
+        3 -> gemini-2.5-flash with 0 thinking budget
+        4 -> gemini-2.5-flash with 4096 thinking budget
+        5 -> gemini-2.5-flash with 24576 thinking budget
+        6 -> gemini-3-flash-preview with minimal thinking level
+        7 -> gemini-3-flash-preview with low thinking level
+        8 -> gemini-3-flash-preview with medium thinking level
+        9 -> gemini-3-flash-preview with high thinking level
+        10 -> gemini-3.1-pro-preview with low thinking level
+        11 -> gemini-3.1-pro-preview with medium thinking level
+        12 -> gemini-3.1-pro-preview with high thinking level
+    :param response_format:
+    :return: Only the content of response.
+    """
+
     match reasoner:
         case 0:
             thinking_config = types.ThinkingConfig(thinking_budget=0)
@@ -304,7 +547,13 @@ async def _prompt_gemini(system_content, user_content, reasoner, response_format
     return response.candidates[0].content.parts[0].text
 
 
-def json_to_sql(json_obj):
+def json_to_sql(json_obj: Dict[str, Any]) -> str:
+    """Converts a json to a sql string.
+
+    :param json_obj: Need to be strictly formatted as :data:`example_json`!
+    :return: String of sql statements to create database.
+    """
+
     sql_list = []
     sql_list.append("CREATE DATABASE '" + json_obj["database"]["topic"] + "'")
     sql_list.append("USE '" + json_obj["database"]["topic"] + "'")
@@ -333,9 +582,11 @@ def json_to_sql(json_obj):
             insert_entry_string += ")"
             sql_list.append(insert_entry_string)
 
+    # Foreign keys made more trouble than they helped, so they were exluded.
     #for foreign_key in foreign_keys:
     #    table, column, foreign_table, foreign_column = foreign_key
-    #    add_key_string = "ALTER TABLE '" + table + "' ADD FOREIGN KEY ('" + column + "') REFERENCES '" + foreign_table + "'('" + foreign_column + "')"
+    #    add_key_string = ("ALTER TABLE '" + table + "' ADD FOREIGN KEY ('" + column + "') REFERENCES '"
+    #                      + foreign_table + "'('" + foreign_column + "')")
     #    sql_list.append(add_key_string)
 
     sql_string = ""
@@ -344,7 +595,27 @@ def json_to_sql(json_obj):
     return sql_string
 
 
-def sql_to_json(sql_string):
+def sql_to_json(sql_string: str) -> Dict[str, Any]:
+    """Converts a sql string to a json.
+
+    .. role:: sql(code)
+        :language: sql
+
+    :param sql_string:
+        | Must have exact format:
+        | :sql:`CREATE DATABASE db_name;`
+        | :sql:`USE db_name;`
+        | :sql:`CREATE TABLE table_1(Attributes);`
+        | :sql:`INSERT INTO table_1 VALUES(dataset_1);`
+        | ...
+        | :sql:`INSERT INTO table_1 VALUES(dataset_n);`
+        | ...
+        | :sql:`CREATE TABLE table_n(Attributes);`
+        | :sql:`INSERT INTO table_n VALUES(dataset_1);`
+        | ...
+        | :sql:`INSERT INTO table_n VALUES(dataset_n);`
+    :return: transformed json object.
+    """
     json_obj = {}
     database = {}
     json_obj["database"] = database
@@ -405,14 +676,6 @@ def sql_to_json(sql_string):
                     entry[column_name] = re.sub("[()',;]", "", words[word_pointer])
 
     return json_obj
-
-
-def _compare(a, b):
-    try:
-        return DataFrame.compare(pandas.read_json(StringIO(a)), pandas.read_json(StringIO(b)), 0, result_names=('before', 'after')).to_string()
-    except Exception as e:
-        pass
-        warnings.warn("Error on comparing prompt results:\n" + str(e) + "\nfor dataframe:\n" + str(a) + "and\n" + str(b), RuntimeWarning)
 
 
 if __name__ in {"__main__", "__mp_main__"}:

@@ -1,9 +1,23 @@
 {
-  "1": {"statement": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] > (SELECT AVG([Tabelle1].[Spalte1]));", "text": false},
-  "2": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Tabelle2 ID] IN (SELECT [Tabelle2].[Tabelle2 ID] FROM [Tabelle2]);", "text": false},
-  "3": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], (SELECT count(*) AS [NeuerName1] FROM [Tabelle2] WHERE [Tabelle1].[Tabelle1 ID] = [Tabelle2].[Tabelle1 ID]) FROM [Tabelle1];", "text": false},
-  "4": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE EXISTS (SELECT * FROM [Tabelle2] WHERE [Tabelle2].[Tabelle1 ID] = [Tabelle1].[Tabelle1 ID];"},
-  "5": {"statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [NeuerName1].[Spalte3] FROM [Tabelle1] JOIN (SELECT [Tabelle1].[Tabelle1 ID], SUM([NeuerName1]) AS [Tabelle2] FROM [Tabelle2] GROUP BY [Tabelle2].[Tabelle1 ID]) AS [NeuerName1] ON [Tabelle1].[Tabelle1 ID] = [NeuerName1].[Tabelle1 ID];", "text": false},
+  "1": {
+    "statement": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] > (SELECT AVG([Tabelle1].[Spalte1]));",
+    "text": false
+  },
+  "2": {
+    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Tabelle2 ID] IN (SELECT [Tabelle2].[Tabelle2 ID] FROM [Tabelle2]);",
+    "text": false
+  },
+  "3": {
+    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], (SELECT count(*) AS [NeuerName1] FROM [Tabelle2] WHERE [Tabelle1].[Tabelle1 ID] = [Tabelle2].[Tabelle1 ID]) FROM [Tabelle1];",
+    "text": false
+  },
+  "4": {
+    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE EXISTS (SELECT * FROM [Tabelle2] WHERE [Tabelle2].[Tabelle1 ID] = [Tabelle1].[Tabelle1 ID];"
+  },
+  "5": {
+    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [NeuerName1].[Spalte3] FROM [Tabelle1] JOIN (SELECT [Tabelle1].[Tabelle1 ID], SUM([NeuerName1]) AS [Tabelle2] FROM [Tabelle2] GROUP BY [Tabelle2].[Tabelle1 ID]) AS [NeuerName1] ON [Tabelle1].[Tabelle1 ID] = [NeuerName1].[Tabelle1 ID];",
+    "text": false
+  },
   "6": {
     "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] = (SELECT MAX([Tabelle1].[Spalte1]) FROM [Tabelle1]);",
     "text": true
