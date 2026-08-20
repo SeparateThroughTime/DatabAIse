@@ -1,3 +1,9 @@
+"""Module for structure and style of the pages.
+
+This module defines the hierarchy of alle pages. Each function with
+:code:`@ui.page("path")` builds a page for the specific path.
+"""
+
 from licenses import Licenses
 from courses import ChooseCoursePage, CoursePage
 from b import BChooseCoursePage, BInstructionsPage, BCoursePage
@@ -6,12 +12,34 @@ import InstructionsPage
 from nicegui import ui, Client, app
 
 
-def build():
+def build() -> None:
+    """Starts NiceGUI."""
+
     ui.run(port=8080, title="DatabAIse", language="de-DE",
            storage_secret="A>dQ@KgXnXQD0iXs", reconnect_timeout=10.0, reload=False)
 
 
-def header(root):
+def footer(root: str) -> None:
+    """Builds the footer for every page.
+
+    Needs to run for every page **after** the actual page.
+
+    :param root: path to front page.
+    """
+    with ui.footer(elevated=True):
+        app.add_static_file(local_file="LICENSE", url_path="/Lizenz")
+        ui.link("released under the MIT-License", "/Lizenz", new_tab=True)
+        ui.link("utilized software", root + "/Lizenzen")
+        ui.label("published by David Seßner")
+
+
+def header(root: str) -> None:
+    """Builds the header for every page and defines default styles.
+
+    This needs to run for every page **before** the actual page.
+
+    :param root: path to front page.
+    """
     ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#80acff", dark="#1d1d1d", dark_page="#0d347a")
 
     ui.button.default_classes('text-center bg-primary q-pa-sm shadow-1')
@@ -36,64 +64,16 @@ def header(root):
         ui.label(" ")
 
 
-def footer(root):
-    with ui.footer(elevated=True):
-        app.add_static_file(local_file="LICENSE", url_path="/Lizenz")
-        ui.link("released under the MIT-License", "/Lizenz", new_tab=True)
-        ui.link("utilized software", root + "/Lizenzen")
-        ui.label("published by David Seßner")
-
-
 @ui.page("/a")
-def a_instructions(client: Client):
+def a_instructions(client: Client) -> None:
     client.content.classes('items-center')
     header("/a")
     InstructionsPage.get_page()
     footer("/a")
 
 
-@ui.page("/a/Themenwahl")
-def choose_topic(client: Client):
-    client.content.classes('items-center')
-    header("/a")
-    Gen01ChooseTopicPage.get_page()
-    footer("/a")
-
-
-@ui.page("/a/Tabellenwahl")
-def choose_table(client: Client):
-    client.content.classes('items-center')
-    header("/a")
-    Gen02ChooseTablesPage.get_page()
-    footer("/a")
-
-
-@ui.page("/a/Spaltenwahl")
-async def choose_columns(client: Client):
-    client.content.classes('items-center')
-    header("/a")
-    Gen03ChooseColumnsPage.get_page()
-    footer("/a")
-
-
-@ui.page("/a/Datenbank")
-def create_database(client: Client):
-    client.content.classes('items-center')
-    header("/a")
-    Gen04CreateDatabasePage.get_page()
-    footer("/a")
-
-
-@ui.page("/a/Upload")
-def upload(client: Client):
-    client.content.classes('items-center')
-    header("/a")
-    UploadPage.get_page()
-    footer("/a")
-
-
 @ui.page("/a/Kurswahl")
-def a_choose_course(client: Client):
+def a_choose_course(client: Client) -> None:
     client.content.classes('items-center')
     header("/a")
     ChooseCoursePage.get_page()
@@ -101,7 +81,7 @@ def a_choose_course(client: Client):
 
 
 @ui.page("/a/Kurs")
-def a_course(client: Client):
+def a_course(client: Client) -> None:
     client.content.classes('items-center')
     header("/a")
     CoursePage.get_page()
@@ -109,7 +89,7 @@ def a_course(client: Client):
 
 
 @ui.page("/a/Lizenzen")
-def a_licenses(client: Client):
+def a_licenses(client: Client) -> None:
     client.content.classes("items-center")
     header("/a")
     Licenses.get_page()
@@ -117,7 +97,7 @@ def a_licenses(client: Client):
 
 
 @ui.page("/b")
-def b_instructions(client: Client):
+def b_instructions(client: Client) -> None:
     client.content.classes('items-center')
     header("/b")
     BInstructionsPage.get_page()
@@ -125,7 +105,7 @@ def b_instructions(client: Client):
 
 
 @ui.page("/b/Kurswahl")
-def control_choose_course(client: Client):
+def b_choose_course(client: Client) -> None:
     client.content.classes("items-center")
     header("/b")
     BChooseCoursePage.get_page()
@@ -133,7 +113,7 @@ def control_choose_course(client: Client):
 
 
 @ui.page("/b/Kurs")
-def a_course(client: Client):
+def b_course(client: Client) -> None:
     client.content.classes('items-center')
     header("/b")
     BCoursePage.get_page()
@@ -141,8 +121,48 @@ def a_course(client: Client):
 
 
 @ui.page("/b/Lizenzen")
-def a_licenses(client: Client):
+def b_licenses(client: Client) -> None:
     client.content.classes("items-center")
     header("/b")
     Licenses.get_page()
     footer("/b")
+
+
+@ui.page("/a/Spaltenwahl")
+def choose_columns(client: Client) -> None:
+    client.content.classes('items-center')
+    header("/a")
+    Gen03ChooseColumnsPage.get_page()
+    footer("/a")
+
+
+@ui.page("/a/Tabellenwahl")
+def choose_table(client: Client) -> None:
+    client.content.classes('items-center')
+    header("/a")
+    Gen02ChooseTablesPage.get_page()
+    footer("/a")
+
+
+@ui.page("/a/Themenwahl")
+def choose_topic(client: Client) -> None:
+    client.content.classes('items-center')
+    header("/a")
+    Gen01ChooseTopicPage.get_page()
+    footer("/a")
+
+
+@ui.page("/a/Datenbank")
+def create_database(client: Client) -> None:
+    client.content.classes('items-center')
+    header("/a")
+    Gen04CreateDatabasePage.get_page()
+    footer("/a")
+
+
+@ui.page("/a/Upload")
+def upload(client: Client) -> None:
+    client.content.classes('items-center')
+    header("/a")
+    UploadPage.get_page()
+    footer("/a")

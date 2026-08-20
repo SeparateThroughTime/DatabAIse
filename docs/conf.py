@@ -25,6 +25,7 @@ extensions = ["sphinx.ext.autodoc",
 
 intersphinx_mapping = {"py": ("https://docs.python.org/3/", None)}
 
+
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
@@ -38,4 +39,7 @@ html_static_path = ['_static']
 
 
 # Autodoc config
-autodoc_member_order = "groupwise"
+autodoc_member_order = "bysource"
+autodoc_default_options = {"members": True,
+                           "undoc-members": True,
+                           "private-members": True}

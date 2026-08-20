@@ -1,0 +1,4 @@
+InstructionsPage
+================
+
+.. automodule:: InstructionsPage

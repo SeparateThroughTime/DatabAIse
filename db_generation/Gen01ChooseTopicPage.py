@@ -1,14 +1,13 @@
+"""Module for Page where user can choose a topic."""
+
 from nicegui import ui, app, events
 
 import CssStyles
 
 
-def next_page(topic):
-    app.storage.user["topic"] = topic
-    ui.navigate.to("/a/Tabellenwahl")
+def get_page() -> None:
+    """Function to build the page"""
 
-
-def get_page():
     with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.markdown("Thema der Datenbank")
@@ -18,9 +17,16 @@ def get_page():
                 ui.label("Thema:")
                 topic_input = ui.input(placeholder="Thema der Datenbank")
 
-            ui.button("Senden", on_click=lambda: next_page(topic_input.value))
+            ui.button("Senden", on_click=lambda: _next_page(topic_input.value))
 
-    def handle_key(e: events.KeyEventArguments):
+    def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
-            next_page(topic_input.value)
+            _next_page(topic_input.value)
     ui.keyboard(on_key=handle_key, ignore=[])
+
+
+def _next_page(topic: str) -> None:
+    """Saves topic that user chose and redirects to ChooseTablesPage"""
+
+    app.storage.user["topic"] = topic
+    ui.navigate.to("/a/Tabellenwahl")

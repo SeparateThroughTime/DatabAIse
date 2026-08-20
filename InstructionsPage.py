@@ -1,8 +1,12 @@
+"""Module for the front page."""
+
 from nicegui import ui
 import CssStyles
 
 
-def get_page():
+def get_page() -> None:
+    """Function to build the page"""
+
     with ui.card().style(CssStyles.maincard_style):
         with ui.column():
             ui.image("images/logo.png").props("width=60%")

@@ -1,7 +1,11 @@
+"""Module for page to view licenses."""
+
 from nicegui import ui, html, app
 
 
 def get_page():
+    """Function to build the page"""
+
     app.add_static_files("/Lizenzen", "licenses")
     with ui.column().classes("items-stretch").style("max-width: 700px; min-width: 30%"):
         with html.table().style("text-align: center; border: 1px solid black;"):

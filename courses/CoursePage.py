@@ -1,3 +1,11 @@
+"""Module for displaying and managing the courses
+
+.. attention::
+
+    Occasionally the Page gets in an endless reload loop. The cause could be a reload on connection loss
+    when the AI takes too long. Further investigation necessary.
+"""
+
 import json
 import sqlite3
 import pandas
@@ -7,7 +15,9 @@ import CssStyles
 import DatabAIse
 
 
-def get_page():
+def get_page() -> None:
+    """Function to build the page"""
+
     database = sqlite3.connect(":memory:")
     for query in app.storage.user["sql_string"].splitlines()[2:]:
         try:
@@ -33,7 +43,7 @@ def get_page():
                     ui.markdown("Aufgabe").classes("text-h5")
                     exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
 
-                    def on_sql_input_change():
+                    def on_sql_input_change() -> None:
                         app.storage.user["sql_input_value"] = sql_input.value
                     sql_input = ui.textarea(on_change=on_sql_input_change)
 
@@ -56,11 +66,21 @@ def get_page():
                                                                 rows=table["columns"]))
 
 
-    def finished_exercise():
+    def finished_course() -> None:
+        """Triggered from the next_button after the last exercise to return to ChooseCoursePage."""
+
         ui.navigate.to("/Kurswahl")
 
 
-    def run_sql():
+    def run_sql() -> None:
+        """Triggered from the run_button to run sql query.
+
+        User query is executed on database. If it runs an error the error will
+        be shown to the user. If the execution succeeds, the result will be
+        compared to the result of the sample solution and the user gets a
+        feedback whether there answer is correct.
+        """
+
         correct_query = app.storage.user["solutions_json"][str(app.storage.user["exercise_counter"])]["statement"]
         correct_result = pandas.read_sql_query(correct_query, database)
 
@@ -94,10 +114,12 @@ def get_page():
         result_table.visible = app.storage.user["result_table_visible"]
 
 
-    def next_exercise():
+    def next_exercise() -> None:
+        """Triggered from the next_button to display next exercise."""
+
         app.storage.user["exercise_counter"] = app.storage.user["exercise_counter"] + 1
         if str(app.storage.user["exercise_counter"] + 1) not in app.storage.user["exercise_json"]:
-            next_button.on("click", finished_exercise)
+            next_button.on("click", finished_course)
             next_button.text = "Kurs abschließen"
 
         if str(app.storage.user["exercise_counter"]) not in app.storage.user["exercise_json"]:
@@ -110,43 +132,9 @@ def get_page():
         sql_input.value = ""
 
 
-    # NOT WORKING!
-    # Occasionally the Page gets in an endless reload loop. The cause could be a reload on connection loss
-    # when the AI takes too long. No replication possible...
-    def load_failsafe_course_data():
-        story_textfield.content = app.storage.user["exercise_json"]["0"]
+    async def start_prompt() -> None:
+        """Start prompt and update page afterward."""
 
-        if str(app.storage.user["exercise_counter"] + 1) not in app.storage.user["exercise_json"]["0"]:
-            next_button.on("click", finished_exercise)
-            next_button.text = "Kurs abschließen"
-
-        if "result_table_visible" in app.storage.user:
-            result_table.visible = app.storage.user["result_table_visible"]
-            if app.storage.user["result_table_visible"]:
-                result_feedback_label.text = app.storage.user["result_feedback_label_text"]
-                result_feedback_label.classes(app.storage.user["result_feedback_label_classes"])
-        else:
-            result_table.visible = False
-
-        exercise_textfield.content = app.storage.user["exercise_json"][str(app.storage.user["exercise_counter"])]
-        sql_input.value = app.storage.user["sql_input_value"]
-
-        run_button.text = "Antwort überprüfen"
-        run_button.on("click", run_sql)
-
-        next_button.text = "Nächste Aufgabe"
-        next_button.on("click", next_exercise)
-    #if "course_loaded_time" in app.storage.user:
-    #    if time.time() - app.storage.user["course_loaded_time"] < 20:
-    #        load_failsafe_course_data()
-
-
-    #def refresh_course_loaded_time():
-    #    app.storage.user["course_loaded_time"] = time.time()
-    #ui.timer(0.2, refresh_course_loaded_time)
-
-
-    async def start_prompt():
         solutions_string = await DatabAIse.course_create_sql_statements(app.storage.user["db_json"], app.storage.user["course_template_string"])
         app.storage.user["solutions_json"] = json.loads(solutions_string)
         exercise_string = await DatabAIse.course_create_exercise(solutions_string)
@@ -167,7 +155,7 @@ def get_page():
         next_button.on("click", next_exercise)
     ui.timer(0.21, start_prompt, once=True)
 
-    def handle_key(e: events.KeyEventArguments):
+    def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
             run_sql()
     ui.keyboard(on_key=handle_key)

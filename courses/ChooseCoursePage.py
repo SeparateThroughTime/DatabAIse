@@ -1,16 +1,13 @@
+"""Module for displaying the page where the user can choose a course."""
+
 from nicegui import ui, app
 
 import CssStyles
 import DatabAIse
 
 
-def on_course_x(course_template_string, course_name):
-    app.storage.user["course_template_string"] = course_template_string
-    app.storage.user["course_name"] = course_name
-    ui.navigate.to("/a/Kurs")
-
-
-def get_page():
+def get_page() -> None:
+    """Function to build the page."""
 
     with ui.card().style(CssStyles.maincard_style):
         with ui.column():
@@ -20,9 +17,23 @@ def get_page():
                                  "Falls du bereits Erfahrungen hast, mache da weiter, wo du gerade stehst oder über die Themen, mit denen du noch "
                                  "die größten Schwierigkeiten hast.")
             with ui.row():
-                ui.button("Kurs 1: Projektion", on_click=lambda: on_course_x(DatabAIse.course_template_1, "Kurs 1: Projektion"))
-                ui.button("Kurs 2: Selektion", on_click=lambda: on_course_x(DatabAIse.course_template_2, "Kurs 2: Selektion"))
-                ui.button("Kurs 3: Sortierung", on_click=lambda: on_course_x(DatabAIse.course_template_3, "Kurs 3: Sortierung"))
-                ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: on_course_x(DatabAIse.course_template_4, "Kurs 4: Aggregatsfunktionen"))
-                ui.button("Kurs 5: Join", on_click=lambda: on_course_x(DatabAIse.course_template_5, "Kurs 5: Join"))
-                ui.button("Kurs 6: Unterabfragen", on_click=lambda: on_course_x(DatabAIse.course_template_6, "Kurs 6: Unterabfragen"))
+                ui.button("Kurs 1: Projektion", on_click=lambda: _on_course_x(DatabAIse.course_template_1, "Kurs 1: Projektion"))
+                ui.button("Kurs 2: Selektion", on_click=lambda: _on_course_x(DatabAIse.course_template_2, "Kurs 2: Selektion"))
+                ui.button("Kurs 3: Sortierung", on_click=lambda: _on_course_x(DatabAIse.course_template_3, "Kurs 3: Sortierung"))
+                ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: _on_course_x(DatabAIse.course_template_4, "Kurs 4: Aggregatsfunktionen"))
+                ui.button("Kurs 5: Join", on_click=lambda: _on_course_x(DatabAIse.course_template_5, "Kurs 5: Join"))
+                ui.button("Kurs 6: Unterabfragen", on_click=lambda: _on_course_x(DatabAIse.course_template_6, "Kurs 6: Unterabfragen"))
+
+
+def _on_course_x(course_template_string: str, course_name: str) -> None:
+    """Function is triggered when any course button is clicked.
+
+    :param course_template_string:
+        Course template in JSON format. See :doc:`/templates/course_template`
+    :param course_name:
+        Name of the course for the title of the next page.
+    """
+
+    app.storage.user["course_template_string"] = course_template_string
+    app.storage.user["course_name"] = course_name
+    ui.navigate.to("/a/Kurs")
