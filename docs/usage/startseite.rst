@@ -10,4 +10,4 @@ werden. Falls das nicht  die erste Stunde für die Schülerinnen ist und sie
 bereits eine oder mehrere Datenbanken erstellt hat ist oder eine bestimmte
 Datenbank(-auswahl) von der Lehrkraft zur Verfügung gestellt wurde, kommen sie
 mit „Lade Datenbank hoch“ (**e**) zu einem Menü, in dem sie Datenbanken
-hochladen können (**6**).
+hochladen können (:doc:`/usage/download`).
