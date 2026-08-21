@@ -1,8 +1,17 @@
 Upload der Datenbank
 ====================
 
-Hier können die Schülerinnen bereits erstellte Datenbanken hochladen und die
-Kurse mit diesen starten.
+.. note::
+
+    Diese Seite ist nur für die Experimentalgruppe einsehbar.
+
+.. image:: /images/usage/06Upload.png
+    :align: center
+    :width: 1200
+
+Hier können die Schülerinnen bereits erstellte Datenbanken mit dem +-Symbol
+(**a**) hochladen und mit "Zur Kurswahl" (**b**) mit diesen die Kurse
+bearbeiten.
 
 .. attention::
 

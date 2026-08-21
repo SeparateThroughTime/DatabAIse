@@ -1,6 +1,14 @@
 Download der Datenbank
 ======================
 
+.. note::
+
+    Diese Seite ist nur für die Experimentalgruppe einsehbar.
+
+.. image:: /images/usage/05Datenbank.png
+    :align: center
+    :width: 1200
+
 Im letzten Schritt der Datenbankerstellung werden Primärschlüssel hinzugefügt,
 Relationen inklusive der Relationstabellen erstellt und die Tabellen mit Daten
 gefüllt. Dieser Prozess kann unter Umständen eine Weile dauern. Sobald alles

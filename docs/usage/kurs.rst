@@ -1,6 +1,28 @@
 Kurs
 ====
 
+.. image:: /images/usage/08Kurs.png
+    :align: center
+    :width: 1200
+
+|
+
+.. image:: /images/usage/09KursUnten.png
+    :align: center
+    :width: 1200
+
+|
+
+.. image:: /images/usage/10KorrekteAufgabe.png
+    :align: center
+    :width: 1200
+
+|
+
+.. image:: /images/usage/11LetzteAufgabe.png
+    :align: center
+    :width: 1200
+
 Nachdem der Kurs generiert wurde, erhalten die Schülerinnen eine
 Hintergrundgeschichte zur Datenbank (**a**). Darunter ist die aktuelle Aufgabe
 zu finden (**b**). Im großen Freitextfeld (**c**) können die Schülerinnen einem

@@ -1,6 +1,10 @@
 Startseite
 ==========
 
+.. image:: /images/usage/01Main.png
+    :align: center
+    :width: 1200
+
 Die Startseite enthält einen kurzen Anleitungstext (**a**) und mehrere Button.
 Mit „Teilnahme an der Vorumfrage“ (**b**) und „Teilnahme an der Nachumfrage“
 (**c**) werden die Schülerinnen auf eine externe Seite für den Pre- bzw.

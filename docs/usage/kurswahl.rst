@@ -1,6 +1,10 @@
 Kurswahl
 ========
 
+.. image:: /images/usage/07Kurswahl.png
+    :align: center
+    :width: 1200
+
 Die Schülerinnen können aus mehreren Kursen einen Auswählen, der ihrem
 aktuellen Lernstand entspricht, womit sie zum :doc:`/usage/kurs` weitergeleitet
 werden. Die Kurse sind rekursiv aufgebaut. Das bedeutet, dass die Inhalte der

@@ -1,6 +1,14 @@
 Anpassen der Tabellen
 =====================
 
+.. note::
+
+    Diese Seite ist nur für die Experimentalgruppe einsehbar.
+
+.. image:: /images/usage/03Tabellen.png
+    :align: center
+    :width: 1200
+
 Abhängig vom Thema werden von der KI vier Tabellennamen generiert. Verschiedene
 Richtlinien sollen dabei dafür sorgen, dass sinnvolle Beziehungen zwischen den
 Tabellen möglich sind. Das Ergebnis kann von den Schülerinnen noch angepasst

@@ -29,7 +29,7 @@ def _on_course_x(course_template_string: str, course_name: str) -> None:
     """Function is triggered when any course button is clicked.
 
     :param course_template_string:
-        Course template in JSON format. See :doc:`/templates/course_template`
+        Course template in JSON format. See :doc:`/templates/course_templates`
     :param course_name:
         Name of the course for the title of the next page.
     """
