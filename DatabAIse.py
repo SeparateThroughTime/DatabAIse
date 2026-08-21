@@ -22,66 +22,71 @@ from google.genai import types
 import Pages
 from nicegui import ui
 
-course_1_db = open("course_db/01Kochbuch.sql").read()
-"""Database for control group of study for course 1 (cookbook): 
-:doc:`/templates/course_db_1`
+try:
+    course_1_db = open("course_db/01Kochbuch.sql").read()
+    """Database for control group of study for course 1 (cookbook): 
+    :doc:`/templates/course_db_1`
+    
+    :meta hide-value:"""
+    course_2_db = open("course_db/02Berufsorientierung.sql").read()
+    """Database for control group of study for course 2 (career orientation): 
+    :doc:`/templates/course_db_2`
+    
+    :meta hide-value:"""
+    course_3_db = open("course_db/03Nachbarschafts-Bibliothek.sql").read()
+    """Database for control group of study for course 3 (library): 
+    :doc:`/templates/course_db_3`
+    
+    :meta hide-value:"""
+    course_4_db = open("course_db/04ÖPNV Frankfurt am Main.sql").read()
+    """Database for control group of study for course 4 (public transport in Ffm): 
+    :doc:`/templates/course_db_4`
+    
+    :meta hide-value:"""
+    course_5_db = open("course_db/05Musikarchiv.sql").read()
+    """Database for control group of study for course 5 (music archive): 
+    :doc:`/templates/course_db_5`
+    
+    :meta hide-value:"""
+    course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
+    """Database for control group of study for course 6 (milestones of history): 
+    :doc:`/templates/course_db_6`
+    
+    :meta hide-value:"""
+    course_template_1 = open("course_templates/01Projektion.json").read()
+    """Template for projection: :doc:`/templates/course_template_1`
+    
+    :meta hide-value:"""
+    course_template_2 = open("course_templates/02Selektion.json").read()
+    """Template for selection: :doc:`/templates/course_template_2`
+    
+    :meta hide-value:"""
+    course_template_3 = open("course_templates/03Sortierung.json").read()
+    """Template for sorting: :doc:`/templates/course_template_3`
+    
+    :meta hide-value:"""
+    course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
+    """Template for aggregate functions: :doc:`/templates/course_template_4`
+    
+    :meta hide-value:"""
+    course_template_5 = open("course_templates/05Join.json").read()
+    """Template for joins: :doc:`/templates/course_template_5`
+    
+    :meta hide-value:"""
+    course_template_6 = open("course_templates/06Unterabfragen.json").read()
+    """Template for sub queries: :doc:`/templates/course_template_6`
+    
+    :meta hide-value:"""
+    example_json = open("db_generation/Example.json").read()
+    """This is how a db is formatted as json in this project.
+    
+    See also :doc:`/templates/example_json`
+    
+    :meta hide-value:"""
 
-:meta hide-value:"""
-course_2_db = open("course_db/02Berufsorientierung.sql").read()
-"""Database for control group of study for course 2 (career orientation): 
-:doc:`/templates/course_db_2`
-
-:meta hide-value:"""
-course_3_db = open("course_db/03Nachbarschafts-Bibliothek.sql").read()
-"""Database for control group of study for course 3 (library): 
-:doc:`/templates/course_db_3`
-
-:meta hide-value:"""
-course_4_db = open("course_db/04ÖPNV Frankfurt am Main.sql").read()
-"""Database for control group of study for course 4 (public transport in Ffm): 
-:doc:`/templates/course_db_4`
-
-:meta hide-value:"""
-course_5_db = open("course_db/05Musikarchiv.sql").read()
-"""Database for control group of study for course 5 (music archive): 
-:doc:`/templates/course_db_5`
-
-:meta hide-value:"""
-course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
-"""Database for control group of study for course 6 (milestones of history): 
-:doc:`/templates/course_db_6`
-
-:meta hide-value:"""
-course_template_1 = open("course_templates/01Projektion.json").read()
-"""Template for projection: :doc:`/templates/course_template_1`
-
-:meta hide-value:"""
-course_template_2 = open("course_templates/02Selektion.json").read()
-"""Template for selection: :doc:`/templates/course_template_2`
-
-:meta hide-value:"""
-course_template_3 = open("course_templates/03Sortierung.json").read()
-"""Template for sorting: :doc:`/templates/course_template_3`
-
-:meta hide-value:"""
-course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
-"""Template for aggregate functions: :doc:`/templates/course_template_4`
-
-:meta hide-value:"""
-course_template_5 = open("course_templates/05Join.json").read()
-"""Template for joins: :doc:`/templates/course_template_5`
-
-:meta hide-value:"""
-course_template_6 = open("course_templates/06Unterabfragen.json").read()
-"""Template for sub queries: :doc:`/templates/course_template_6`
-
-:meta hide-value:"""
-example_json = open("db_generation/Example.json").read()
-"""This is how a db is formatted as json in this project.
-
-See also :doc:`/templates/example_json`
-
-:meta hide-value:"""
+except FileNotFoundError as e:
+    # Readthedocs has problems reading the file paths. This is a simple and inelegant solution.
+    warnings.warn(repr(e), UserWarning)
 
 
 async def course_create_exercise(sql_statements: str) -> str:
