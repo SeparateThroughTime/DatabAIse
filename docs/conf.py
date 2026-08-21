@@ -20,8 +20,7 @@ author = 'David Seßner'
 
 extensions = ["sphinx.ext.autodoc",
               "sphinx.ext.intersphinx",
-              "sphinx.ext.autosummary",
-              "sphinx_autodoc_typehints"]
+              "sphinx.ext.autosummary"]
 
 intersphinx_mapping = {"py": ("https://docs.python.org/3/", None)}
 
