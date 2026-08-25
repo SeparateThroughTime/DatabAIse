@@ -28,5 +28,5 @@ def get_page() -> None:
 def _next_page(topic: str) -> None:
     """Saves topic that user chose and redirects to ChooseTablesPage"""
 
-    app.storage.user["topic"] = topic
+    app.storage.user["database_build"] = topic
     ui.navigate.to("/a/Tabellenwahl")

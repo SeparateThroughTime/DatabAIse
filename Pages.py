@@ -166,3 +166,9 @@ def upload(client: Client) -> None:
     header("/a")
     UploadPage.get_page()
     footer("/a")
+
+
+#TODO: Only for development. Should be deleted before launch!
+@ui.page("/")
+def root_page() -> None:
+    ui.navigate.to("/a")

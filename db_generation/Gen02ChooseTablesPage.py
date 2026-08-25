@@ -2,17 +2,16 @@
 
 from nicegui.elements.input import Input
 from nicegui import ui, app, events, elements
-import json
-from typing import List
 
 import CssStyles
 import DatabAIse
+from BaseModels import DatabaseStructure0
 
 
 def get_page() -> None:
     """Function to build the page"""
 
-    topic = app.storage.user["topic"]
+    topic = app.storage.user["database_build"]
 
     with ui.card().style(CssStyles.maincard_style):
         with ui.column():
@@ -37,13 +36,11 @@ def get_page() -> None:
             button = ui.button("Warte auf KI-Antwort")
 
     async def start_prompt() -> None:
-        response = await DatabAIse.db_create_tables_agent(topic)
+        result = await DatabAIse.db_create_tables(topic)
+        tables = result.tables
 
-        tables = json.loads(response)
-        i = 0
-        for key in tables:
-            table_inputs[i].value = tables[key]
-            i = i + 1
+        for i in range(len(tables)):
+            table_inputs[i].value = tables[i]
 
         button.on("click", lambda: _next_page(table_inputs))
         button.text = "Senden"
@@ -51,16 +48,18 @@ def get_page() -> None:
 
     def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
-            _next_page(table_inputs)
+            _next_page(topic, table_inputs)
     ui.keyboard(on_key=handle_key, ignore=[])
 
 
-def _next_page(table_inputs: List[Input]) -> None:
+def _next_page(table_inputs: list[Input]) -> None:
     """Saves tables and redirects to ChooseColumnsPage"""
 
-    tables = []
+    topic = app.storage.user["database_build"]
+    table_strings = []
     for table_input in table_inputs:
-        tables.append(table_input.value)
-    app.storage.user["tables"] = tables
+        table_strings.append(table_input.value)
+    tables = DatabaseStructure0(topic=topic, tables=table_strings)
+    app.storage.user["database_build"] = tables.model_dump()
 
     ui.navigate.to("/a/Spaltenwahl")

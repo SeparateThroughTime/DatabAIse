@@ -11,16 +11,19 @@ Probably a conversion is necessary after using them.
 import os
 import re
 import warnings
-from typing import List
-from typing import Dict
+import logging
 from typing import Any
 
 from openai import OpenAI, AsyncOpenAI
+from agents import Agent, Runner, ModelSettings
 from google import genai
 from google.genai import types
+from openai.types import Reasoning
 
 import Pages
 from nicegui import ui
+from BaseModels import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type
+
 
 try:
     course_1_db = open("course_db/01Kochbuch.sql").read()
@@ -166,153 +169,245 @@ async def course_create_sql_statements(db_json: str, course_template_json: str) 
     return result
 
 
-async def db_create_columns_agent(topic: str, tables: List[str]) -> str:
-    """Generates 3 columns to each of a collection of tables for a given topic.
+# TODO: Check if conditions are fulfilled.
+_db_create_tables_agent = Agent(
+    name="table generator",
+    instructions="""Generate table names for a database to a given topic.
+                 It must be reasonable to have at least two 1-to-many relations, one
+                 many-to-many relation and one recursive relation between the tables.
+                 The generated tables must not be relational tables.
+                 All data must be german or be loanwords for german language.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=DatabaseStructure0
+)
+"""Agent for generating table names.
 
-    .. role:: json(code)
-        :language: json
+The agent is instructed to take into account that the database should have
+two 1-to-many relations, one many-to-many-relation and one recursive relation.
+"""
 
-    :param topic: Topic for the database
-    :param tables:
-        Tables for the database. Can be any type that can be cast to str but
-        list of strings is advised.
-    :return:
-        | Database structure in json format:
-        | :json:`{"table1": ["column1", "column2", "column3"],`
-        | ...
-        | :json:`"table4": ["column1", "column2", "column3"]}`
+async def db_create_tables(topic: str, amount_tables: int = 4) -> DatabaseStructure0:
+    """Generates tables to a given topic.
+
+    :param topic: Topic for the database.
+    :param amount_tables: Amount of tables to be generated.
+    :return: Generated Tables
     """
 
-    system_content = ("You get a topic and a list of tables for a database. "
-                      "Suggest for every table 3 attributes. "
-                      "Primary keys will be incremental integer which must not be any of your suggestions. "
-                      "The suggested columns must not be secondary keys neither. "
-                      "There has to be at least one table with two columns with type Integer, "
-                      "one table with two columns with type Varchar and "
-                      "one table with one column with type Integer and one column with type Varchar. "
-                      "All data must be german or be loanwords for german language. "
-                      "The output is a json with following structure: "
-                      '{"table1": ["column1", "column2", "column3"], ..., "table4": ["column1", "column2", "column3"]} ')
-    user_content = '{topic: ' + topic + "', tables: '" + str(tables) + "'}"
-    return await _main_prompt(system_content, user_content, 3, "json")
+    result = await Runner.run(_db_create_tables_agent,
+                              f"Generate {amount_tables} tables for a database with the topic '{topic}'.")
+    return result.final_output
 
 
-async def db_create_relations_keys_agent(topic: str, tables: List[str], columns: List[List[str]]) -> str:
+
+# TODO: Check if conditions are fulfilled.
+# TODO: Compare conditions with exercises and add missing conditions.
+_db_create_attributes_agent = Agent(
+    name="attribute generator",
+    instructions="""Generate attribute names for the tables of a database.
+                 Primary keys will be incremental integer which must not be any of your suggestions.
+                 The suggested attributes must not be secondary keys neither.
+                 There has to be at least one table with two attributes with type Integer,
+                 one table with two attributes with type Varchar and
+                 one table with one attribute with type Integer and one attribute with type Varchar.
+                 The output should only include the name of the attribute and not the type.
+                 All data must be german or be loanwords for german language.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=DatabaseStructure1
+)
+"""Agent for generating attributes, used in :func:'db_create_attributes'
+
+The agent is instructed to not generate primary or secondary keys and that the
+database should have a table with two integers, a table with two varchar and
+a table with one integer and one varchar.
+"""
+
+async def db_create_attributes(database: DatabaseStructure0, amount_attributes: int = 3) -> DatabaseStructure1:
+    """Generates attributes for each of a collection of tables for a given topic.
+
+    :param database: Database including topic and table names.
+    :param amount_attributes: Amount of attributes to be generated per table.
+    :return: Database with generated attributes.
+    """
+
+    input_string = f"Generate {amount_attributes} attributes for: {database.model_dump_json()}"
+    result = await Runner.run(_db_create_attributes_agent, input_string)
+    return result.final_output
+
+
+_db_create_attribute_types_agent = Agent(
+    name="attribute type generator",
+    instructions="""Generate attribute types for an unfinished database.
+                 You are only allowed to use following types: VARCHAR, BOOL, INT, DEC, DATE, DATETIME, TIME and YEAR.
+                 The x and y values in the attributes are for the parameters of the type.
+                 For example an attribute of type DEC(4, 2) has type=DEC, x=4 and y=2.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=DatabaseStructure2
+)
+"""Agent for generating attribute types, used in :func:`db_finalize_structure`."""
+
+_db_create_primary_keys_agent = Agent(
+    name="primary key generator",
+    instructions="""Generate primary keys for every table of an unfinished database.
+                 The keys should be IDs with sql naming convention.
+                 All data must be german or be loanwords for german language.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=DatabaseStructure2
+)
+"""Agent for generating primary keys, used in :func:`db_finalize_structure`."""
+
+_db_create_relations_agent = Agent(
+    name="relation generator",
+    instructions="""Generate relations for the tables of an unfinished database.
+                 The relations should be reasonable.
+                 But More important are the following conditions:
+                 There has to be at least one many-to-many relation, two 1-to-many relations and one recursive relation.
+                 You are not allowed to add any table to the database.
+                 1-to-many relations are implemented with foreign keys.
+                 many-to-many relations are implemented with a relation-table.
+                 All data must be german or be loanwords for german language.
+                 """,
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=DatabaseStructure2
+)
+"""Agent for generating relations, used in :func:`db_finalize_structure`.
+
+The agent is instructed to generate at leas one many-to-many relation, two
+1-to-many relations and one recursive relation.
+"""
+
+_db_verify_relations_agent = Agent(
+    name="relation verifier",
+    instructions="""Verify if a database contains at least one many-to-many relation,
+                    two 1-to-many relations and one recursive relation.
+                    If something is missing, add that relation type in the most reasonable way possible.
+                    1-to-many relations are implemented with foreign keys.
+                    many-to-many relations are implemented with a relation-table.
+                    All data must be german or be loanwords for german language.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=DatabaseStructure2
+)
+"""Agent for verifying the generated relations, used in :func:`db_finalize_structure`."""
+
+async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructure2:
     """Generates relations and keys for a given database.
 
-    :param topic: Topic for the database
-    :param tables: Tables for the database. Must be a list of strings!
-    :param columns:
-        Columns for the database. Must be a 2D list of strings! First
-        dimension determines table and second dimension determines column.
+    :param database: database with topic and tables including their attributes.
     :return: Database in json format
     """
 
-    system_content = ("You get the topic, tables and columns for a database. "
-                      "Add primary keys to every table as IDs with sql naming convention. "
-                      "Create reasonable relations between the tables. "
-                      "There has to be at least one many-to-many relation and two 1-to-many relations."
-                      "You are not allowed to add any table to the database. "
-                      "1-to-many relations are implemented with foreign keys. "
-                      "many-to-many relations are implemented with a relation-table. "
-                      "All data must be german or be loanwords for german language. "
-                      "The output is the database only as json without explanations or relations.")
-    user_content = "{topic: '" + topic + "', tables: {"
-    for i in range(len(tables)):
-        user_content += tables[i] + ": ["
-        for j in range(len(columns[i])):
-            user_content += columns[i][j] + ", "
-        user_content = user_content[:-2] + "], "
-    user_content = user_content[:-2] + "}}"
-    result = await _main_prompt(system_content, user_content, 3, "json")
-    return await _db_verify_relations_keys_agent(result)
+    result = await Runner.run(_db_create_attribute_types_agent,database.model_dump_json())
+    result = await Runner.run(_db_create_primary_keys_agent, result.final_output.model_dump_json())
+    result = await Runner.run(_db_create_relations_agent, result.final_output.model_dump_json())
+    result = await Runner.run(_db_create_primary_keys_agent, result.final_output.model_dump_json())
+    return result.final_output
 
 
-async def db_create_tables_agent(topic: str) -> str:
-    """Generates 4 tables to a given topic.
+_db_fill_agent = Agent(
+    name="database filler",
+    instructions="""Fill an empty database with fictive data.
+                 The database should have 100 entries total.
+                 All data must be german or be loanwords for german language.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=DatabaseStructure3
+)
+"""Agent for filling a database with data, used in :func:`db_fill`"""
 
-    .. role:: json(code)
-        :language: json
-
-    :param topic: Topic for the database.
-    :return:
-        | Tables in json format:
-        | :json:`{"A": "table1", "B": "table2", "C": "table3", "D": "table4"}`
-
-    """
-
-    system_content = ("Suggest 4 table names for a database with a specific topic."
-                      " It must be reasonable to have at least two 1-to-many relations, one"
-                      " many-to-many relation an on recursive relation between the tables."
-                      " The suggested tables must not be relational tables."
-                      " All data must be german or be loanwords for german language."
-                      " The output is a json containing the table names only as:"
-                      ' {"A": "table1", "B": "table2", "C": "table3", "D": "table4"}')
-    return await _main_prompt(system_content, topic, 3, "json")
-
-
-async def db_fill_agent(db_json: str) -> str:
+async def db_fill(db_structure: DatabaseStructure2) -> DatabaseStructure3:
     """Generates data for a given database.
 
-    :param db_json:
-        Database in json format. Can be any type that can be cast to string.
+    :param db_structure:
+        Database structure.
     :return:
         Database in json format defined by the :data:`example_json`.
     """
 
-    system_content = "You get an empty database. Fill it with 100 entries total. Let the output fit this json example: " + example_json + " Do not use spaces between parameters of a variable type."
-    return await _main_prompt(system_content, db_json, 6, "json")
+    result = await Runner.run(_db_fill_agent,db_structure.model_dump_json())
+    return result.final_output
 
 
-def json_to_sql(json_obj: Dict[str, Any]) -> str:
+def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
     """Converts a json to a sql string.
 
-    :param json_obj: Need to be strictly formatted as :data:`example_json`!
+    :param database: database with data.
     :return: String of sql statements to create database.
     """
 
     sql_list = []
-    sql_list.append("CREATE DATABASE '" + json_obj["database"]["topic"] + "'")
-    sql_list.append("USE '" + json_obj["database"]["topic"] + "'")
+    sql_list.append(f"CREATE DATABASE '{database.topic}'")
+    sql_list.append(f"USE '{database.topic}'")
 
     foreign_keys = []
-    for table in json_obj["database"]["tables"]:
-        create_table_string = "CREATE TABLE '" + table["name"] + "' ("
-        for column in table["columns"]:
-            create_table_string += "'" + column["name"] + "' " + column["type"]
-            if "primary_key" in column:
-                create_table_string += " PRIMARY KEY"
-            #if "foreign_key" in column:
-            #    foreign_key = column["foreign_key"]
-            #    foreign_keys.append((table["name"], column["name"], foreign_key["table"], foreign_key["column"]))
+    for table in database.tables:
+        create_table_string = f"CREATE TABLE '{table.name}' ("
+        for attribute in table.attributes:
+            create_table_string += f"'{attribute.name}' {attribute.type}"
+            if (attribute.type == Type.VARCHAR or attribute.type == Type.INT) and attribute.x != None:
+                create_table_string += f"({attribute.x})"
+            elif attribute.type == Type.DEC and attribute.x != None and attribute.y != None:
+                create_table_string += f"({attribute.x}, {attribute.y})"
             create_table_string += ", "
         create_table_string = create_table_string[:-2]
         create_table_string += ")"
         sql_list.append(create_table_string)
 
-        for entry in table["data"]:
-            insert_entry_string = "INSERT INTO '" + table["name"] + "' VALUES ("
-            for value_key in entry:
-                value = entry[value_key]
-                insert_entry_string += "'" + str(value) + "', "
+        for entry in table.data_entries:
+            insert_entry_string = f"INSERT INTO '{table.name}' VALUES ("
+            for value in entry.data_points:
+                insert_entry_string += f"'{value}', "
             insert_entry_string = insert_entry_string[:-2]
             insert_entry_string += ")"
             sql_list.append(insert_entry_string)
 
-    # Foreign keys made more trouble than they helped, so they were exluded.
-    #for foreign_key in foreign_keys:
-    #    table, column, foreign_table, foreign_column = foreign_key
-    #    add_key_string = ("ALTER TABLE '" + table + "' ADD FOREIGN KEY ('" + column + "') REFERENCES '"
-    #                      + foreign_table + "'('" + foreign_column + "')")
-    #    sql_list.append(add_key_string)
-
     sql_string = ""
     for sql_command in sql_list:
-        sql_string += sql_command + ";\n"
+        sql_string += f"{sql_command};\n"
     return sql_string
 
 
-def sql_to_json(sql_string: str) -> Dict[str, Any]:
+def sql_to_json(sql_string: str) -> dict[str, Any]:
     """Converts a sql string to a json.
 
     .. role:: sql(code)
@@ -396,7 +491,7 @@ def sql_to_json(sql_string: str) -> Dict[str, Any]:
 
 
 async def _course_verify_exercise(sql_statements: str, exercises: str) -> str:
-    """Helper function for course_create_exercise.
+    """Helper function for :func:`course_create_exercise`.
 
     Verifies and optimizes the generated exercises.
 
@@ -418,7 +513,7 @@ async def _course_verify_exercise(sql_statements: str, exercises: str) -> str:
 
 
 async def _course_verify_sql_statements(db_json: str, course_json: str, course_template_json: str) -> str:
-    """Helper function for course_create_sql_statements.
+    """Helper function for :func:`course_create_sql_statements`.
 
     Verifies and optimizes the generated sample solution.
 
@@ -451,32 +546,16 @@ async def _course_verify_sql_statements(db_json: str, course_json: str, course_t
     return result2
 
 
-async def _db_verify_relations_keys_agent(db_json: str) -> str:
-    """Helper function for db_create_relations_keys_agent.
-
-    Verifies and optimizes relation and key generation.
-
-    :param db_json: Database in json format. Can be any type that can be cast to string.
-    :return: Optimized database in json format.
-    """
-
-    system_content = ("You get the topic, tables and columns for a database. "
-                      "Verify if the database contains at least one many-to-many relation "
-                      "and two 1-to-many relations. "
-                      "If something is missing, add that relation type in the most reasonable way possible. "
-                      "1-to-many relations are implemented with foreign keys. "
-                      "many-to-many relations are implemented with a relation-table. "
-                      "All data must be german or be loanwords for german language. "
-                      "The output is the database only as json without explanations or relations.")
-    return await _main_prompt(system_content, db_json, 3, "json")
-
-
 async def _main_prompt(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
     """This is the function for prompting that should be used by all agents.
 
-    To have multiple options if an AI call throws an exception,
-    this method tries different models in a specific order before
-    raising an exception if all attempts fail.
+    Initially this function was to try multiple AI models in case of one or
+    more failing.
+
+    Currently only OpenAI is used as gemini and deepseek where not reliable
+    upon there accessibility. The structure of *Agent -> Abstract Prompt ->
+    Concrete Prompt* will be kept though, to be flexible if this changes in
+    future.
 
     :param system_content: System Content for prompt
     :param user_content: User Content for prompt
@@ -486,19 +565,15 @@ async def _main_prompt(system_content: str, user_content: str, reasoner: int, re
     """
 
     try:
-        response = await _prompt_gemini(system_content, user_content, reasoner, response_format)
+        response = await _prompt_openai(system_content, user_content, reasoner, response_format)
     except Exception as e:
         warnings.warn(str(e), RuntimeWarning)
-        try:
-            response = await _prompt_deepseek(system_content, user_content, reasoner, response_format)
-        except Exception as e:
-            warnings.warn(str(e), RuntimeWarning)
-            response = "Kritischer Fehler: Keine Kommunikation mit einer KI möglich!"
-            with ui.dialog() as dialog:
-                ui.label(response)
-                ui.button("Ok :(", on_click=dialog.close)
-            dialog.open()
-            raise Exception("No AI could be used.")
+        response = "Kritischer Fehler: Keine Kommunikation mit der KI möglich!"
+        with ui.dialog() as dialog:
+            ui.label(response)
+            ui.button("Ok :(", on_click=dialog.close)
+        await dialog.open()
+        raise Exception("Kommunikation mit der KI fehlgeschlagen.")
     return response
 
 
@@ -645,28 +720,65 @@ async def _prompt_openai(system_content: str, user_content: str, reasoner: int, 
     :param response_format: Currently not used.
     :return: Only the content of response.
     """
+    match reasoner:
+        case 0:
+            model = "gpt-5-nano"
+            effort = "minimal"
+        case 1:
+            model = "gpt-5-nano"
+            effort = "low"
+        case 2:
+            model = "gpt-5-nano"
+            effort = "medium"
+        case 3:
+            model = "gpt-5-nano"
+            effort = "high"
+        case 4:
+            model = "gpt-5.6-luna"
+            effort = "none"
+        case 5:
+            model = "gpt-5.6-luna"
+            effort = "low"
+        case 6:
+            model = "gpt-5.6-luna"
+            effort = "medium"
+        case 7:
+            model = "gpt-5.6-luna"
+            effort = "high"
+        case 8:
+            model = "gpt-5.6-luna"
+            effort = "xhigh"
+        case 9:
+            model = "gpt-5.6-luna"
+            effort = "max"
+        case 10:
+            model = "gpt-5.6-terra"
+            effort = "medium"
+        case 11:
+            model = "gpt-5.6-terra"
+            effort = "high"
+        case 12:
+            model = "gpt-5.6-terra"
+            effort = "xhigh"
+        case 13:
+            model = "gpt-5.6-terra"
+            effort = "max"
+        case 14:
+            model = "gpt-5.6-sol"
+            effort = "medium"
+        case 15:
+            model = "gpt-5.6-sol"
+            effort = "high"
+        case 16:
+            model = "gpt-5.6-sol"
+            effort = "xhigh"
+        case 17:
+            model = "gpt-5.6-sol"
+            effort = "max"
+        case _:
+            model = "gpt-5-nano"
+            effort = "minimal"
 
-    if reasoner <= 5:
-        model = "gpt-5-mini"
-        effort = "medium"
-    elif reasoner <= 7:
-        model = "gpt-5"
-        effort = "low"
-    elif reasoner <= 8:
-        model = "gpt-5"
-        effort = "medium"
-    elif reasoner <= 9:
-        model = "gpt-5"
-        effort = "high"
-    elif reasoner <= 10:
-        model = "gpt-5.4"
-        effort = "medium"
-    elif reasoner <= 11:
-        model = "gpt-5.4"
-        effort = "high"
-    else:
-        model = "gpt-5.4"
-        effort = "xhigh"
     ai_client = AsyncOpenAI()
     response = await ai_client.responses.parse(
         model=model,
@@ -679,8 +791,19 @@ async def _prompt_openai(system_content: str, user_content: str, reasoner: int, 
         ],
         stream=False
     )
-    return response.choices[0].message.content
+    return response.output_text
+
+
+def _check_databases_exist():
+    """Checks if databases.db exists."""
+
+    if not os.path.isfile("databases.db"):
+        logging.warning("""'databases.db' does not exist. Run 'CreateDatabase.py' to create file and log all databases
+                        created with DatabAIse.""")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
+    logging.basicConfig(filename="last_run.log", filemode="w",
+                        format="%(asctime)s - %(levelname)s - %(message)s")
+    _check_databases_exist()
     Pages.build()

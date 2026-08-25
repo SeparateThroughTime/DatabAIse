@@ -1,22 +1,24 @@
 """Module for page where the database is created and can be downloaded."""
 
 import json
+import logging
+import os.path
+
 from nicegui import ui, app, events
 import re
 import sqlite3
-from typing import Dict
 from typing import Any
 
 import CssStyles
 import DatabAIse
+from BaseModels import DatabaseStructure1, DatabaseStructure3
 
 
 def get_page() -> None:
     """Function to build the page"""
 
-    topic = app.storage.user["topic"]
-    tables = app.storage.user["tables"]
-    columns = app.storage.user["columns"]
+    database_build : DatabaseStructure1 = DatabaseStructure1.model_validate(app.storage.user["database_build"])
+    topic = database_build.topic
 
     with ui.card().style(CssStyles.maincard_style):
         with ui.column():
@@ -31,33 +33,33 @@ def get_page() -> None:
                 course_button = ui.button("Warte auf KI-Antwort")
 
     async def start_prompt() -> None:
-        response = await DatabAIse.db_create_relations_keys_agent(topic, tables, columns)
-        response = await DatabAIse.db_fill_agent(response)
+        response = await DatabAIse.db_finalize_structure(database_build)
+        database = await DatabAIse.db_fill(response)
 
-        json_obj = json.loads(response)
-        print(json.dumps(json_obj, indent=4))
-        _format_json_strings(json_obj)
-        sql_string = DatabAIse.json_to_sql(json_obj)
+        _format_database(database)
+        sql_string = DatabAIse.db_structure_3_to_sql(database)
         app.storage.user["sql_string"] = sql_string
-        app.storage.user["db_json"] = DatabAIse.sql_to_json(sql_string)
-        print(json.dumps(app.storage.user["db_json"], indent=4))
+        app.storage.user["database_build"] = database.model_dump()
 
         download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
         download_button.text = "Download SQL"
         course_button.on("click", lambda: ui.navigate.to("/a/Kurswahl"))
         course_button.text = "Zur Kurswahl"
 
-        con = sqlite3.connect("databases.db")
-        cur = con.cursor()
-        cur.execute(f"""INSERT INTO databases (topic, sql_file)
-                       VALUES ('{app.storage.user["topic"]}', "{app.storage.user["db_json"]}");""")
-        con.commit()
-        con.close()
+        if os.path.isfile("databases.db"):
+            con = sqlite3.connect("databases.db")
+            cur = con.cursor()
+            cur.execute(f"""INSERT INTO databases (topic, sql_file)
+                           VALUES ('{app.storage.user["topic"]}', "{app.storage.user["db_json"]}");""")
+            con.commit()
+            con.close()
+        else:
+            logging.info("Tried to safe database in 'database.db' but file does not exist.")
     ui.timer(0.1, start_prompt, once=True)
 
 
-def _format_json_strings(json_obj: Dict[str, Any]) -> None:
-    """Helper function to format all strings and names in the json.
+def _format_database(database: DatabaseStructure3) -> None:
+    """Helper function to format all strings and names in the database.
 
     This is primarily to remove or replace illegal characters so the
     SQL engine won't run into errors.
@@ -65,22 +67,15 @@ def _format_json_strings(json_obj: Dict[str, Any]) -> None:
     :param json_obj: JSON to be formatted.
     """
 
-    # Sometime 'topic' is renamed to 'name' from AI...
-    if "topic" in json_obj["database"]:
-        topic = json_obj["database"]["topic"]
-    elif "name" in json_obj["database"]:
-        topic = json_obj["database"]["name"]
-    else:
-        topic = "unknown"
-    json_obj["database"]["topic"] = _namingConventions(_replaceUmlaute(topic))
+    database.topic = _namingConventions(_replaceUmlaute(database.topic))
 
-    for table in json_obj["database"]["tables"]:
-        table["name"] = _namingConventions(_replaceUmlaute(table["name"]))
-        for column in table["columns"]:
-            column["name"] = _namingConventions(_replaceUmlaute(column["name"]))
-        for entry in table["data"]:
-            for value_key in entry:
-                entry[value_key] = _replaceUmlaute(_removeApostrophes(entry[value_key]))
+    for table in database.tables:
+        table.name = _namingConventions(_replaceUmlaute(table.name))
+        for attribute in table.attributes:
+            attribute.name = _namingConventions(_replaceUmlaute(attribute.name))
+        for entry in table.data_entries:
+            for i in range(len(entry.data_points)):
+                entry.data_points[i] = _replaceUmlaute(_removeApostrophes(entry.data_points[i]))
 
 
 def _namingConventions(s: str) -> str:
