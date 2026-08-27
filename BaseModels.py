@@ -8,6 +8,44 @@ from enum import StrEnum
 from pydantic import BaseModel
 
 
+class Course(BaseModel):
+    """BaseModel for Courses.
+
+    :ivar story: Underlying story for the course.
+    :ivar exercises: List of exercises.
+    """
+
+    story: str
+    exercises: list[str]
+
+
+class _Solution(BaseModel):
+    """BaseModel for single exercise solutions with 'text' boolean to indicate
+    complexity of the exercise.
+
+    Abstract and concrete solutions can both use this model.
+
+    :ivar sql_query: Query of exercise.
+    :ivar text:
+        Boolean to indicate complexity of the exercise. See
+        :doc:`/templates/course_templates` for more information.
+    """
+
+    sql_query: str
+    text: bool
+
+class CourseTemplate(BaseModel):
+    """BaseModel for course templates.
+
+    Abstract templates and concrete templates (sample solutions) can both use
+    this model.
+
+    :ivar exercise_solutions: List of exercise solutions.
+    """
+
+    exercise_solutions: list[_Solution]
+
+
 class _DataEntry(BaseModel):
     """BaseModel for data entries.
 
@@ -21,6 +59,7 @@ class Type(StrEnum):
     """Enum with all allowed datatypes for the database."""
 
     VARCHAR = "VARCHAR"
+    TEXT = "TEXT"
     BOOL = "BOOL"
     INT = "INT"
     DEC = "DEC"

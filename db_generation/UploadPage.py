@@ -39,5 +39,7 @@ def _next_page(err_label: Label) -> None:
 async def _on_upload(sql_file: FileUpload) -> None:
     """Safes uploaded file in user storage."""
 
-    app.storage.user["sql_string"] = await sql_file.text()
-    app.storage.user["db_json"] = DatabAIse.sql_to_json(app.storage.user["sql_string"])
+    sql_string = await sql_file.text()
+    app.storage.user["sql_string"] = sql_string
+    app.storage.user["database_build"] = DatabAIse.sql_to_db_structure_3(
+        sql_string, disable_debug=False).model_dump_json()

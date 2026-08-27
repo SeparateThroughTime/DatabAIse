@@ -7,7 +7,7 @@ INSERT INTO 'berufsfelder' VALUES ('3', 'Handwerk & Technik', 'Berufe im handwer
 INSERT INTO 'berufsfelder' VALUES ('4', 'Wirtschaft & Finanzen', 'Fokus auf kaufmaennische Berufe, Finanzen und Management.', '12');
 INSERT INTO 'berufsfelder' VALUES ('5', 'Kreativ & Medien', 'Berufe in Kunst, Design, Medien und Kommunikation.', '10');
 INSERT INTO 'berufsfelder' VALUES ('6', 'Bildung & Soziales', 'Berufe in Bildung, Erziehung und sozialer Arbeit.', '10');
-CREATE TABLE 'berufe' ('beruf_id' INT PRIMARY KEY, 'berufsbezeichnung' VARCHAR(255), 'beschreibung' TEXT, 'durchschnittsgehalt' DECIMAL(10,2), 'berufsfeld_id' INT);
+CREATE TABLE 'berufe' ('beruf_id' INT PRIMARY KEY, 'berufsbezeichnung' VARCHAR(255), 'beschreibung' TEXT, 'durchschnittsgehalt' DEC(10,2), 'berufsfeld_id' INT);
 INSERT INTO 'berufe' VALUES ('1', 'Softwareentwickler', 'Entwickelt und pflegt Softwareanwendungen.', '60000.0', '1');
 INSERT INTO 'berufe' VALUES ('2', 'Krankenpfleger', 'Pflegt und betreut Patienten in medizinischen Einrichtungen.', '45000.0', '2');
 INSERT INTO 'berufe' VALUES ('3', 'Elektriker', 'Installiert und wartet elektrische Anlagen.', '40000.0', '3');
@@ -38,7 +38,7 @@ INSERT INTO 'berufe' VALUES ('27', 'Maschinenbauingenieur', 'Entwickelt, konstru
 INSERT INTO 'berufe' VALUES ('28', 'Steuerberater', 'Beraet Mandanten in steuerlichen Angelegenheiten.', '75000.0', '4');
 INSERT INTO 'berufe' VALUES ('29', 'Filmproduzent', 'Plant, organisiert und ueberwacht die Produktion von Filmen.', '60000.0', '5');
 INSERT INTO 'berufe' VALUES ('30', 'Sonderschullehrer', 'Unterrichtet und foerdert Schueler mit besonderen Beduerfnissen.', '52000.0', '6');
-CREATE TABLE 'praktika' ('praktikum_id' INT PRIMARY KEY, 'praktikumsbezeichnung' VARCHAR(255), 'dauer_wochen' INT, 'verguetung' DECIMAL(10,2));
+CREATE TABLE 'praktika' ('praktikum_id' INT PRIMARY KEY, 'praktikumsbezeichnung' VARCHAR(255), 'dauer_wochen' INT, 'verguetung' DEC(10,2));
 INSERT INTO 'praktika' VALUES ('1', 'Softwareentwicklung Praktikum', '12', '800.0');
 INSERT INTO 'praktika' VALUES ('2', 'Pflegepraktikum', '8', '400.0');
 INSERT INTO 'praktika' VALUES ('3', 'Elektrotechnik Praktikum', '10', '600.0');

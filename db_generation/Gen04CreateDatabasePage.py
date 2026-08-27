@@ -14,9 +14,13 @@ import DatabAIse
 from BaseModels import DatabaseStructure1, DatabaseStructure3
 
 
+logger: logging.Logger = DatabAIse.create_logger(__name__)
+
+
 def get_page() -> None:
     """Function to build the page"""
 
+    logger.info("Start page build.")
     database_build : DatabaseStructure1 = DatabaseStructure1.model_validate(app.storage.user["database_build"])
     topic = database_build.topic
 
@@ -31,15 +35,18 @@ def get_page() -> None:
             with ui.row():
                 download_button = ui.button("Warte auf KI-Antwort")
                 course_button = ui.button("Warte auf KI-Antwort")
+    logger.info("Page built.")
 
     async def start_prompt() -> None:
+        logger.debug("Starting prompt to finalize database.")
         response = await DatabAIse.db_finalize_structure(database_build)
+        logger.debug("Starting prompt to fill database.")
         database = await DatabAIse.db_fill(response)
 
         _format_database(database)
         sql_string = DatabAIse.db_structure_3_to_sql(database)
         app.storage.user["sql_string"] = sql_string
-        app.storage.user["database_build"] = database.model_dump()
+        app.storage.user["database_build"] = database.model_dump_json()
 
         download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
         download_button.text = "Download SQL"
@@ -54,7 +61,7 @@ def get_page() -> None:
             con.commit()
             con.close()
         else:
-            logging.info("Tried to safe database in 'database.db' but file does not exist.")
+            logger.info("Tried to safe database in 'database.db' but file does not exist.")
     ui.timer(0.1, start_prompt, once=True)
 
 

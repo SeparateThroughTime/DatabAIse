@@ -1,62 +1,63 @@
 {
-  "1": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2];",
-    "text": false
-  },
-  "2": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Int] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] DESC;",
-    "text": false
-  },
-  "3": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1] ASC, [Tabelle1].[Spalte2] DESC;",
-    "text": false
-  },
-  "4": {
-    "statement": "SELECT * FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1 Typ Date];",
-    "text": false
-  },
-  "5": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Int] AS [NeuerName], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [NeuerName] DESC;",
-    "text": true
-  },
-  "6": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Varchars] AS 'Name', [Tabelle1].[Spalte2 Typ Int] FROM [Tabelle1] ORDER BY 'Name' ASC;",
-    "text": true
-  },
-  "7": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Float] FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] > 100 ORDER BY [Tabelle1].[Spalte2] DESC;",
-    "text": true
-  },
-  "8": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2 Typ Int], [Tabelle1].[Spalte3 Typ Int] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] DESC;",
-    "text": true
-  },
-  "9": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1];",
-    "text": true
-  },
-  "10": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] ASC, [Tabelle1].[Spalte1] ASC;",
-    "text": true
-  },
-  "11": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Date] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] DESC, [Tabelle1].[Spalte1] ASC;",
-    "text": true
-  },
-  "12": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Varchars] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] LIKE 'A%' ORDER BY [Tabelle1].[Spalte1];",
-    "text": true
-  },
-  "13": {
-    "statement": "SELECT [Tabelle1].[Spalte1 Typ Int] * 2 AS 'DoppelterWert' FROM [Tabelle1] ORDER BY 'DoppelterWert' DESC;",
-    "text": true
-  },
-  "14": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] IS NULL, [Tabelle1].[Spalte2] ASC;",
-    "text": true
-  },
-  "15": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte3 Typ Int] DESC;",
-    "text": true
-  }
+  "exercise_solutions":[
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Int] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] DESC;",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1] ASC, [Tabelle1].[Spalte2] DESC;",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT * FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1 Typ Date];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Int] AS [NeuerName], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [NeuerName] DESC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Varchars] AS 'Name', [Tabelle1].[Spalte2 Typ Int] FROM [Tabelle1] ORDER BY 'Name' ASC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Float] FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] > 100 ORDER BY [Tabelle1].[Spalte2] DESC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Int], [Tabelle1].[Spalte2 Typ Int], [Tabelle1].[Spalte3 Typ Int] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] DESC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte1];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] ASC, [Tabelle1].[Spalte1] ASC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Date] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] DESC, [Tabelle1].[Spalte1] ASC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Varchars] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] LIKE 'A%' ORDER BY [Tabelle1].[Spalte1];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1 Typ Int] * 2 AS 'DoppelterWert' FROM [Tabelle1] ORDER BY 'DoppelterWert' DESC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2 Typ Varchars] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte2] IS NULL, [Tabelle1].[Spalte2] ASC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] ORDER BY [Tabelle1].[Spalte3 Typ Int] DESC;",
+      "text": true
+    }]
 }

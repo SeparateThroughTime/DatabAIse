@@ -4,6 +4,7 @@ from nicegui import ui, app
 
 import CssStyles
 import DatabAIse
+from BaseModels import CourseTemplate
 
 
 def get_page() -> None:
@@ -25,7 +26,7 @@ def get_page() -> None:
                 ui.button("Kurs 6: Unterabfragen", on_click=lambda: _on_course_x(DatabAIse.course_template_6, "Kurs 6: Unterabfragen"))
 
 
-def _on_course_x(course_template_string: str, course_name: str) -> None:
+def _on_course_x(course_template: CourseTemplate, course_name: str) -> None:
     """Function is triggered when any course button is clicked.
 
     :param course_template_string:
@@ -34,6 +35,6 @@ def _on_course_x(course_template_string: str, course_name: str) -> None:
         Name of the course for the title of the next page.
     """
 
-    app.storage.user["course_template_string"] = course_template_string
+    app.storage.user["course_template"] = course_template.model_dump_json()
     app.storage.user["course_name"] = course_name
     ui.navigate.to("/a/Kurs")
