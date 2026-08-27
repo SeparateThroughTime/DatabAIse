@@ -3,13 +3,16 @@
 This module defines the hierarchy of alle pages. Each function with
 :code:`@ui.page("path")` builds a page for the specific path.
 """
-
+import DatabAIse
 from licenses import Licenses
 from courses import ChooseCoursePage, CoursePage
 from b import BChooseCoursePage, BInstructionsPage, BCoursePage
 from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, UploadPage
 import InstructionsPage
 from nicegui import ui, Client, app
+
+
+logger = DatabAIse.create_logger("pages")
 
 
 def build() -> None:

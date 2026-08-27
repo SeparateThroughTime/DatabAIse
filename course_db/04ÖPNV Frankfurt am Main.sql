@@ -91,7 +91,7 @@ INSERT INTO 'fahrten' VALUES ('18', '7', '7', '1', '15:00:00', '15:35:00', '2023
 INSERT INTO 'fahrten' VALUES ('19', '8', '8', '2', '16:00:00', '16:45:00', '2023-10-27');
 INSERT INTO 'fahrten' VALUES ('20', '9', '9', '4', '17:00:00', '17:55:00', '2023-10-27');
 INSERT INTO 'fahrten' VALUES ('21', '10', '10', '5', '18:00:00', '18:20:00', '2023-10-27');
-CREATE TABLE 'fahrkarten' ('fahrkarteid' INT PRIMARY KEY, 'typ' VARCHAR(255), 'preis' DECIMAL(5,2), 'gueltigkeitsdauer' VARCHAR(255), 'verkaufsdatum' DATE);
+CREATE TABLE 'fahrkarten' ('fahrkarteid' INT PRIMARY KEY, 'typ' VARCHAR(255), 'preis' DEC(5,2), 'gueltigkeitsdauer' VARCHAR(255), 'verkaufsdatum' DATE);
 INSERT INTO 'fahrkarten' VALUES ('1', 'Einzelfahrt', '2.9', '2 Stunden', '2023-10-26');
 INSERT INTO 'fahrkarten' VALUES ('2', 'Tageskarte', '7.5', '1 Tag', '2023-10-26');
 INSERT INTO 'fahrkarten' VALUES ('3', 'Wochenkarte', '25.0', '7 Tage', '2023-10-25');

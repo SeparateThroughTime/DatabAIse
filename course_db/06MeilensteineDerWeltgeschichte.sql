@@ -1,6 +1,6 @@
 CREATE DATABASE 'geschichte';
 USE 'geschichte';
-CREATE TABLE 'ereignisse' ('ereignis_id' INTEGER PRIMARY KEY, 'beschreibung' TEXT, 'jahr' INTEGER, 'ort' TEXT, 'epoche_id' INTEGER, 'kulturkreis_id' INTEGER);
+CREATE TABLE 'ereignisse' ('ereignis_id' INT PRIMARY KEY, 'beschreibung' TEXT, 'jahr' INT, 'ort' TEXT, 'epoche_id' INT, 'kulturkreis_id' INT);
 INSERT INTO 'ereignisse' VALUES ('1', 'Bau der Pyramiden von Gizeh', '-2580', 'Gizeh, Aegypten', '1', '1');
 INSERT INTO 'ereignisse' VALUES ('2', 'Schlacht von Marathon', '-490', 'Marathon, Griechenland', '2', '2');
 INSERT INTO 'ereignisse' VALUES ('3', 'Fall des Westroemischen Reiches', '476', 'Rom, Italien', '3', '2');
@@ -21,7 +21,7 @@ INSERT INTO 'ereignisse' VALUES ('17', 'Industrielle Revolution', '1760', 'Gross
 INSERT INTO 'ereignisse' VALUES ('18', 'Apollo 11 Mondlandung', '1969', 'Mond', '8', '7');
 INSERT INTO 'ereignisse' VALUES ('19', 'Gruendung der Vereinten Nationen', '1945', 'San Francisco, USA', '8', '7');
 INSERT INTO 'ereignisse' VALUES ('20', 'Pest in Europa (Schwarzer Tod)', '1347', 'Europa', '4', '3');
-CREATE TABLE 'persoenlichkeiten' ('persoenlichkeit_id' INTEGER PRIMARY KEY, 'name' TEXT, 'geburtsjahr' INTEGER, 'beruf' TEXT);
+CREATE TABLE 'persoenlichkeiten' ('persoenlichkeit_id' INT PRIMARY KEY, 'name' TEXT, 'geburtsjahr' INT, 'beruf' TEXT);
 INSERT INTO 'persoenlichkeiten' VALUES ('1', 'Kleopatra VII.', '-69', 'Pharaonin');
 INSERT INTO 'persoenlichkeiten' VALUES ('2', 'Alexander der Grosse', '-356', 'Koenig, Feldherr');
 INSERT INTO 'persoenlichkeiten' VALUES ('3', 'Julius Caesar', '-100', 'Staatsmann, Feldherr');
@@ -42,7 +42,7 @@ INSERT INTO 'persoenlichkeiten' VALUES ('17', 'William Shakespeare', '1564', 'Dr
 INSERT INTO 'persoenlichkeiten' VALUES ('18', 'Nelson Mandela', '1918', 'Praesident, Aktivist');
 INSERT INTO 'persoenlichkeiten' VALUES ('19', 'Konfuzius', '-551', 'Philosoph');
 INSERT INTO 'persoenlichkeiten' VALUES ('20', 'Hippokrates', '-460', 'Arzt');
-CREATE TABLE 'epochen' ('epoche_id' INTEGER PRIMARY KEY, 'name' TEXT, 'startjahr' INTEGER, 'endjahr' INTEGER);
+CREATE TABLE 'epochen' ('epoche_id' INT PRIMARY KEY, 'name' TEXT, 'startjahr' INT, 'endjahr' INT);
 INSERT INTO 'epochen' VALUES ('1', 'Antike (Fruehzeit)', '-3500', '-500');
 INSERT INTO 'epochen' VALUES ('2', 'Antike (Klassik)', '-500', '500');
 INSERT INTO 'epochen' VALUES ('3', 'Fruehmittelalter', '500', '1000');
@@ -51,7 +51,7 @@ INSERT INTO 'epochen' VALUES ('5', 'Spaetmittelalter/Fruehe Neuzeit', '1300', '1
 INSERT INTO 'epochen' VALUES ('6', 'Neuzeit (bis Industrielle Revolution)', '1600', '1850');
 INSERT INTO 'epochen' VALUES ('7', 'Moderne', '1850', '1945');
 INSERT INTO 'epochen' VALUES ('8', 'Zeitgeschichte', '1945', '2024');
-CREATE TABLE 'kulturkreis' ('kulturkreis_id' INTEGER PRIMARY KEY, 'name' TEXT, 'region' TEXT, 'hauptsprache' TEXT);
+CREATE TABLE 'kulturkreis' ('kulturkreis_id' INT PRIMARY KEY, 'name' TEXT, 'region' TEXT, 'hauptsprache' TEXT);
 INSERT INTO 'kulturkreis' VALUES ('1', 'Aegyptische Hochkultur', 'Nordafrika', 'Aegyptisch');
 INSERT INTO 'kulturkreis' VALUES ('2', 'Griechisch-Roemische Antike', 'Mittelmeerraum', 'Griechisch, Latein');
 INSERT INTO 'kulturkreis' VALUES ('3', 'Westeuropaeischer Kulturkreis', 'Westeuropa', 'Diverse');
@@ -60,7 +60,7 @@ INSERT INTO 'kulturkreis' VALUES ('5', 'Mesopotamischer Kulturkreis', 'Naher Ost
 INSERT INTO 'kulturkreis' VALUES ('6', 'Chinesischer Kulturkreis', 'Ostasien', 'Chinesisch');
 INSERT INTO 'kulturkreis' VALUES ('7', 'Nordamerikanischer Kulturkreis', 'Nordamerika', 'Englisch');
 INSERT INTO 'kulturkreis' VALUES ('8', 'Indischer Kulturkreis', 'Suedasien', 'Hindi, Sanskrit');
-CREATE TABLE 'persoenlichkeit_ereignis' ('persoenlichkeit_ereignis_id' INTEGER PRIMARY KEY, 'persoenlichkeit_id' INTEGER, 'ereignis_id' INTEGER);
+CREATE TABLE 'persoenlichkeit_ereignis' ('persoenlichkeit_ereignis_id' INT PRIMARY KEY, 'persoenlichkeit_id' INT, 'ereignis_id' INT);
 INSERT INTO 'persoenlichkeit_ereignis' VALUES ('1', '2', '2');
 INSERT INTO 'persoenlichkeit_ereignis' VALUES ('2', '3', '13');
 INSERT INTO 'persoenlichkeit_ereignis' VALUES ('3', '4', '3');
@@ -81,7 +81,7 @@ INSERT INTO 'persoenlichkeit_ereignis' VALUES ('17', '16', '5');
 INSERT INTO 'persoenlichkeit_ereignis' VALUES ('18', '8', '16');
 INSERT INTO 'persoenlichkeit_ereignis' VALUES ('19', '14', '2');
 INSERT INTO 'persoenlichkeit_ereignis' VALUES ('20', '19', '15');
-CREATE TABLE 'errungenschaften' ('errungenschaft_id' INTEGER PRIMARY KEY, 'beschreibung' TEXT, 'persoenlichkeit_id' INTEGER);
+CREATE TABLE 'errungenschaften' ('errungenschaft_id' INT PRIMARY KEY, 'beschreibung' TEXT, 'persoenlichkeit_id' INT);
 INSERT INTO 'errungenschaften' VALUES ('1', 'Eroberung Persiens', '2');
 INSERT INTO 'errungenschaften' VALUES ('2', 'Roemischer Staatsmann und Feldherr', '3');
 INSERT INTO 'errungenschaften' VALUES ('3', 'Begruender des Heiligen Roemischen Reiches', '4');

@@ -7,166 +7,151 @@ The functions for prompting use strings excessively.
 This is because the AI APIs use strings as inputs and return strings.
 Probably a conversion is necessary after using them.
 """
-
+import json
 import os
 import re
-import warnings
 import logging
-from typing import Any
 
-from openai import OpenAI, AsyncOpenAI
 from agents import Agent, Runner, ModelSettings
-from google import genai
-from google.genai import types
 from openai.types import Reasoning
 
 import Pages
-from nicegui import ui
-from BaseModels import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type
+from BaseModels import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type, _Table3, \
+    _Attribute, _DataEntry, CourseTemplate, Course
 
 
-try:
-    course_1_db = open("course_db/01Kochbuch.sql").read()
-    """Database for control group of study for course 1 (cookbook): 
-    :doc:`/templates/course_db_1`
-    
-    :meta hide-value:"""
-    course_2_db = open("course_db/02Berufsorientierung.sql").read()
-    """Database for control group of study for course 2 (career orientation): 
-    :doc:`/templates/course_db_2`
-    
-    :meta hide-value:"""
-    course_3_db = open("course_db/03Nachbarschafts-Bibliothek.sql").read()
-    """Database for control group of study for course 3 (library): 
-    :doc:`/templates/course_db_3`
-    
-    :meta hide-value:"""
-    course_4_db = open("course_db/04ÖPNV Frankfurt am Main.sql").read()
-    """Database for control group of study for course 4 (public transport in Ffm): 
-    :doc:`/templates/course_db_4`
-    
-    :meta hide-value:"""
-    course_5_db = open("course_db/05Musikarchiv.sql").read()
-    """Database for control group of study for course 5 (music archive): 
-    :doc:`/templates/course_db_5`
-    
-    :meta hide-value:"""
-    course_6_db = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
-    """Database for control group of study for course 6 (milestones of history): 
-    :doc:`/templates/course_db_6`
-    
-    :meta hide-value:"""
-    course_template_1 = open("course_templates/01Projektion.json").read()
-    """Template for projection: :doc:`/templates/course_template_1`
-    
-    :meta hide-value:"""
-    course_template_2 = open("course_templates/02Selektion.json").read()
-    """Template for selection: :doc:`/templates/course_template_2`
-    
-    :meta hide-value:"""
-    course_template_3 = open("course_templates/03Sortierung.json").read()
-    """Template for sorting: :doc:`/templates/course_template_3`
-    
-    :meta hide-value:"""
-    course_template_4 = open("course_templates/04Aggregatsfunktionen.json").read()
-    """Template for aggregate functions: :doc:`/templates/course_template_4`
-    
-    :meta hide-value:"""
-    course_template_5 = open("course_templates/05Join.json").read()
-    """Template for joins: :doc:`/templates/course_template_5`
-    
-    :meta hide-value:"""
-    course_template_6 = open("course_templates/06Unterabfragen.json").read()
-    """Template for sub queries: :doc:`/templates/course_template_6`
-    
-    :meta hide-value:"""
-    example_json = open("db_generation/Example.json").read()
-    """This is how a db is formatted as json in this project.
-    
-    See also :doc:`/templates/example_json`
-    
-    :meta hide-value:"""
+_course_verify_sample_solutions_to_database_agent = Agent(
+    name="sample solution database verifier",
+    instructions="""Verify if a list of queries is executable for a specific database.
+                 Especially check if the table and attribute names match.
+                 Verify if the execution return at least 3 entries for queries that contain ordering and otherwise 
+                 at least 1 entry.
+                 Replace the queries that do not fulfill the conditions with similar queries that fulfill it.
+                 The list of SQL queries contain a 'text' boolean which should also be included unchanged in 
+                 your response.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=CourseTemplate
+)
 
-except FileNotFoundError as e:
-    # Readthedocs has problems reading the file paths. This is a simple and inelegant solution.
-    warnings.warn(repr(e), UserWarning)
+_course_verify_sample_solutions_to_course_template_agent = Agent(
+    name="sample solution verifier",
+    instructions="""Verify if a list of concrete SQL queries match a list of abstract SQL queries.
+                 The abstract queries contain instructions inside of square brackets which should be fulfilled
+                 in the concrete queries.
+                 The concrete queries must not have any additions that are not in the abstracts queries.
+                 Alter queries that do not fulfill the condition with similar queries that fulfill it and 
+                 return the new concrete queries.
+                 The data contain a 'text' boolean which should also be included unchanged in your response.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=CourseTemplate
+)
 
+_course_create_sample_solutions_agent = Agent(
+    name="sample solution generator",
+    instructions="""You are transforming abstract SQL queries to concrete SQL queries for a specific database.
+                 The abstract queries contain instructions inside of square brackets.
+                 You have to analyze the database and replace the instructions with whatever is asked for.
+                 Example-statement: 'SELECT [Spalte1], [Spalte2] FROM [Tabelle1];'
+                 Example of your modification: 'SELECT benutzername, level FROM spieler;'
+                 You must not add any other additions to the queries.
+                 Executing the SQL query must return at least 1 entry.
+                 If the query contains ordering it must return at least 3 entries.
+                 The input of the abstract SQL queries contain a 'text' boolean
+                 which must be kept for the concrete queries.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=CourseTemplate
+)
 
-async def course_create_exercise(sql_statements: str) -> str:
-    """Generates underlying story and exercises for a list of sql statements.
+async def course_create_sample_solutions(database: DatabaseStructure3, course_template: CourseTemplate) -> CourseTemplate:
+    """Generates SQL statements with a given database and course template.
 
-    .. role:: json(code)
-        :language: json
-
-    :param sql_statements:
-        Sql statements in json format.
-        Can be any type that can be cast to string.
-        Should have format of :data:`example_json`
-    :return:
-        | Story and exercises in json format:
-        | :json:`{"0": "underlying_story",`
-        | :json:`"1": "task_description_1",`
-        | :json:`"2": "task_description_2",`
-        | ...
-        | :json:`"n": "task_description_n"}`
-
+    :param database: Database with data.
+    :param course_template:
+        Abstract course template. See :doc:`templates/course_templates` for
+        more information.
+    :return: Sample solutions for the course.
     """
 
-    system_content = ("You are creating exercises for students learning SQL. "
-                      "The prompts have following structure:\n"
-                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}\n'
-                      "The SQL-Statements are the solutions of the exercises you have to create. "
-                      "For SQL-Statements where the text-entry is false the exercise should simply ask for a statement by descriping the desired result with the tables and columns. "
-                      "For SQL-Statements where the text-entry is true the exercise should not use the names of tables and columns "
-                      "but a description a non-technical person would give and a fictive reason for why the SQL-Statement is to be done. "
-                      "The exercises must be in german. Pay attention to a correct german grammar. "
-                      "All names of tables or columns should be in single quotation marks. "
-                      "You create a motivating underlying story line which is also explaining the structure of the database. "
-                      "Your response is only the resulting exercise as json in following structure:"
-                      '{"0": underlying_story, "1": task_description_1, "2": task_description_2, ..., "n": task_description_n}\n')
-    result = await _main_prompt(system_content, sql_statements, 4, "json")
-    return await _course_verify_exercise(sql_statements, result)
+    result = await Runner.run(_course_create_sample_solutions_agent,
+                              f"Generate sample solutions for database: {database.model_dump_json()} with the "
+                              f"abstract SQL queries: {course_template.model_dump_json()}.")
+    result = await Runner.run(_course_verify_sample_solutions_to_course_template_agent,
+                              f"abstract SQL queries: {course_template.model_dump_json()}, "
+                              f"concrete SQL queries: {result.final_output.model_dump_json}")
+    result = await Runner.run(_course_verify_sample_solutions_to_database_agent,
+                              f"SQL queries: {result.final_output.model_dump_json}, "
+                              f"database: {database.model_dump_json()}")
+    return result.final_output
 
 
-async def course_create_sql_statements(db_json: str, course_template_json: str) -> str:
-    """Generates sql statements with a given database and course template.
+_course_create_exercise_agent = Agent(
+    name="exercise generator",
+    instructions="""You are creating exercises for students learning SQL.
+                 You get a list of SQL queries which are the solutions for the exercises you have to generate.
+                 For SQL queries where the 'text' variable is false the exercise should simply ask for a query by
+                 describing the desired result with the tables and attributes.
+                 For SQL queries where the 'text' variable is true the exercise should not use explicitly the names of 
+                 tables and attributes but give a description a non-technical person would give and a fictive reason for
+                 why the SQL query is to be done.
+                 The exercises must be in german language.
+                 All names of tables or columns should be in single quotation marks.
+                 You create also a motivating underlying story line which is explaining the structure of the database.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=Course
+)
+"""Agent to generate exercises based on SQL queries."""
 
-    .. role:: json(code)
-        :language: json
+_course_verify_exercise_agent = Agent(
+    name="exercise verifier",
+    instructions="""Verify if a list of exercises match the corresponding sample solutions.
+                 If it does not match, alter the exercise.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=Course
+)
+"""Agent to verify that exercises and sample solutions fit."""
 
-    :param db_json:
-        Database in json format. Can be any type that can be cast to string.
-        Should have format of :data:`example_json`.
-    :param course_template_json:
-        Json with course template. Can be any type that can be cast to string.
-        See :doc:`/templates/course_templates` for more information.
-    :return:
-        | Sample solutions for the course with json format:
-        | :json:`{"1": {"statement": "statement_1", "text": false},`
-        | :json:`"2": {"statement": "statement_2", "text": false},`
-        | ...
-        | :json:`"n": {"statement": "statement_n", "text": true}}`
+async def course_create_exercise(sample_solutions: CourseTemplate) -> Course:
+    """Generates underlying story and exercises with sample solutions.
 
+    :param sample_solutions: Concrete sample solutions for the course.
+    :return: Course with underlying story and exercises.
     """
 
-    system_content = ("You are filling SQL-statements with informations from a database. "
-                      "The prompts have following structure:\n"
-                      '{"database": database, '
-                      '"sql_statements": '
-                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}\n'
-                      "The SQL-statements contain instructions inside of square brackets. "
-                      "You have to analyze the sql_file and replace the instructions with whatever is asked for. "
-                      "Example-statement: 'SELECT [Spalte1], [Spalte2] FROM [Tabelle1];' "
-                      "Your modification: 'SELECT benutzername, level FROM spieler;' "
-                      "You must not add any other additions to the statements. "
-                      "Executing the SQL statements must return at least 1 entry. "
-                      "If it contains ordering it must return at least 3 entries. "
-                      "Your response is a json in following structure: "
-                      '{"1": {"statement": statement_1, "text": false}, "2": {"statement": statement_2, "text": false}, ..., "n": {"statement": statement_n, "text": true}}')
-    user_content = f'{{"sql_file": "{db_json}", "exercise_template": {course_template_json}}}'
-    result = await _main_prompt(system_content, user_content, 4, "json")
-    #return await _course_verify_sql_statements(db_json, result, course_template_json)
-    return result
+    result = await Runner.run(_course_create_exercise_agent,sample_solutions.model_dump_json())
+    result = await Runner.run(_course_verify_exercise_agent,
+                              f"""Sample solutions: {sample_solutions.model_dump_json()}
+                              f"Exercises: {result.final_output.model_dump_json}""")
+    return result.final_output
 
 
 # TODO: Check if conditions are fulfilled.
@@ -369,30 +354,52 @@ async def db_fill(db_structure: DatabaseStructure2) -> DatabaseStructure3:
 
 
 def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
-    """Converts a json to a sql string.
+    """Converts a DatabaseStructure3 object to a sql string.
 
     :param database: database with data.
     :return: String of sql statements to create database.
     """
 
+    logger.info("Converting DatabaseStructure3 object to string")
+    if logger.getEffectiveLevel() == logging.DEBUG:
+        db_wo_data = {
+            "topic": database.topic,
+            "tables": [{
+                "name": table.name,
+                "attributes": [{
+                    "name": attribute.name,
+                    "type": attribute.type,
+                    "x": attribute.x,
+                    "y": attribute.y
+                } for attribute in table.attributes]
+            } for table in database.tables]
+        }
+        logger.debug(f"DatabaseStructure3 object:\n{json.dumps(db_wo_data, indent=2)}")
+
     sql_list = []
     sql_list.append(f"CREATE DATABASE '{database.topic}'")
     sql_list.append(f"USE '{database.topic}'")
+    logger.debug("Create database")
 
     foreign_keys = []
+    logger.debug("Iterate tables")
     for table in database.tables:
+        logger.debug(f"Table '{table.name}'")
         create_table_string = f"CREATE TABLE '{table.name}' ("
+        logger.debug("Iterate attributes")
         for attribute in table.attributes:
+            logger.debug(f"Attribute '{attribute.name}'")
             create_table_string += f"'{attribute.name}' {attribute.type}"
             if (attribute.type == Type.VARCHAR or attribute.type == Type.INT) and attribute.x != None:
                 create_table_string += f"({attribute.x})"
             elif attribute.type == Type.DEC and attribute.x != None and attribute.y != None:
-                create_table_string += f"({attribute.x}, {attribute.y})"
+                create_table_string += f"({attribute.x},{attribute.y})"
             create_table_string += ", "
         create_table_string = create_table_string[:-2]
         create_table_string += ")"
         sql_list.append(create_table_string)
 
+        logger.debug("Iterate data entries")
         for entry in table.data_entries:
             insert_entry_string = f"INSERT INTO '{table.name}' VALUES ("
             for value in entry.data_points:
@@ -407,8 +414,8 @@ def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
     return sql_string
 
 
-def sql_to_json(sql_string: str) -> dict[str, Any]:
-    """Converts a sql string to a json.
+def sql_to_db_structure_3(sql_string: str, disable_debug: bool = True) -> DatabaseStructure3:
+    """Converts a sql string to a DatababaseStructure3 object.
 
     .. role:: sql(code)
         :language: sql
@@ -426,384 +433,226 @@ def sql_to_json(sql_string: str) -> dict[str, Any]:
         | :sql:`INSERT INTO table_n VALUES(dataset_1);`
         | ...
         | :sql:`INSERT INTO table_n VALUES(dataset_n);`
-    :return: transformed json object.
+    :param disable_debug: Prevent log clustering in debug logging level.
+    :return: transformed DatabaseStructure3 object.
     """
-    json_obj = {}
-    database = {}
-    json_obj["database"] = database
-    tables = []
-    database["topic"] = ""
-    database["tables"] = tables
 
+    logger_level_changed = False
+    logger_level: int
+    if disable_debug and logger.getEffectiveLevel() == logging.DEBUG:
+        logger_level_changed = True
+        logger_level = logger.level
+        logger.setLevel(logging.INFO)
+
+
+    logger.info("Converting sql string to DatabaseStructure3 object.")
+    logger.debug(f"SQL string:\n{sql_string}")
+    topic = ""
+    tables: list[_Table3] = []
+
+    # Start of Loop
     queries = sql_string.splitlines()
     query_pointer = 0
     while query_pointer < len(queries):
         query = queries[query_pointer]
+        logger.debug(f"Query: {query}")
         words = query.split()
 
+        # Get topic
         if words[0] == "CREATE" and words[1] == "DATABASE":
-            database["topic"] = re.sub("'", "", words[2])
+            logger.debug("Create database")
+            topic = re.sub("'", "", words[2])
             query_pointer = query_pointer + 2
 
+        # Get tables
         elif words[0] == "CREATE" and words[1] == "TABLE":
-            table = {}
-            tables.append(table)
-            table["name"] = words[2].replace("'", "")
-            columns = []
-            table["columns"] = columns
+            logger.debug("Create table")
+            table_name = words[2].replace("'", "")
+            logger.debug(f"table name: {table_name}")
+            attributes: list[_Attribute] = []
 
+            # Get attributes
+            logger.debug("Getting attributes")
             word_pointer = 3
             while word_pointer < len(words):
-                column = {}
-                columns.append(column)
-                column["name"] = re.sub("['(]", "", words[word_pointer])
-                column_type = words[word_pointer + 1]
-                column_type = column_type[:-1] if column_type.endswith(";") else column_type
-                column_type = column_type[:-1] if column_type.endswith(")") else column_type
-                column_type = column_type[:-1] if column_type.endswith(",") else column_type
-                column["type"] = column_type
+                attribute_name = re.sub("['(]", "", words[word_pointer])
+                logger.debug(f"Attribute name: {attribute_name}")
+                # attribute_full_type is with paremeters. I.e. VARCHAR(255)
+                attribute_full_type = words[word_pointer + 1]
+                logger.debug(f"Attribute type: {attribute_full_type}")
+                attribute_full_type_split = re.split("[(,]", attribute_full_type)
+                attribute_full_type_split = [s for s in attribute_full_type_split if s != ""]
+                attribute_type_string = attribute_full_type_split[0]
+                attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(";") else attribute_type_string
+                attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(")") else attribute_type_string
+                attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(",") else attribute_type_string
+                attribute_type = Type(attribute_type_string)
+                attribute_x = None
+                attribute_y = None
+                if len(attribute_full_type_split) > 1:
+                    attribute_x_string = re.sub("[^0-9]", "", attribute_full_type_split[1])
+                    attribute_x = int(attribute_x_string)
+                if len(attribute_full_type_split) > 2:
+                    attribute_y_string = re.sub("[^0-9]", "", attribute_full_type_split[2])
+                    attribute_y = int(attribute_y_string)
                 if word_pointer + 2 >= len(words):
                     word_pointer = word_pointer + 2
                 elif words[word_pointer + 2] == "PRIMARY":
-                    column["primary"] = "true"
+                    attribute_type = Type.INT_PRIMARY_KEY
                     word_pointer = word_pointer + 4
                 else:
                     word_pointer = word_pointer + 2
 
-            data = []
-            table["data"] = data
+                # Create attribute
+                attribute = _Attribute(name=attribute_name, type=attribute_type, x=attribute_x, y=attribute_y)
+                attributes.append(attribute)
+
+            # Get data entries
+            logger.debug("Getting data")
+            data_entries: list[_DataEntry] = []
             while True:
                 query_pointer = query_pointer + 1
                 if query_pointer >= len(queries):
                     break
                 query = queries[query_pointer]
+                logger.debug(f"Query: {query}")
                 words = query.split()
                 if words[0] != "INSERT":
                     break
 
-                entry = {}
-                data.append(entry)
-                for word_pointer in range(4, len(columns) + 4):
-                    column_name = columns[word_pointer - 4]["name"]
-                    entry[column_name] = re.sub("[()',;]", "", words[word_pointer])
+                #Get data points
+                data_points: list[str] = []
+                for word_pointer in range(4, len(attributes) + 4):
+                    data_points.append(re.sub("[()',;]", "", words[word_pointer]))
 
-    return json_obj
+                # Create data entry
+                data_entry = _DataEntry(data_points=data_points)
+                data_entries.append(data_entry)
 
+            # Create table
+            table = _Table3(name=table_name, attributes=attributes, data_entries=data_entries)
+            tables.append(table)
 
-async def _course_verify_exercise(sql_statements: str, exercises: str) -> str:
-    """Helper function for :func:`course_create_exercise`.
+    # Create database
+    database = DatabaseStructure3(topic=topic, tables=tables)
+    logger.info("Finished conversion.")
 
-    Verifies and optimizes the generated exercises.
+    if logger_level_changed:
+        logger.setLevel(logger_level)
 
-    :param sql_statements:
-        Sql statements in json format.
-        Can be any type that can be cast to string.
-        Should have format of example_json.
-    :param exercises: Exercises generated by course_create_exercise.
-    :return: Optimized exercises in JSON format.
-    """
-
-    system_content = ("You get a json containing exercises and a json with the sample solutions. "
-                      "Verify if the exercise fits the corresponding sample solution. "
-                      "If it does not fit, change the exercise to fit the sample solution. "
-                      "Your response is only the altered json with the exercises in unchanged structure. ")
-    user_content = f'exercises: {exercises}, sample_solutions: {sql_statements}'
-    result = await _main_prompt(system_content, user_content, 4, "json")
-    return result
-
-
-async def _course_verify_sql_statements(db_json: str, course_json: str, course_template_json: str) -> str:
-    """Helper function for :func:`course_create_sql_statements`.
-
-    Verifies and optimizes the generated sample solution.
-
-    :param db_json:
-        Database in json format. Can be any type that can be cast to string.
-        Should have format of example_json.
-    :param course_json:
-        The sample solutions generated by course_create_sql_statements.
-    :param course_template_json:
-        Database in json format. Can be any type that can be cast to string.
-        Should have format of example_json.
-    :return: Optimized sample solutions for the course with json format.
-    """
-
-    system_content = ("You get a json with a template for SQL queries and a json with corresponding SQL queries. "
-                      "Verify if the SQL queries in the second json fit the template and its instructions. "
-                      "The second json must not have any additions to the template. "
-                      "Alter queries that do not fulfill the condition with similar queries that fulfill it. "
-                      "Your response is the altered json in unchanged structure. ")
-    user_content = f'template: "{course_template_json}", query_json: {course_json}'
-    result1 = await _main_prompt(system_content, user_content, 4, "json")
-
-    system_content = ("You get a json containing a database and a json with a series of SQL queries. "
-                      "Verify if the result for the queries that contain ordering return at least 3 entries "
-                      "and the result of the other queries return at least 1 entry with the given database. "
-                      "Replace the queries that do not fulfill the condition with similar queries that fulfill it. "
-                      "Your response is the altered json in unchanged structure. ")
-    user_content = f'sql_file: "{db_json}", query_json: {result1}'
-    result2 = await _main_prompt(system_content, user_content, 4, "json")
-    return result2
-
-
-async def _main_prompt(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
-    """This is the function for prompting that should be used by all agents.
-
-    Initially this function was to try multiple AI models in case of one or
-    more failing.
-
-    Currently only OpenAI is used as gemini and deepseek where not reliable
-    upon there accessibility. The structure of *Agent -> Abstract Prompt ->
-    Concrete Prompt* will be kept though, to be flexible if this changes in
-    future.
-
-    :param system_content: System Content for prompt
-    :param user_content: User Content for prompt
-    :param reasoner:
-        Integer between 0 and 12 determining the 'intelligence' of AI
-    :param response_format: Valid formats are "json" and "text"
-    """
-
-    try:
-        response = await _prompt_openai(system_content, user_content, reasoner, response_format)
-    except Exception as e:
-        warnings.warn(str(e), RuntimeWarning)
-        response = "Kritischer Fehler: Keine Kommunikation mit der KI möglich!"
-        with ui.dialog() as dialog:
-            ui.label(response)
-            ui.button("Ok :(", on_click=dialog.close)
-        await dialog.open()
-        raise Exception("Kommunikation mit der KI fehlgeschlagen.")
-    return response
-
-
-async def _prompt_deepseek(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
-    """Deepseek API call.
-
-    :param system_content: System content for API call.
-    :param user_content: User content for API call.
-    :param reasoner:
-        Values <= 5 use deepseek-chat. Values > 5 use deepseek-reasoner.
-    :param response_format: Can be "json" or "text"
-    :return: Only the content of response.
-    """
-
-    model = "deepseek-reasoner" if reasoner > 5 else "deepseek-chat"
-    response_format = "json_object" if response_format == "json" else "text"
-    ai_client = OpenAI(api_key=os.environ.get('DEEPSEEK_API_KEY'), base_url="https://api.deepseek.com")
-    response = ai_client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system",
-             "content": system_content},
-            {"role": "user",
-             "content": user_content},
-        ],
-        response_format={'type': response_format},
-        stream=False
-    )
-    return response.choices[0].message.content
-
-
-async def _prompt_gemini(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
-    """Gemini API call.
-
-    :param system_content: System content for API call
-    :param user_content: User content for API call
-    :param reasoner:
-        0 -> gemini-2.5-flash-lite with 0 thinking budget
-        1 -> gemini-2.5-flash-lite with 4096 thinking budget
-        2 -> gemini-2.5-flash-lite with 24576 thinking budget
-        3 -> gemini-2.5-flash with 0 thinking budget
-        4 -> gemini-2.5-flash with 4096 thinking budget
-        5 -> gemini-2.5-flash with 24576 thinking budget
-        6 -> gemini-3-flash-preview with minimal thinking level
-        7 -> gemini-3-flash-preview with low thinking level
-        8 -> gemini-3-flash-preview with medium thinking level
-        9 -> gemini-3-flash-preview with high thinking level
-        10 -> gemini-3.1-pro-preview with low thinking level
-        11 -> gemini-3.1-pro-preview with medium thinking level
-        12 -> gemini-3.1-pro-preview with high thinking level
-    :param response_format:
-    :return: Only the content of response.
-    """
-
-    match reasoner:
-        case 0:
-            thinking_config = types.ThinkingConfig(thinking_budget=0)
-            model = "gemini-2.5-flash-lite"
-        case 1:
-            thinking_config = types.ThinkingConfig(thinking_budget=4096)
-            model = "gemini-2.5-flash-lite"
-        case 2:
-            thinking_config = types.ThinkingConfig(thinking_budget=24576)
-            model = "gemini-2.5-flash-lite"
-        case 3:
-            thinking_config = types.ThinkingConfig(thinking_budget=0)
-            model = "gemini-2.5-flash"
-        case 4:
-            thinking_config = types.ThinkingConfig(thinking_budget=4096)
-            model = "gemini-2.5-flash"
-        case 5:
-            thinking_config = types.ThinkingConfig(thinking_budget=24576)
-            model = "gemini-2.5-flash"
-        case 6:
-            thinking_config = types.ThinkingConfig(thinking_level="minimal")
-            model = "gemini-3-flash-preview"
-        case 7:
-            thinking_config = types.ThinkingConfig(thinking_level="low")
-            model = "gemini-3-flash-preview"
-        case 8:
-            thinking_config = types.ThinkingConfig(thinking_level="medium")
-            model = "gemini-3-flash-preview"
-        case 9:
-            thinking_config = types.ThinkingConfig(thinking_level="high")
-            model = "gemini-3-flash-preview"
-        case 10:
-            thinking_config = types.ThinkingConfig(thinking_level="low")
-            model = "gemini-3.1-pro-preview"
-        case 11:
-            thinking_config = types.ThinkingConfig(thinking_level="medium")
-            model = "gemini-3.1-pro-preview"
-        case 12:
-            thinking_config = types.ThinkingConfig(thinking_level="high")
-            model = "gemini-3.1-pro-preview"
-        case _:
-            raise Exception("Unexpected value '" + str(reasoner) + "' for thinking config!")
-    match response_format:
-        case "json":
-            response_format = "application/json"
-        case "text":
-            response_format = "text/plain"
-        case _:
-            raise Exception("Unexpected value '" + str(response_format) + "' for response format!")
-
-    ai_client = genai.Client()
-    response = await ai_client.aio.models.generate_content(
-        model=model,
-        contents=user_content,
-        config=types.GenerateContentConfig(
-            thinking_config=thinking_config,
-            system_instruction=system_content,
-            responseMimeType=response_format,
-            safety_settings=[
-                {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold': 'BLOCK_LOW_AND_ABOVE'},
-                {'category': 'HARM_CATEGORY_HARASSMENT', 'threshold': 'BLOCK_LOW_AND_ABOVE'},
-                {'category': 'HARM_CATEGORY_HATE_SPEECH', 'threshold': 'BLOCK_LOW_AND_ABOVE'},
-                {'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold': 'BLOCK_LOW_AND_ABOVE'}
-            ]
-        )
-    )
-    return response.candidates[0].content.parts[0].text
-
-
-async def _prompt_openai(system_content: str, user_content: str, reasoner: int, response_format: str) -> str:
-    """OpenAI API call.
-
-    .. attention::
-
-        Function currently uses always text mode as response format!
-        During development there was a change in API usage.
-        Due to missing time resources it was changed to only use text mode.
-        Nonetheless, it does produce correct jsons most of the time.
-
-    :param system_content: System content for API call
-    :param user_content: User content for API call
-    :param reasoner:
-        0-5 -> gpt-5-mini with medium effort
-        6,7 -> gpt-5 with low effort
-        8 -> gpt-5 with medium effort
-        9 -> gpt-5 with high effort
-        10 -> gpt-5.4 with medium effort
-        11 -> gpt-5.4 with high effort
-        12 -> gpt-5.4 with xhigh effort
-    :param response_format: Currently not used.
-    :return: Only the content of response.
-    """
-    match reasoner:
-        case 0:
-            model = "gpt-5-nano"
-            effort = "minimal"
-        case 1:
-            model = "gpt-5-nano"
-            effort = "low"
-        case 2:
-            model = "gpt-5-nano"
-            effort = "medium"
-        case 3:
-            model = "gpt-5-nano"
-            effort = "high"
-        case 4:
-            model = "gpt-5.6-luna"
-            effort = "none"
-        case 5:
-            model = "gpt-5.6-luna"
-            effort = "low"
-        case 6:
-            model = "gpt-5.6-luna"
-            effort = "medium"
-        case 7:
-            model = "gpt-5.6-luna"
-            effort = "high"
-        case 8:
-            model = "gpt-5.6-luna"
-            effort = "xhigh"
-        case 9:
-            model = "gpt-5.6-luna"
-            effort = "max"
-        case 10:
-            model = "gpt-5.6-terra"
-            effort = "medium"
-        case 11:
-            model = "gpt-5.6-terra"
-            effort = "high"
-        case 12:
-            model = "gpt-5.6-terra"
-            effort = "xhigh"
-        case 13:
-            model = "gpt-5.6-terra"
-            effort = "max"
-        case 14:
-            model = "gpt-5.6-sol"
-            effort = "medium"
-        case 15:
-            model = "gpt-5.6-sol"
-            effort = "high"
-        case 16:
-            model = "gpt-5.6-sol"
-            effort = "xhigh"
-        case 17:
-            model = "gpt-5.6-sol"
-            effort = "max"
-        case _:
-            model = "gpt-5-nano"
-            effort = "minimal"
-
-    ai_client = AsyncOpenAI()
-    response = await ai_client.responses.parse(
-        model=model,
-        reasoning={"effort": effort},
-        input=[
-            {"role": "system",
-             "content": system_content},
-            {"role": "user",
-             "content": user_content},
-        ],
-        stream=False
-    )
-    return response.output_text
+    return database
 
 
 def _check_databases_exist():
     """Checks if databases.db exists."""
 
     if not os.path.isfile("databases.db"):
-        logging.warning("""'databases.db' does not exist. Run 'CreateDatabase.py' to create file and log all databases
+        logger.warning("""'databases.db' does not exist. Run 'CreateDatabase.py' to create file and log all databases
                         created with DatabAIse.""")
 
 
-if __name__ in {"__main__", "__mp_main__"}:
-    logging.basicConfig(filename="last_run.log", filemode="w",
-                        format="%(asctime)s - %(levelname)s - %(message)s")
+LOGGING_LEVEL = logging.DEBUG
+def create_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger("databaise") if name == "" else logging.getLogger(f"databaise.{name}")
+    if logger.hasHandlers():
+        return logger
+
+    formatter = logging.Formatter("%(asctime)s - %(name)s.%(funcName)s - %(levelname)s: %(message)s")
+
+    file_handler = logging.FileHandler("last_run.log")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(LOGGING_LEVEL)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(LOGGING_LEVEL)
+    logger.addHandler(console_handler)
+
+    logger.setLevel(LOGGING_LEVEL)
+    logger.propagate = False
+
+    return logger
+logger = create_logger("")
+
+
+
+try:
+    course_1_db: DatabaseStructure3 \
+        = sql_to_db_structure_3(open("course_db/01Kochbuch.sql").read())
+    """Database for control group of study for course 1 (cookbook): 
+    :doc:`/templates/course_db_1`
+    
+    :meta hide-value:"""
+    course_2_db: DatabaseStructure3 \
+        = sql_to_db_structure_3(open("course_db/02Berufsorientierung.sql").read())
+    """Database for control group of study for course 2 (career orientation): 
+    :doc:`/templates/course_db_2`
+    
+    :meta hide-value:"""
+    course_3_db: DatabaseStructure3 \
+        = sql_to_db_structure_3(open("course_db/03Nachbarschafts-Bibliothek.sql").read())
+    """Database for control group of study for course 3 (library): 
+    :doc:`/templates/course_db_3`
+    
+    :meta hide-value:"""
+    course_4_db: DatabaseStructure3 \
+        = sql_to_db_structure_3(open("course_db/04ÖPNV Frankfurt am Main.sql").read())
+    """Database for control group of study for course 4 (public transport in Ffm): 
+    :doc:`/templates/course_db_4`
+    
+    :meta hide-value:"""
+    course_5_db: DatabaseStructure3 \
+        = sql_to_db_structure_3(open("course_db/05Musikarchiv.sql").read())
+    """Database for control group of study for course 5 (music archive): 
+    :doc:`/templates/course_db_5`
+    
+    :meta hide-value:"""
+    course_6_db: DatabaseStructure3 \
+        = sql_to_db_structure_3(open("course_db/06MeilensteineDerWeltgeschichte.sql").read())
+    """Database for control group of study for course 6 (milestones of history): 
+    :doc:`/templates/course_db_6`
+    
+    :meta hide-value:"""
+    course_template_1: CourseTemplate \
+        = CourseTemplate.model_validate_json(open("course_templates/01Projektion.json").read())
+    """Template for projection: :doc:`/templates/course_template_1`
+    
+    :meta hide-value:"""
+    course_template_2: CourseTemplate \
+        = CourseTemplate.model_validate_json(open("course_templates/02Selektion.json").read())
+    """Template for selection: :doc:`/templates/course_template_2`
+    
+    :meta hide-value:"""
+    course_template_3: CourseTemplate \
+        = CourseTemplate.model_validate_json(open("course_templates/03Sortierung.json").read())
+    """Template for sorting: :doc:`/templates/course_template_3`
+    
+    :meta hide-value:"""
+    course_template_4: CourseTemplate \
+        = CourseTemplate.model_validate_json(open("course_templates/04Aggregatsfunktionen.json").read())
+    """Template for aggregate functions: :doc:`/templates/course_template_4`
+    
+    :meta hide-value:"""
+    course_template_5: CourseTemplate \
+        = CourseTemplate.model_validate_json(open("course_templates/05Join.json").read())
+    """Template for joins: :doc:`/templates/course_template_5`
+    
+    :meta hide-value:"""
+    course_template_6: CourseTemplate \
+        = CourseTemplate.model_validate_json(open("course_templates/06Unterabfragen.json").read())
+    """Template for sub queries: :doc:`/templates/course_template_6`
+    
+    :meta hide-value:"""
+except FileNotFoundError as e:
+    # readthedocs has problems reading the file paths. This is a simple and inelegant solution.
+    logger.warning(repr(e))
+
+
+if __name__ == "__main__":
+    log_file = open("last_run.log", "w")
+    log_file.truncate()
+    log_file.close()
+    logging.basicConfig()
     _check_databases_exist()
     Pages.build()

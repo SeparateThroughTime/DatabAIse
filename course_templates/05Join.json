@@ -1,62 +1,63 @@
 {
-  "1": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": false
-  },
-  "2": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": false
-  },
-  "3": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] RIGHT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": false
-  },
-  "4": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] OUTER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": false
-  },
-  "5": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": false
-  },
-  "6": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] OUTER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": false
-  },
-  "7": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
-    "text": true
-  },
-  "8": {
-    "statement": "SELECT [NeuerName1].[Spalte1], [NeuerName2].[Spalte2] FROM [Tabelle1] AS [NeuerName1] INNER JOIN [Tabelle1] AS [NeuerName2] ON [NeuerName1].[NeuerName2 ID] = [NeuerName2].[NeuerName1 ID];",
-    "text": false
-  },
-  "9": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID] WHERE [Tabelle1].[Spalte1] > [Integer];",
-    "text": true
-  },
-  "10": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID] WHERE [Tabelle2].[Tabelle1 ID] IS NULL;",
-    "text": true
-  },
-  "11": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID] ORDER BY [Tabelle2].[Spalte2] DESC;",
-    "text": true
-  },
-  "12": {
-    "statement": "SELECT [Tabelle1].[Spalte1] AS [NeuerName1], [Tabelle2].[Spalte1] AS [NeuerName2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle2 ID];",
-    "text": true
-  },
-  "13": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] CROSS JOIN [Tabelle2];",
-    "text": true
-  },
-  "14": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte1], [Tabelle3].[Spalte1] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[T2_ID] = [Tabelle2].[ID] INNER JOIN [Tabelle3] ON [Tabelle2].[Tabelle3 ID] = [Tabelle3].[Tabelle2 ID];",
-    "text": true
-  },
-  "15": {
-    "statement": "SELECT COUNT([Tabelle1].[ID]), [Tabelle2].[Spalte2] FROM [Tabelle1] RIGHT JOIN [Tabelle2] ON [Tabelle1].[T2_ID] = [Tabelle2].[ID] GROUP BY [Tabelle2].[Spalte2];",
-    "text": true
-  }
+  "exercise_solutions":[
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] RIGHT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] OUTER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] OUTER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [NeuerName1].[Spalte1], [NeuerName2].[Spalte2] FROM [Tabelle1] AS [NeuerName1] INNER JOIN [Tabelle1] AS [NeuerName2] ON [NeuerName1].[NeuerName2 ID] = [NeuerName2].[NeuerName1 ID];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID] WHERE [Tabelle1].[Spalte1] > [Integer];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] LEFT JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID] WHERE [Tabelle2].[Tabelle1 ID] IS NULL;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle1 ID] ORDER BY [Tabelle2].[Spalte2] DESC;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1] AS [NeuerName1], [Tabelle2].[Spalte1] AS [NeuerName2] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[Tabelle2 ID] = [Tabelle2].[Tabelle2 ID];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte2] FROM [Tabelle1] CROSS JOIN [Tabelle2];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle2].[Spalte1], [Tabelle3].[Spalte1] FROM [Tabelle1] INNER JOIN [Tabelle2] ON [Tabelle1].[T2_ID] = [Tabelle2].[ID] INNER JOIN [Tabelle3] ON [Tabelle2].[Tabelle3 ID] = [Tabelle3].[Tabelle2 ID];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT COUNT([Tabelle1].[ID]), [Tabelle2].[Spalte2] FROM [Tabelle1] RIGHT JOIN [Tabelle2] ON [Tabelle1].[T2_ID] = [Tabelle2].[ID] GROUP BY [Tabelle2].[Spalte2];",
+      "text": true
+    }]
 }

@@ -5,28 +5,36 @@
     Occasionally the Page gets in an endless reload loop. The cause could be a reload on connection loss
     when the AI takes too long. Further investigation necessary.
 """
-
-import json
+import logging
 import sqlite3
+from typing import Any
+
 import pandas
 from nicegui import ui, app, events
 
 import CssStyles
 import DatabAIse
+from BaseModels import DatabaseStructure3, CourseTemplate, Course
+
+logger = DatabAIse.create_logger("course_page")
 
 
 def get_page() -> None:
     """Function to build the page"""
 
+    logger.info("Start loading page.")
+    sql_string = app.storage.user["sql_string"]
+    logger.debug(f"Creating virtual database with SQL file:\n{sql_string}")
     database = sqlite3.connect(":memory:")
-    for query in app.storage.user["sql_string"].splitlines()[2:]:
+    for query in sql_string.splitlines()[2:]:
         try:
             database.execute(query)
         except Exception as e:
             raise Exception("SQL Error for '" + query + "':", e)
     database.commit()
+    logger.info("Virtual database connected.")
 
-    with ui.card().style(CssStyles.maincard_style):
+    with (ui.card().style(CssStyles.maincard_style)):
         with ui.column().classes("items-start", remove="items-center"):
             choose_course_button = ui.button("Zurück zu Kurswahl", on_click=lambda: ui.navigate.to("/a/Kurswahl"))
 
@@ -58,12 +66,15 @@ def get_page() -> None:
                     ui.markdown("Tabellen der Datenbank").classes("text-h5")
                     with ui.row():
                         database_tables = []
-                        for table in app.storage.user["db_json"]["database"]["tables"]:
-                            with ui.expansion(table["name"]):
+                        database_structure: DatabaseStructure3 \
+                            = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
+                        for table in database_structure.tables:
+                            with ui.expansion(table.name):
                                 database_tables.append(ui.table(columns=[{'name': "name", 'label': "Spalte", 'field': "name"},
-                                                                         {'name': "type", 'label': "Typ", 'field': "type"},
-                                                                         {'name': "primary", 'label': "Primärschlüssel", 'field': "primary"}],
-                                                                rows=table["columns"]))
+                                                                         {'name': "type", 'label': "Typ", 'field': "type"}],
+                                                                rows=[{"name": attribute.name, "type": attribute.type}
+                                                                      for attribute in table.attributes]))
+    logger.info("Page built finished.")
 
 
     def finished_course() -> None:
@@ -80,8 +91,10 @@ def get_page() -> None:
         compared to the result of the sample solution and the user gets a
         feedback whether there answer is correct.
         """
+        sample_solutions: CourseTemplate = CourseTemplate.model_validate_json(app.storage.user["sample_solutions"])
+        exercise_counter: int = app.storage.user["exercise_counter"]
+        correct_query = sample_solutions.exercise_solutions[exercise_counter].sql_query
 
-        correct_query = app.storage.user["solutions_json"][str(app.storage.user["exercise_counter"])]["statement"]
         correct_result = pandas.read_sql_query(correct_query, database)
 
         try:
@@ -117,32 +130,43 @@ def get_page() -> None:
     def next_exercise() -> None:
         """Triggered from the next_button to display next exercise."""
 
-        app.storage.user["exercise_counter"] = app.storage.user["exercise_counter"] + 1
-        if str(app.storage.user["exercise_counter"] + 1) not in app.storage.user["exercise_json"]:
+        course: Course = Course.model_validate_json(app.storage.user["course"])
+        exercise_counter: int = app.storage.user["exercise_counter"]
+        exercise_counter = exercise_counter + 1
+        if exercise_counter + 1 > len(course.exercises):
             next_button.on("click", finished_course)
             next_button.text = "Kurs abschließen"
 
-        if str(app.storage.user["exercise_counter"]) not in app.storage.user["exercise_json"]:
-            #raise Exception("Exercise " + str(app.storage.user["exercise_counter"]) + " does not exist in:\n" + str(app.storage.user["exercise_json"]))
+        if exercise_counter > len(course.exercises):
+            #raise Exception("Exercise " + str(exercise_counter) + " does not exist in:\n" + str(app.storage.user["exercise_json"]))
             return
 
         result_table.visible = False
         result_feedback_label.visible = False
-        exercise_textfield.content = app.storage.user["exercise_json"][str(app.storage.user["exercise_counter"])]
+        exercise_textfield.content = course.exercises[exercise_counter]
         sql_input.value = ""
+
+        app.storage.user["exercise_counter"] = exercise_counter
 
 
     async def start_prompt() -> None:
         """Start prompt and update page afterward."""
 
-        solutions_string = await DatabAIse.course_create_sql_statements(app.storage.user["db_json"], app.storage.user["course_template_string"])
-        app.storage.user["solutions_json"] = json.loads(solutions_string)
-        exercise_string = await DatabAIse.course_create_exercise(solutions_string)
-        app.storage.user["exercise_json"] = json.loads(exercise_string)
+        logger.info("Start_prompt() started.")
+        database = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
+        course_template = CourseTemplate.model_validate_json(app.storage.user["course_template"])
+        logger.info("Start AI call for sample solutions.")
+        sample_solutions = await DatabAIse.course_create_sample_solutions(database, course_template)
+        logger.info("Sample solutions generated.")
+        app.storage.user["sample_solutions"] = sample_solutions.model_dump_json()
+        logger.info("Start AI call for course generation.")
+        course = await DatabAIse.course_create_exercise(sample_solutions)
+        logger.info("Course generated.")
+        app.storage.user["course"] = course.model_dump_json()
 
-        story_textfield.content = app.storage.user["exercise_json"]["0"]
+        story_textfield.content = course.story
 
-        app.storage.user["exercise_counter"] = 0
+        app.storage.user["exercise_counter"] = -1
 
         next_exercise()
 
@@ -153,6 +177,7 @@ def get_page() -> None:
 
         next_button.text = "Nächste Aufgabe"
         next_button.on("click", next_exercise)
+        logger.info("UI updated.")
     ui.timer(0.21, start_prompt, once=True)
 
     def handle_key(e: events.KeyEventArguments) -> None:

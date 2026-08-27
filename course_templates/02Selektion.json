@@ -1,62 +1,63 @@
 {
-  "1": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] = '[Varchar]';",
-    "text": false
-  },
-  "2": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] > [Int];",
-    "text": false
-  },
-  "3": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] BETWEEN [Int] AND [Int];",
-    "text": false
-  },
-  "4": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] LIKE '[VARCHAR]%';",
-    "text": true
-  },
-  "5": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] <= [Int] AND [Tabelle1].[Spalte3] LIKE '%[VARCHAR]%';",
-    "text": false
-  },
-  "6": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] BETWEEN [Int] AND [Int] OR [Tabelle1].[Spalte1] = [Int];",
-    "text": true
-  },
-  "7": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] NOT LIKE '%[VARCHAR]';",
-    "text": true
-  },
-  "8": {
-    "statement": "SELECT * FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] IS NULL;",
-    "text": true
-  },
-  "9": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] IN ('[Varchar]', '[Varchar]', '[Varchar]');",
-    "text": true
-  },
-  "10": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] != [Int] AND [Tabelle1].[Spalte2] IS NOT NULL;",
-    "text": true
-  },
-  "11": {
-    "statement": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] >= [Int] AND [Tabelle1].[Spalte1] <= [Int];",
-    "text": true
-  },
-  "12": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3], [Tabelle1].[Spalte4] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] LIKE '_[Varchar]%';",
-    "text": true
-  },
-  "13": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE ([Tabelle1].[Spalte1] = [Int] OR [Tabelle1].[Spalte1] = [Int]) AND [Tabelle1].[Spalte2] > [Int];",
-    "text": true
-  },
-  "14": {
-    "statement": "SELECT * FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] NOT BETWEEN [Int] AND [Int];",
-    "text": true
-  },
-  "15": {
-    "statement": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] < [Int] OR [Tabelle1].[Spalte2] LIKE '[Varchar]';",
-    "text": true
-  }
+  "exercise_solutions":[
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] = '[Varchar]';",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] > [Int];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] BETWEEN [Int] AND [Int];",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte2] LIKE '[VARCHAR]%';",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] <= [Int] AND [Tabelle1].[Spalte3] LIKE '%[VARCHAR]%';",
+      "text": false
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] BETWEEN [Int] AND [Int] OR [Tabelle1].[Spalte1] = [Int];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] NOT LIKE '%[VARCHAR]';",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT * FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] IS NULL;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] IN ('[Varchar]', '[Varchar]', '[Varchar]');",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] != [Int] AND [Tabelle1].[Spalte2] IS NOT NULL;",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] >= [Int] AND [Tabelle1].[Spalte1] <= [Int];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2], [Tabelle1].[Spalte3], [Tabelle1].[Spalte4] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] LIKE '_[Varchar]%';",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE ([Tabelle1].[Spalte1] = [Int] OR [Tabelle1].[Spalte1] = [Int]) AND [Tabelle1].[Spalte2] > [Int];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT * FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] NOT BETWEEN [Int] AND [Int];",
+      "text": true
+    },
+    {
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1] WHERE [Tabelle1].[Spalte1] < [Int] OR [Tabelle1].[Spalte2] LIKE '[Varchar]';",
+      "text": true
+    }]
 }
