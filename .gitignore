@@ -8,3 +8,4 @@ last_run.log
 /licenses/__pycache__
 /docs/_build
 databases.db
+/out
