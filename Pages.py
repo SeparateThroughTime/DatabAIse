@@ -3,18 +3,37 @@
 This module defines the hierarchy of alle pages. Each function with
 :code:`@ui.page("path")` builds a page for the specific path.
 """
-import DatabAIse
+
 import logger_module
 from licenses import Licenses
 from courses import ChooseCoursePage, CoursePage
-from b import BChooseCoursePage, BInstructionsPage, BCoursePage
 from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, UploadPage
 import InstructionsPage
 from nicegui import ui, Client, app
 
+PRETEST_LINK: str = "https://cryptpad.fr/form/#/2/form/view/rEpyzVy1ixXJbHELucLHyHNXjWjd9ByDePDkkDOu2C0/"
+POSTTEST_LINK: str = "https://cryptpad.fr/form/#/2/form/view/v1pD9HRuMrT9mytSd2yxBCkn9T6rXGQCr21Pndo-Lk8/"
 
 logger = logger_module.create_logger("pages")
 
+_page_links_experimental_group = {
+    "home": "/a",
+    "choose_course": "/a/Kurswahl",
+    "course": "/a/Kurs",
+    "licenses": "/a/Lizenzen",
+    "choose_topic": "/a/Themenwahl",
+    "choose_tables": "/a/Tabellenwahl",
+    "choose_attributes": "/a/Attributswahl",
+    "create_database": "/a/Datenbank",
+    "upload_database": "/a/Upload"
+}
+
+_page_links_control_group = {
+    "home": "/b",
+    "choose_course": "/b/Kurswahl",
+    "course": "/b/Kurs",
+    "licenses": "/b/Lizenzen"
+}
 
 def build() -> None:
     """Starts NiceGUI."""
@@ -23,26 +42,28 @@ def build() -> None:
            storage_secret="A>dQ@KgXnXQD0iXs", reconnect_timeout=10.0, reload=False)
 
 
-def footer(root: str) -> None:
+def footer(control_group:bool = False) -> None:
     """Builds the footer for every page.
 
     Needs to run for every page **after** the actual page.
 
-    :param root: path to front page.
+    :param control_group:
+        Whether the header is for the control or experimental group.
     """
     with ui.footer(elevated=True):
         app.add_static_file(local_file="LICENSE", url_path="/Lizenz")
         ui.link("released under the MIT-License", "/Lizenz", new_tab=True)
-        ui.link("utilized software", root + "/Lizenzen")
-        ui.label("published by David Seßner")
+        ui.link("utilized software", get_page_link("licenses", control_group))
+        ui.label("developed by David Seßner")
 
 
-def header(root: str) -> None:
+def header(control_group: bool = False) -> None:
     """Builds the header for every page and defines default styles.
 
     This needs to run for every page **before** the actual page.
 
-    :param root: path to front page.
+    :param control_group:
+        Whether the header is for the control or experimental group.
     """
     ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#80acff", dark="#1d1d1d", dark_page="#0d347a")
 
@@ -63,116 +84,129 @@ def header(root: str) -> None:
     ui.textarea.default_style('width: 90%; background-color: gainsboro')
 
     with ui.header(elevated=True):
-        ui.image("images/favicon.png").classes('w-8 cursor-pointer').on("click", lambda: ui.navigate.to(root))
+        ui.image("images/favicon.png").classes('w-8 cursor-pointer').on("click",
+                                                lambda: ui.navigate.to(get_page_link("home", control_group)))
         ui.label("DatabAIse").classes('text-h5')
         ui.label(" ")
 
 
-@ui.page("/a")
+@ui.page(_page_links_experimental_group["home"])
 def a_instructions(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     InstructionsPage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Kurswahl")
+@ui.page(_page_links_experimental_group["choose_course"])
 def a_choose_course(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     ChooseCoursePage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Kurs")
+@ui.page(_page_links_experimental_group["course"])
 def a_course(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     CoursePage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Lizenzen")
+@ui.page(_page_links_experimental_group["licenses"])
 def a_licenses(client: Client) -> None:
     client.content.classes("items-center")
-    header("/a")
+    header()
     Licenses.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/b")
+@ui.page(_page_links_control_group["home"])
 def b_instructions(client: Client) -> None:
     client.content.classes('items-center')
-    header("/b")
-    BInstructionsPage.get_page()
-    footer("/b")
+    header(True)
+    InstructionsPage.get_page(True)
+    footer(True)
 
 
-@ui.page("/b/Kurswahl")
+@ui.page(_page_links_control_group["choose_course"])
 def b_choose_course(client: Client) -> None:
     client.content.classes("items-center")
-    header("/b")
-    BChooseCoursePage.get_page()
-    footer("/b")
+    header(True)
+    ChooseCoursePage.get_page(True)
+    footer(True)
 
 
-@ui.page("/b/Kurs")
+@ui.page(_page_links_control_group["course"])
 def b_course(client: Client) -> None:
     client.content.classes('items-center')
-    header("/b")
-    BCoursePage.get_page()
-    footer("/b")
+    header(True)
+    CoursePage.get_page(True)
+    footer(True)
 
 
-@ui.page("/b/Lizenzen")
+@ui.page(_page_links_control_group["licenses"])
 def b_licenses(client: Client) -> None:
     client.content.classes("items-center")
-    header("/b")
-    Licenses.get_page()
-    footer("/b")
+    header(True)
+    Licenses.get_page(True)
+    footer(True)
 
 
-@ui.page("/a/Spaltenwahl")
+@ui.page(_page_links_experimental_group["choose_attributes"])
 def choose_columns(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     Gen03ChooseColumnsPage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Tabellenwahl")
+@ui.page(_page_links_experimental_group["choose_tables"])
 def choose_table(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     Gen02ChooseTablesPage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Themenwahl")
+@ui.page(_page_links_experimental_group["choose_topic"])
 def choose_topic(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     Gen01ChooseTopicPage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Datenbank")
+@ui.page(_page_links_experimental_group["create_database"])
 def create_database(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     Gen04CreateDatabasePage.get_page()
-    footer("/a")
+    footer()
 
 
-@ui.page("/a/Upload")
+@ui.page(_page_links_experimental_group["upload_database"])
 def upload(client: Client) -> None:
     client.content.classes('items-center')
-    header("/a")
+    header()
     UploadPage.get_page()
-    footer("/a")
+    footer()
+
+
+def get_page_link(page_key: str, control_group: bool) -> str:
+    """Function to get the link to the pages.
+
+    :param page_key: Like *'home'* or *'choose_topic'*.
+    :param control_group:
+        Whether it returns the link for control group or experimental group.
+    :return: Link to the page.
+    """
+
+    return _page_links_control_group[page_key] if control_group else _page_links_experimental_group[page_key]
 
 
 #TODO: Only for development. Should be deleted before launch!
 @ui.page("/")
 def root_page() -> None:
-    ui.navigate.to("/a")
+    ui.navigate.to(_page_links_experimental_group["home"])

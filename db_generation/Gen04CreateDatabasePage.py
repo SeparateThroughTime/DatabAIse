@@ -1,24 +1,23 @@
 """Module for page where the database is created and can be downloaded."""
 
-import json
 import logging
 import os.path
 
 from nicegui import ui, app, events
 import re
 import sqlite3
-from typing import Any
 
 import CssStyles
 import DatabAIse
 import logger_module
 from BaseModels import DatabaseStructure1, DatabaseStructure3
+import Pages
 
 
 logger: logging.Logger = logger_module.create_logger(__name__)
 
 
-def get_page() -> None:
+def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
     logger.info("Start page build.")
@@ -51,7 +50,7 @@ def get_page() -> None:
 
         download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
         download_button.text = "Download SQL"
-        course_button.on("click", lambda: ui.navigate.to("/a/Kurswahl"))
+        course_button.on("click", lambda: ui.navigate.to(Pages.get_page_link("choose_course", control_group)))
         course_button.text = "Zur Kurswahl"
 
         if os.path.isfile("databases.db"):
@@ -75,15 +74,15 @@ def _format_database(database: DatabaseStructure3) -> None:
     :param json_obj: JSON to be formatted.
     """
 
-    database.topic = _namingConventions(_replaceUmlaute(database.topic))
+    database.topic = _namingConventions(_replaceUmlauts(database.topic))
 
     for table in database.tables:
-        table.name = _namingConventions(_replaceUmlaute(table.name))
+        table.name = _namingConventions(_replaceUmlauts(table.name))
         for attribute in table.attributes:
-            attribute.name = _namingConventions(_replaceUmlaute(attribute.name))
+            attribute.name = _namingConventions(_replaceUmlauts(attribute.name))
         for entry in table.data_entries:
             for i in range(len(entry.data_points)):
-                entry.data_points[i] = _replaceUmlaute(_removeApostrophes(entry.data_points[i]))
+                entry.data_points[i] = _replaceUmlauts(_removeApostrophes(entry.data_points[i]))
 
 
 def _namingConventions(s: str) -> str:
@@ -109,7 +108,7 @@ def _removeApostrophes(s: str) -> str:
         return s
 
 
-def _replaceUmlaute(s: str) -> str:
+def _replaceUmlauts(s: str) -> str:
     """Replaces all german umlauts with transliterations"""
 
     if type(s) is str:

@@ -6,9 +6,10 @@ from nicegui import ui, app, events
 import CssStyles
 import DatabAIse
 from BaseModels import DatabaseStructure0, DatabaseStructure1, _Table1
+import Pages
 
 
-def get_page() -> None:
+def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
     database_build : DatabaseStructure0 = DatabaseStructure0.model_validate(app.storage.user["database_build"])
@@ -64,24 +65,24 @@ def get_page() -> None:
                 attribute_counter = attribute_counter + 1
             table_counter = table_counter + 1
 
-        button.on("click", lambda: _next_page(attribute_inputs))
+        button.on("click", lambda: _next_page(attribute_inputs, control_group))
         button.text = "Senden"
     ui.timer(0.1, start_prompt, once=True)
 
     def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
-            _next_page(attribute_inputs)
+            _next_page(attribute_inputs, control_group)
     ui.keyboard(on_key=handle_key, ignore=[])
 
 
-def _next_page(column_inputs: list[list[Input]]) -> None:
+def _next_page(column_inputs: list[list[Input]], control_group: bool) -> None:
     """Saves columns and redirects to CreateDatabasePage"""
 
     database_build : DatabaseStructure0 = DatabaseStructure0.model_validate(app.storage.user["database_build"])
     topic = database_build.topic
     table_names = database_build.tables
 
-    tables : list[DatabaseStructure1.Table] = []
+    tables : list[_Table1] = []
     for i in range(len(column_inputs)):
         attributes_for_table : list[str] = []
         for j in range(len(column_inputs[i])):
@@ -92,4 +93,4 @@ def _next_page(column_inputs: list[list[Input]]) -> None:
     new_database_build = DatabaseStructure1(topic=topic, tables=tables)
     app.storage.user["database_build"] = new_database_build.model_dump()
 
-    ui.navigate.to("/a/Datenbank")
+    ui.navigate.to(Pages.get_page_link("create_database", control_group))

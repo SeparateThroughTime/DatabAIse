@@ -1,0 +1,6 @@
+- Columns to Attributes
+- Eliminate import loops
+- Refactor Module names
+- Safe course
+- Course navigation
+- Update Licenses

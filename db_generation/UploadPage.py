@@ -6,9 +6,10 @@ from nicegui.elements.upload_files import FileUpload
 
 import CssStyles
 import DatabAIse
+import Pages
 
 
-def get_page() -> None:
+def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
     with ui.card().style(CssStyles.maincard_style):
@@ -18,22 +19,22 @@ def get_page() -> None:
             upload_input = ui.upload(label="SQL-File", max_file_size=16384, on_upload=lambda e: _on_upload(e.file), auto_upload=True).props('accept=".sql"')
             err_label = ui.label("Keine Datei ausgewählt!")
             err_label.visible = False
-            ui.button("Zur Kurswahl", on_click=lambda: _next_page(err_label))
+            ui.button("Zur Kurswahl", on_click=lambda: _next_page(err_label, control_group))
 
     def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
-            _next_page(err_label)
+            _next_page(err_label, control_group)
     ui.keyboard(on_key=handle_key)
 
 
-def _next_page(err_label: Label) -> None:
+def _next_page(err_label: Label, control_group: bool) -> None:
     """Redirects to ChooseCoursePage if upload was successful."""
 
     if "sql_string" not in app.storage.user:
         err_label.visible = True
         return
 
-    ui.navigate.to("/a/Kurswahl")
+    ui.navigate.to(Pages.get_page_link("choose_course", control_group))
 
 
 async def _on_upload(sql_file: FileUpload) -> None:

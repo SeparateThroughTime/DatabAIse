@@ -559,38 +559,32 @@ def _check_databases_exist():
 logger = logger_module.create_logger("")
 # Load files
 try:
-    course_1_db: DatabaseStructure3 \
-        = sql_to_db_structure_3(open("course_db/01Kochbuch.sql").read())
+    course_1_db: str = open("course_db/01Kochbuch.sql").read()
     """Database for control group of study for course 1 (cookbook): 
     :doc:`/templates/course_db_1`
     
     :meta hide-value:"""
-    course_2_db: DatabaseStructure3 \
-        = sql_to_db_structure_3(open("course_db/02Berufsorientierung.sql").read())
+    course_2_db: str = open("course_db/02Berufsorientierung.sql").read()
     """Database for control group of study for course 2 (career orientation): 
     :doc:`/templates/course_db_2`
     
     :meta hide-value:"""
-    course_3_db: DatabaseStructure3 \
-        = sql_to_db_structure_3(open("course_db/03Nachbarschafts-Bibliothek.sql").read())
+    course_3_db: str = open("course_db/03Nachbarschafts-Bibliothek.sql").read()
     """Database for control group of study for course 3 (library): 
     :doc:`/templates/course_db_3`
     
     :meta hide-value:"""
-    course_4_db: DatabaseStructure3 \
-        = sql_to_db_structure_3(open("course_db/04ÖPNV Frankfurt am Main.sql").read())
+    course_4_db: str = open("course_db/04ÖPNV Frankfurt am Main.sql").read()
     """Database for control group of study for course 4 (public transport in Ffm): 
     :doc:`/templates/course_db_4`
     
     :meta hide-value:"""
-    course_5_db: DatabaseStructure3 \
-        = sql_to_db_structure_3(open("course_db/05Musikarchiv.sql").read())
+    course_5_db: str = open("course_db/05Musikarchiv.sql").read()
     """Database for control group of study for course 5 (music archive): 
     :doc:`/templates/course_db_5`
     
     :meta hide-value:"""
-    course_6_db: DatabaseStructure3 \
-        = sql_to_db_structure_3(open("course_db/06MeilensteineDerWeltgeschichte.sql").read())
+    course_6_db: str = open("course_db/06MeilensteineDerWeltgeschichte.sql").read()
     """Database for control group of study for course 6 (milestones of history): 
     :doc:`/templates/course_db_6`
     

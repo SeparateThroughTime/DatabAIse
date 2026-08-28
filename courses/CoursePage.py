@@ -7,7 +7,6 @@
 """
 import logging
 import sqlite3
-from typing import Any
 
 import pandas
 from nicegui import ui, app, events
@@ -16,11 +15,12 @@ import CssStyles
 import DatabAIse
 import logger_module
 from BaseModels import DatabaseStructure3, CourseTemplate, Course
+import Pages
 
-logger = logger_module.create_logger("course_page")
+logger: logging.Logger = logger_module.create_logger("course_page")
 
 
-def get_page() -> None:
+def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
     logger.info("Start loading page.")
@@ -37,7 +37,8 @@ def get_page() -> None:
 
     with (ui.card().style(CssStyles.maincard_style)):
         with ui.column().classes("items-start", remove="items-center"):
-            choose_course_button = ui.button("Zurück zu Kurswahl", on_click=lambda: ui.navigate.to("/a/Kurswahl"))
+            choose_course_button = ui.button("Zurück zu Kurswahl",
+                                on_click=lambda: ui.navigate.to(Pages.get_page_link("choose_course", control_group)))
 
         with ui.column():
             topic_markdown = ui.markdown(app.storage.user["course_name"])
@@ -81,7 +82,7 @@ def get_page() -> None:
     def finished_course() -> None:
         """Triggered from the next_button after the last exercise to return to ChooseCoursePage."""
 
-        ui.navigate.to("/Kurswahl")
+        ui.navigate.to(Pages.get_page_link("choose_course", control_group))
 
 
     def run_sql() -> None:

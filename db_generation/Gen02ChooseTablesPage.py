@@ -6,9 +6,10 @@ from nicegui import ui, app, events, elements
 import CssStyles
 import DatabAIse
 from BaseModels import DatabaseStructure0
+import Pages
 
 
-def get_page() -> None:
+def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
     topic = app.storage.user["database_build"]
@@ -42,7 +43,7 @@ def get_page() -> None:
         for i in range(len(tables)):
             table_inputs[i].value = tables[i]
 
-        button.on("click", lambda: _next_page(table_inputs))
+        button.on("click", lambda: _next_page(table_inputs, control_group))
         button.text = "Senden"
     ui.timer(0.1, start_prompt, once=True)
 
@@ -52,7 +53,7 @@ def get_page() -> None:
     ui.keyboard(on_key=handle_key, ignore=[])
 
 
-def _next_page(table_inputs: list[Input]) -> None:
+def _next_page(table_inputs: list[Input], control_group: bool) -> None:
     """Saves tables and redirects to ChooseColumnsPage"""
 
     topic = app.storage.user["database_build"]
@@ -62,4 +63,4 @@ def _next_page(table_inputs: list[Input]) -> None:
     tables = DatabaseStructure0(topic=topic, tables=table_strings)
     app.storage.user["database_build"] = tables.model_dump()
 
-    ui.navigate.to("/a/Spaltenwahl")
+    ui.navigate.to(Pages.get_page_link("choose_attributes", control_group))
