@@ -91,7 +91,7 @@ async def course_create_sample_solutions(database: DatabaseStructure3, course_te
 
     :param database: Database with data.
     :param course_template:
-        Abstract course template. See :doc:`templates/course_templates` for
+        Abstract course template. See :doc:`/templates/course_templates` for
         more information.
     :return: Sample solutions for the course.
     """
