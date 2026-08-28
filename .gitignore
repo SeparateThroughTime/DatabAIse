@@ -1,0 +1,10 @@
+/.idea
+/.nicegui
+DatabAIse.iml
+/__pycache__
+/courses/__pycache__
+/db_generation/__pycache__
+last_run.log
+/licenses/__pycache__
+/docs/_build
+databases.db
