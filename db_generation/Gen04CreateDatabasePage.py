@@ -11,10 +11,11 @@ from typing import Any
 
 import CssStyles
 import DatabAIse
+import logger_module
 from BaseModels import DatabaseStructure1, DatabaseStructure3
 
 
-logger: logging.Logger = DatabAIse.create_logger(__name__)
+logger: logging.Logger = logger_module.create_logger(__name__)
 
 
 def get_page() -> None:

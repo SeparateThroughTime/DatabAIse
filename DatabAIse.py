@@ -16,6 +16,7 @@ from agents import Agent, Runner, ModelSettings
 from openai.types import Reasoning
 
 import Pages
+import logger_module
 from BaseModels import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type, _Table3, \
     _Attribute, _DataEntry, CourseTemplate, Course
 
@@ -555,32 +556,7 @@ def _check_databases_exist():
         logger.warning("""'databases.db' does not exist. Run 'CreateDatabase.py' to create file and log all databases
                         created with DatabAIse.""")
 
-
-LOGGING_LEVEL = logging.DEBUG
-def create_logger(name: str) -> logging.Logger:
-    logger = logging.getLogger("databaise") if name == "" else logging.getLogger(f"databaise.{name}")
-    if logger.hasHandlers():
-        return logger
-
-    formatter = logging.Formatter("%(asctime)s - %(name)s.%(funcName)s - %(levelname)s: %(message)s")
-
-    file_handler = logging.FileHandler("last_run.log")
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(LOGGING_LEVEL)
-    logger.addHandler(file_handler)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(LOGGING_LEVEL)
-    logger.addHandler(console_handler)
-
-    logger.setLevel(LOGGING_LEVEL)
-    logger.propagate = False
-
-    return logger
-logger = create_logger("")
-
-
+logger = logger_module.create_logger("")
 # Load files
 try:
     course_1_db: DatabaseStructure3 \

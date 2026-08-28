@@ -4,6 +4,7 @@ This module defines the hierarchy of alle pages. Each function with
 :code:`@ui.page("path")` builds a page for the specific path.
 """
 import DatabAIse
+import logger_module
 from licenses import Licenses
 from courses import ChooseCoursePage, CoursePage
 from b import BChooseCoursePage, BInstructionsPage, BCoursePage
@@ -12,7 +13,7 @@ import InstructionsPage
 from nicegui import ui, Client, app
 
 
-logger = DatabAIse.create_logger("pages")
+logger = logger_module.create_logger("pages")
 
 
 def build() -> None:

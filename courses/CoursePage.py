@@ -14,9 +14,10 @@ from nicegui import ui, app, events
 
 import CssStyles
 import DatabAIse
+import logger_module
 from BaseModels import DatabaseStructure3, CourseTemplate, Course
 
-logger = DatabAIse.create_logger("course_page")
+logger = logger_module.create_logger("course_page")
 
 
 def get_page() -> None:
