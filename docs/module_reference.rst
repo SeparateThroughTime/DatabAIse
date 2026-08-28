@@ -7,6 +7,7 @@ Module Reference
 
    docstrings/DatabAIse
    docstrings/Pages
+   docstrings/BaseModels
    docstrings/InstructionsPage
    docstrings/CssStyles
    docstrings/CreateDatabase
