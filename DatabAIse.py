@@ -20,43 +20,7 @@ from BaseModels import DatabaseStructure0, DatabaseStructure1, DatabaseStructure
     _Attribute, _DataEntry, CourseTemplate, Course
 
 
-_course_verify_sample_solutions_to_database_agent = Agent(
-    name="sample solution database verifier",
-    instructions="""Verify if a list of queries is executable for a specific database.
-                 Especially check if the table and attribute names match.
-                 Verify if the execution return at least 3 entries for queries that contain ordering and otherwise 
-                 at least 1 entry.
-                 Replace the queries that do not fulfill the conditions with similar queries that fulfill it.
-                 The list of SQL queries contain a 'text' boolean which should also be included unchanged in 
-                 your response.""",
-    model="gpt-5.6-luna",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(
-            context="current_turn",
-            effort="low"
-        )
-    ),
-    output_type=CourseTemplate
-)
 
-_course_verify_sample_solutions_to_course_template_agent = Agent(
-    name="sample solution verifier",
-    instructions="""Verify if a list of concrete SQL queries match a list of abstract SQL queries.
-                 The abstract queries contain instructions inside of square brackets which should be fulfilled
-                 in the concrete queries.
-                 The concrete queries must not have any additions that are not in the abstracts queries.
-                 Alter queries that do not fulfill the condition with similar queries that fulfill it and 
-                 return the new concrete queries.
-                 The data contain a 'text' boolean which should also be included unchanged in your response.""",
-    model="gpt-5.6-luna",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(
-            context="current_turn",
-            effort="low"
-        )
-    ),
-    output_type=CourseTemplate
-)
 
 _course_create_sample_solutions_agent = Agent(
     name="sample solution generator",
@@ -79,6 +43,47 @@ _course_create_sample_solutions_agent = Agent(
     ),
     output_type=CourseTemplate
 )
+"""Agent for generating sample solutions."""
+
+_course_verify_sample_solutions_to_database_agent = Agent(
+    name="sample solution database verifier",
+    instructions="""Verify if a list of queries is executable for a specific database.
+                 Especially check if the table and attribute names match.
+                 Verify if the execution return at least 3 entries for queries that contain ordering and otherwise 
+                 at least 1 entry.
+                 Replace the queries that do not fulfill the conditions with similar queries that fulfill it.
+                 The list of SQL queries contain a 'text' boolean which should also be included unchanged in 
+                 your response.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=CourseTemplate
+)
+"""Agent for verifying if sample solutions match with database."""
+
+_course_verify_sample_solutions_to_course_template_agent = Agent(
+    name="sample solution verifier",
+    instructions="""Verify if a list of concrete SQL queries match a list of abstract SQL queries.
+                 The abstract queries contain instructions inside of square brackets which should be fulfilled
+                 in the concrete queries.
+                 The concrete queries must not have any additions that are not in the abstracts queries.
+                 Alter queries that do not fulfill the condition with similar queries that fulfill it and 
+                 return the new concrete queries.
+                 The data contain a 'text' boolean which should also be included unchanged in your response.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="low"
+        )
+    ),
+    output_type=CourseTemplate
+)
+"""Agent for verifying if sample solutions match with course template."""
 
 async def course_create_sample_solutions(database: DatabaseStructure3, course_template: CourseTemplate) -> CourseTemplate:
     """Generates SQL statements with a given database and course template.
@@ -576,7 +581,7 @@ def create_logger(name: str) -> logging.Logger:
 logger = create_logger("")
 
 
-
+# Load files
 try:
     course_1_db: DatabaseStructure3 \
         = sql_to_db_structure_3(open("course_db/01Kochbuch.sql").read())
