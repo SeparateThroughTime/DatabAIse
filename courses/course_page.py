@@ -11,11 +11,11 @@ import sqlite3
 import pandas
 from nicegui import ui, app, events
 
-import CssStyles
-import DatabAIse
+import gui_styles
+import databaise
 import logger_module
-from BaseModels import DatabaseStructure3, CourseTemplate, Course
-import Pages
+from base_models import DatabaseStructure3, CourseTemplate, Course
+import pages
 
 logger: logging.Logger = logger_module.create_logger("course_page")
 
@@ -35,20 +35,20 @@ def get_page(control_group: bool = False) -> None:
     database.commit()
     logger.info("Virtual database connected.")
 
-    with (ui.card().style(CssStyles.maincard_style)):
+    with (ui.card().style(gui_styles.maincard_style)):
         with ui.column().classes("items-start", remove="items-center"):
             choose_course_button = ui.button("Zurück zu Kurswahl",
-                                on_click=lambda: ui.navigate.to(Pages.get_page_link("choose_course", control_group)))
+                                             on_click=lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
 
         with ui.column():
             topic_markdown = ui.markdown(app.storage.user["course_name"])
-            with ui.card().classes(CssStyles.subcard_classes):
+            with ui.card().classes(gui_styles.subcard_classes):
                 with ui.column():
                     ui.markdown("Hintergrundgeschichte").classes("text-h5")
                     story_textfield = ui.restructured_text("Warte auf KI-Antwort")
 
 
-            with ui.card().classes(CssStyles.subcard_classes):
+            with ui.card().classes(gui_styles.subcard_classes):
                 with ui.column():
                     ui.markdown("Aufgabe").classes("text-h5")
                     exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
@@ -82,7 +82,7 @@ def get_page(control_group: bool = False) -> None:
     def finished_course() -> None:
         """Triggered from the next_button after the last exercise to return to ChooseCoursePage."""
 
-        ui.navigate.to(Pages.get_page_link("choose_course", control_group))
+        ui.navigate.to(pages.get_page_link("choose_course", control_group))
 
 
     def run_sql() -> None:
@@ -103,7 +103,7 @@ def get_page(control_group: bool = False) -> None:
             user_result = pandas.read_sql_query(sql_input.value, database)
         except pandas.errors.DatabaseError as e:
             app.storage.user["result_feedback_label_text"] = str(e)
-            app.storage.user["result_feedback_label_classes"] = CssStyles.err_msg
+            app.storage.user["result_feedback_label_classes"] = gui_styles.err_msg
             app.storage.user["result_table_visible"] = False
         else:
             app.storage.user["result_table_attributes"] = [{'name': col, 'label': col, 'field': col} for col in user_result]
@@ -112,13 +112,13 @@ def get_page(control_group: bool = False) -> None:
             result_table.rows = app.storage.user["result_table_rows"]
             if correct_result.equals(user_result):
                 app.storage.user["result_feedback_label_text"] = "Deine Antwort ist richtig!"
-                app.storage.user["result_feedback_label_classes"] = CssStyles.success_msg_classes
+                app.storage.user["result_feedback_label_classes"] = gui_styles.success_msg_classes
             else:
                 app.storage.user["result_feedback_label_text"] = ("Dein Ergebnis stimmt noch nicht mit den Lösungen überein.\n"
                                                                   "Überprüfe, ob du einen Fehler gemacht hast. Falls du trotzdem glaubst, "
                                                                   "dass deine Eingabe korrekt ist, frage bei deiner Lehrkraft nach. Da "
                                                                   "die Aufgaben KI-generiert sind, könnte auch die Lösung falsch sein.")
-                app.storage.user["result_feedback_label_classes"] = CssStyles.wrong_msg_classes
+                app.storage.user["result_feedback_label_classes"] = gui_styles.wrong_msg_classes
             app.storage.user["result_table_visible"] = True
 
         result_feedback_label.text = app.storage.user["result_feedback_label_text"]
@@ -158,11 +158,11 @@ def get_page(control_group: bool = False) -> None:
         database = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
         course_template = CourseTemplate.model_validate_json(app.storage.user["course_template"])
         logger.info("Start AI call for sample solutions.")
-        sample_solutions = await DatabAIse.course_create_sample_solutions(database, course_template)
+        sample_solutions = await databaise.course_create_sample_solutions(database, course_template)
         logger.info("Sample solutions generated.")
         app.storage.user["sample_solutions"] = sample_solutions.model_dump_json()
         logger.info("Start AI call for course generation.")
-        course = await DatabAIse.course_create_exercise(sample_solutions)
+        course = await databaise.course_create_exercise(sample_solutions)
         logger.info("Course generated.")
         app.storage.user["course"] = course.model_dump_json()
 

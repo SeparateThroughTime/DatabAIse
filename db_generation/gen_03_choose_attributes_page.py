@@ -3,10 +3,10 @@
 from nicegui.elements.input import Input
 from nicegui import ui, app, events
 
-import CssStyles
-import DatabAIse
-from BaseModels import DatabaseStructure0, DatabaseStructure1, _Table1
-import Pages
+import gui_styles
+import databaise
+from base_models import DatabaseStructure0, DatabaseStructure1, _Table1
+import pages
 
 
 def get_page(control_group: bool = False) -> None:
@@ -16,7 +16,7 @@ def get_page(control_group: bool = False) -> None:
     topic = database_build.topic
     tables = database_build.tables
 
-    with ui.card().style(CssStyles.maincard_style):
+    with ui.card().style(gui_styles.maincard_style):
         with ui.column():
             ui.markdown("Attribute der Tabellen")
             ui.restructured_text("Überprüfe, ob die Attribute für die Tabellen sinnvoll sind. "
@@ -54,7 +54,7 @@ def get_page(control_group: bool = False) -> None:
             button = ui.button("Warte auf KI-Antwort")
 
     async def start_prompt() -> None:
-        response = await DatabAIse.db_create_attributes(database_build)
+        response = await databaise.db_create_attributes(database_build)
         tables_with_attributes = response.tables
 
         table_counter = 0
@@ -76,7 +76,7 @@ def get_page(control_group: bool = False) -> None:
 
 
 def _next_page(attribute_inputs: list[list[Input]], control_group: bool) -> None:
-    """Saves attributes and redirects to CreateDatabasePage"""
+    """Saves attributes and redirects to :class:`db_generation.gen_04_create_database_page`"""
 
     database_build : DatabaseStructure0 = DatabaseStructure0.model_validate(app.storage.user["database_build"])
     topic = database_build.topic
@@ -93,4 +93,4 @@ def _next_page(attribute_inputs: list[list[Input]], control_group: bool) -> None
     new_database_build = DatabaseStructure1(topic=topic, tables=tables)
     app.storage.user["database_build"] = new_database_build.model_dump()
 
-    ui.navigate.to(Pages.get_page_link("create_database", control_group))
+    ui.navigate.to(pages.get_page_link("create_database", control_group))

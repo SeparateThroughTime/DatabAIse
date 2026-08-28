@@ -1,4 +1,0 @@
-BaseModels
-==========
-
-.. automodule:: BaseModels

@@ -1,4 +1,0 @@
-DatabAIse
-=========
-
-.. automodule:: DatabAIse

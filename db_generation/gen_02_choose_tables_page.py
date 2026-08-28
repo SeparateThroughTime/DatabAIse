@@ -3,10 +3,10 @@
 from nicegui.elements.input import Input
 from nicegui import ui, app, events, elements
 
-import CssStyles
-import DatabAIse
-from BaseModels import DatabaseStructure0
-import Pages
+import gui_styles
+import databaise
+from base_models import DatabaseStructure0
+import pages
 
 
 def get_page(control_group: bool = False) -> None:
@@ -14,7 +14,7 @@ def get_page(control_group: bool = False) -> None:
 
     topic = app.storage.user["database_build"]
 
-    with ui.card().style(CssStyles.maincard_style):
+    with ui.card().style(gui_styles.maincard_style):
         with ui.column():
             ui.markdown("Tabellen der Datenbank")
             ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "
@@ -37,7 +37,7 @@ def get_page(control_group: bool = False) -> None:
             button = ui.button("Warte auf KI-Antwort")
 
     async def start_prompt() -> None:
-        result = await DatabAIse.db_create_tables(topic)
+        result = await databaise.db_create_tables(topic)
         tables = result.tables
 
         for i in range(len(tables)):
@@ -54,7 +54,7 @@ def get_page(control_group: bool = False) -> None:
 
 
 def _next_page(table_inputs: list[Input], control_group: bool) -> None:
-    """Saves tables and redirects to :class:`db_generation.ChooseAttributesPage`"""
+    """Saves tables and redirects to :class:`db_generation.gen_03_choose_attributes_page`"""
 
     topic = app.storage.user["database_build"]
     table_strings = []
@@ -63,4 +63,4 @@ def _next_page(table_inputs: list[Input], control_group: bool) -> None:
     tables = DatabaseStructure0(topic=topic, tables=table_strings)
     app.storage.user["database_build"] = tables.model_dump()
 
-    ui.navigate.to(Pages.get_page_link("choose_attributes", control_group))
+    ui.navigate.to(pages.get_page_link("choose_attributes", control_group))

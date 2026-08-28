@@ -1,4 +1,0 @@
-ChooseCoursePage
-================
-
-.. automodule:: courses.ChooseCoursePage

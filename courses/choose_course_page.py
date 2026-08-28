@@ -3,10 +3,10 @@ import logging
 
 from nicegui import ui, app
 
-import CssStyles
-import DatabAIse
+import gui_styles
+import databaise
 import logger_module
-import Pages
+import pages
 
 
 logger: logging.Logger = logger_module.create_logger(__name__)
@@ -15,7 +15,7 @@ logger: logging.Logger = logger_module.create_logger(__name__)
 def get_page(control_group: bool = False) -> None:
     """Function to build the page."""
 
-    with ui.card().style(CssStyles.maincard_style):
+    with ui.card().style(gui_styles.maincard_style):
         with ui.column():
             ui.markdown("Kurswahl")
             ui.restructured_text("Du kannst jetzt einen Kurs auswählen. Die KI wird dann Aufgaben passend zu deiner Datenbank erstellen.\n"
@@ -54,17 +54,17 @@ def _on_course_x(course_number: int, course_name: str, control_group: bool) -> N
     try:
         match course_number:
             case 1:
-                app.storage.user["course_template"] = DatabAIse.course_template_1.model_dump_json()
+                app.storage.user["course_template"] = databaise.course_template_1.model_dump_json()
             case 2:
-                app.storage.user["course_template"] = DatabAIse.course_template_2.model_dump_json()
+                app.storage.user["course_template"] = databaise.course_template_2.model_dump_json()
             case 3:
-                app.storage.user["course_template"] = DatabAIse.course_template_3.model_dump_json()
+                app.storage.user["course_template"] = databaise.course_template_3.model_dump_json()
             case 4:
-                app.storage.user["course_template"] = DatabAIse.course_template_4.model_dump_json()
+                app.storage.user["course_template"] = databaise.course_template_4.model_dump_json()
             case 5:
-                app.storage.user["course_template"] = DatabAIse.course_template_5.model_dump_json()
+                app.storage.user["course_template"] = databaise.course_template_5.model_dump_json()
             case 6:
-                app.storage.user["course_template"] = DatabAIse.course_template_6.model_dump_json()
+                app.storage.user["course_template"] = databaise.course_template_6.model_dump_json()
             case _:
                 raise ValueError(f"Expected course_number between 1 and 6 but got {course_number}.")
     except ValueError as e:
@@ -77,22 +77,22 @@ def _on_course_x(course_number: int, course_name: str, control_group: bool) -> N
         try:
             match course_number:
                 case 1:
-                    app.storage.user["sql_string"] = DatabAIse.course_1_db
+                    app.storage.user["sql_string"] = databaise.course_1_db
                 case 2:
-                    app.storage.user["sql_string"] = DatabAIse.course_2_db
+                    app.storage.user["sql_string"] = databaise.course_2_db
                 case 3:
-                    app.storage.user["sql_string"] = DatabAIse.course_3_db
+                    app.storage.user["sql_string"] = databaise.course_3_db
                 case 4:
-                    app.storage.user["sql_string"] = DatabAIse.course_4_db
+                    app.storage.user["sql_string"] = databaise.course_4_db
                 case 5:
-                    app.storage.user["sql_string"] = DatabAIse.course_5_db
+                    app.storage.user["sql_string"] = databaise.course_5_db
                 case 6:
-                    app.storage.user["sql_string"] = DatabAIse.course_6_db
+                    app.storage.user["sql_string"] = databaise.course_6_db
                 case _:
                     raise ValueError(f"Expected course_number between 1 and 6 but got {course_number}.")
         except ValueError as e:
             logger.exception(repr(e))
             raise
 
-    ui.navigate.to(Pages.get_page_link("course", control_group))
+    ui.navigate.to(pages.get_page_link("course", control_group))
 

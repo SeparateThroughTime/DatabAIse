@@ -7,5 +7,5 @@ Here are the modules related to the course pages.
    :maxdepth: 2
    :caption: courses
 
-   courses/ChooseCoursePage
-   courses/CoursePage
+   courses/choose_course_page
+   courses/course_page

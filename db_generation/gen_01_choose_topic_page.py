@@ -2,14 +2,14 @@
 
 from nicegui import ui, app, events
 
-import CssStyles
-import Pages
+import gui_styles
+import pages
 
 
 def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
-    with ui.card().style(CssStyles.maincard_style):
+    with ui.card().style(gui_styles.maincard_style):
         with ui.column():
             ui.markdown("Thema der Datenbank")
             ui.label("Gib zuerst das Thema der Datenbank an.")
@@ -27,7 +27,7 @@ def get_page(control_group: bool = False) -> None:
 
 
 def _next_page(topic: str, control_group: bool) -> None:
-    """Saves topic that user chose and redirects to ChooseTablesPage"""
+    """Saves topic that user chose and redirects to :class:`db_generation.gen_02_choose_tables_page`"""
 
     app.storage.user["database_build"] = topic
-    ui.navigate.to(Pages.get_page_link("choose_tables", control_group))
+    ui.navigate.to(pages.get_page_link("choose_tables", control_group))

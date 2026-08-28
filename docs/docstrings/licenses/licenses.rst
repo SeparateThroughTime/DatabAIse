@@ -1,6 +1,6 @@
-Licenses
+licenses
 ========
 
-.. automodule:: licenses.Licenses
+.. automodule:: licenses.licenses
     :members:
     :undoc-members:

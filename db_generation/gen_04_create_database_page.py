@@ -7,11 +7,11 @@ from nicegui import ui, app, events
 import re
 import sqlite3
 
-import CssStyles
-import DatabAIse
+import gui_styles
+import databaise
 import logger_module
-from BaseModels import DatabaseStructure1, DatabaseStructure3
-import Pages
+from base_models import DatabaseStructure1, DatabaseStructure3
+import pages
 
 
 logger: logging.Logger = logger_module.create_logger(__name__)
@@ -24,7 +24,7 @@ def get_page(control_group: bool = False) -> None:
     database_build : DatabaseStructure1 = DatabaseStructure1.model_validate(app.storage.user["database_build"])
     topic = database_build.topic
 
-    with ui.card().style(CssStyles.maincard_style):
+    with ui.card().style(gui_styles.maincard_style):
         with ui.column():
             ui.markdown("Erstellen der Datenbank")
             ui.restructured_text("""Du hast es fast geschafft!
@@ -39,18 +39,18 @@ def get_page(control_group: bool = False) -> None:
 
     async def start_prompt() -> None:
         logger.debug("Starting prompt to finalize database.")
-        response = await DatabAIse.db_finalize_structure(database_build)
+        response = await databaise.db_finalize_structure(database_build)
         logger.debug("Starting prompt to fill database.")
-        database = await DatabAIse.db_fill(response)
+        database = await databaise.db_fill(response)
 
         _format_database(database)
-        sql_string = DatabAIse.db_structure_3_to_sql(database)
+        sql_string = databaise.db_structure_3_to_sql(database)
         app.storage.user["sql_string"] = sql_string
         app.storage.user["database_build"] = database.model_dump_json()
 
         download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
         download_button.text = "Download SQL"
-        course_button.on("click", lambda: ui.navigate.to(Pages.get_page_link("choose_course", control_group)))
+        course_button.on("click", lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
         course_button.text = "Zur Kurswahl"
 
         if os.path.isfile("databases.db"):

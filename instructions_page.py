@@ -2,8 +2,8 @@
 
 from nicegui import ui
 
-import CssStyles
-import Pages
+import gui_styles
+import pages
 
 
 
@@ -11,7 +11,7 @@ import Pages
 def get_page(control_group: bool = False) -> None:
     """Function to build the page"""
 
-    with ui.card().style(CssStyles.maincard_style):
+    with ui.card().style(gui_styles.maincard_style):
         with ui.column():
             ui.image("images/logo.png").props("width=60%")
             group_designation = "B" if control_group else "A"
@@ -29,7 +29,7 @@ def get_page(control_group: bool = False) -> None:
                                      """).style('margin-left: 10%; margin-right: 10%')
 
             ui.button("Teilnahme an der Vorumfrage",
-                      on_click=lambda: ui.navigate.to(Pages.PRETEST_LINK, new_tab=True))
+                      on_click=lambda: ui.navigate.to(pages.PRETEST_LINK, new_tab=True))
 
             with ui.card().classes("col-6", remove="col-9"):
                 if control_group:
@@ -37,14 +37,14 @@ def get_page(control_group: bool = False) -> None:
                 else:
                     _get_experimental_group_page()
 
-            ui.button("Teilnahme an der Nachumfrage", on_click=lambda: ui.navigate.to(Pages.POSTTEST_LINK, new_tab=True))
+            ui.button("Teilnahme an der Nachumfrage", on_click=lambda: ui.navigate.to(pages.POSTTEST_LINK, new_tab=True))
 
 
 def _get_control_group_page() -> None:
     ui.restructured_text("""Du kannst direkt mit der Aufgabenbearbeitung loslegen.
                                 Klicke auf **Zur Kurswahl** um zu beginnen.""")
     ui.button("Zur Kurswahl",
-              on_click=lambda: ui.navigate.to(Pages.get_page_link("choose_course", True)))
+              on_click=lambda: ui.navigate.to(pages.get_page_link("choose_course", True)))
 
 
 def _get_experimental_group_page() -> None:
@@ -55,7 +55,7 @@ def _get_experimental_group_page() -> None:
                                 klicke auf **Lade Datenbank hoch**.
                                 Falls du noch keine Datenbank erstellt hast, oder eine neue erstellen möchtest,
                                 klicke auf **Erstelle Datenbank**.""")
-    ui.button("Erstelle Datenbank", on_click=lambda: ui.navigate.to(Pages.get_page_link(
+    ui.button("Erstelle Datenbank", on_click=lambda: ui.navigate.to(pages.get_page_link(
         "choose_topic", False)))
-    ui.button("Lade Datenbank hoch", on_click=lambda: ui.navigate.to(Pages.get_page_link(
+    ui.button("Lade Datenbank hoch", on_click=lambda: ui.navigate.to(pages.get_page_link(
         "upload_database", False)))

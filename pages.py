@@ -5,10 +5,10 @@ This module defines the hierarchy of alle pages. Each function with
 """
 
 import logger_module
-from licenses import Licenses
-from courses import ChooseCoursePage, CoursePage
-from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseAttributesPage, Gen04CreateDatabasePage, UploadPage
-import InstructionsPage
+from licenses import licenses
+from courses import choose_course_page, course_page
+from db_generation import gen_01_choose_topic_page, gen_02_choose_tables_page, gen_03_choose_attributes_page, gen_04_create_database_page, upload_page
+import instructions_page
 from nicegui import ui, Client, app
 
 PRETEST_LINK: str = "https://cryptpad.fr/form/#/2/form/view/rEpyzVy1ixXJbHELucLHyHNXjWjd9ByDePDkkDOu2C0/"
@@ -94,7 +94,7 @@ def header(control_group: bool = False) -> None:
 def a_instructions(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    InstructionsPage.get_page()
+    instructions_page.get_page()
     footer()
 
 
@@ -102,7 +102,7 @@ def a_instructions(client: Client) -> None:
 def a_choose_course(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    ChooseCoursePage.get_page()
+    choose_course_page.get_page()
     footer()
 
 
@@ -110,7 +110,7 @@ def a_choose_course(client: Client) -> None:
 def a_course(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    CoursePage.get_page()
+    course_page.get_page()
     footer()
 
 
@@ -118,7 +118,7 @@ def a_course(client: Client) -> None:
 def a_licenses(client: Client) -> None:
     client.content.classes("items-center")
     header()
-    Licenses.get_page()
+    licenses.get_page()
     footer()
 
 
@@ -126,7 +126,7 @@ def a_licenses(client: Client) -> None:
 def b_instructions(client: Client) -> None:
     client.content.classes('items-center')
     header(True)
-    InstructionsPage.get_page(True)
+    instructions_page.get_page(True)
     footer(True)
 
 
@@ -134,7 +134,7 @@ def b_instructions(client: Client) -> None:
 def b_choose_course(client: Client) -> None:
     client.content.classes("items-center")
     header(True)
-    ChooseCoursePage.get_page(True)
+    choose_course_page.get_page(True)
     footer(True)
 
 
@@ -142,7 +142,7 @@ def b_choose_course(client: Client) -> None:
 def b_course(client: Client) -> None:
     client.content.classes('items-center')
     header(True)
-    CoursePage.get_page(True)
+    course_page.get_page(True)
     footer(True)
 
 
@@ -150,7 +150,7 @@ def b_course(client: Client) -> None:
 def b_licenses(client: Client) -> None:
     client.content.classes("items-center")
     header(True)
-    Licenses.get_page(True)
+    licenses.get_page(True)
     footer(True)
 
 
@@ -158,7 +158,7 @@ def b_licenses(client: Client) -> None:
 def choose_attributes(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    Gen03ChooseAttributesPage.get_page()
+    gen_03_choose_attributes_page.get_page()
     footer()
 
 
@@ -166,7 +166,7 @@ def choose_attributes(client: Client) -> None:
 def choose_table(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    Gen02ChooseTablesPage.get_page()
+    gen_02_choose_tables_page.get_page()
     footer()
 
 
@@ -174,7 +174,7 @@ def choose_table(client: Client) -> None:
 def choose_topic(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    Gen01ChooseTopicPage.get_page()
+    gen_01_choose_topic_page.get_page()
     footer()
 
 
@@ -182,7 +182,7 @@ def choose_topic(client: Client) -> None:
 def create_database(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    Gen04CreateDatabasePage.get_page()
+    gen_04_create_database_page.get_page()
     footer()
 
 
@@ -190,7 +190,7 @@ def create_database(client: Client) -> None:
 def upload(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    UploadPage.get_page()
+    upload_page.get_page()
     footer()
 
 

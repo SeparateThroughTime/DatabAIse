@@ -1,4 +1,0 @@
-Pages
-=====
-
-.. automodule:: Pages

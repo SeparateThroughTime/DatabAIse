@@ -1,4 +1,0 @@
-CoursePage
-==========
-
-.. automodule:: courses.CoursePage

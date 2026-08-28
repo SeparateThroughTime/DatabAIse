@@ -15,9 +15,9 @@ import logging
 from agents import Agent, Runner, ModelSettings
 from openai.types import Reasoning
 
-import Pages
+import pages
 import logger_module
-from BaseModels import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type, _Table3, \
+from base_models import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type, _Table3, \
     _Attribute, _DataEntry, CourseTemplate, Course
 
 
@@ -553,7 +553,7 @@ def _check_databases_exist():
     """Checks if databases.db exists."""
 
     if not os.path.isfile("databases.db"):
-        logger.warning("""'databases.db' does not exist. Run 'CreateDatabase.py' to create file and log all databases
+        logger.warning("""'databases.db' does not exist. Run 'create_database.py' to create file and log all databases
                         created with DatabAIse.""")
 
 logger = logger_module.create_logger("")
@@ -630,4 +630,4 @@ if __name__ == "__main__":
     log_file.close()
     logging.basicConfig()
     _check_databases_exist()
-    Pages.build()
+    pages.build()

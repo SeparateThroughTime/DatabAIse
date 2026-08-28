@@ -1,6 +1,4 @@
-- Columns to Attributes
-- Eliminate import loops
-- Refactor Module names
+- Safe to database.db error
 - Safe course
 - Course navigation
 - Update Licenses

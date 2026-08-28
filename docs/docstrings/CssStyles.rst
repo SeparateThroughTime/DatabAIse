@@ -1,4 +1,0 @@
-CssStyles
-=========
-
-.. automodule:: CssStyles

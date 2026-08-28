@@ -2,7 +2,7 @@
 
 .. deprecated:: 0.9
 
-    Styles are defined in :doc:`/docstrings/Pages`
+    Styles are defined in :doc:`/docstrings/pages`
 """
 
 err_msg = 'text-negative text-weight-bold'
