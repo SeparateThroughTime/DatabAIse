@@ -106,8 +106,8 @@ def get_page(control_group: bool = False) -> None:
             app.storage.user["result_feedback_label_classes"] = CssStyles.err_msg
             app.storage.user["result_table_visible"] = False
         else:
-            app.storage.user["result_table_columns"] = [{'name': col, 'label': col, 'field': col} for col in user_result]
-            result_table.columns = app.storage.user["result_table_columns"]
+            app.storage.user["result_table_attributes"] = [{'name': col, 'label': col, 'field': col} for col in user_result]
+            result_table.columns = app.storage.user["result_table_attributes"]
             app.storage.user["result_table_rows"] = user_result.to_dict('records')
             result_table.rows = app.storage.user["result_table_rows"]
             if correct_result.equals(user_result):

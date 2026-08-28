@@ -1,4 +1,4 @@
-"""Module for page where user can choose columns"""
+"""Module for page where user can choose attributes"""
 
 from nicegui.elements.input import Input
 from nicegui import ui, app, events
@@ -75,18 +75,18 @@ def get_page(control_group: bool = False) -> None:
     ui.keyboard(on_key=handle_key, ignore=[])
 
 
-def _next_page(column_inputs: list[list[Input]], control_group: bool) -> None:
-    """Saves columns and redirects to CreateDatabasePage"""
+def _next_page(attribute_inputs: list[list[Input]], control_group: bool) -> None:
+    """Saves attributes and redirects to CreateDatabasePage"""
 
     database_build : DatabaseStructure0 = DatabaseStructure0.model_validate(app.storage.user["database_build"])
     topic = database_build.topic
     table_names = database_build.tables
 
     tables : list[_Table1] = []
-    for i in range(len(column_inputs)):
+    for i in range(len(attribute_inputs)):
         attributes_for_table : list[str] = []
-        for j in range(len(column_inputs[i])):
-            attributes_for_table.append(column_inputs[i][j].value)
+        for j in range(len(attribute_inputs[i])):
+            attributes_for_table.append(attribute_inputs[i][j].value)
         table = _Table1(name=table_names[i], attributes=attributes_for_table)
         tables.append(table)
 

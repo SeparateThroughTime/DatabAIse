@@ -118,7 +118,7 @@ _course_create_exercise_agent = Agent(
                  tables and attributes but give a description a non-technical person would give and a fictive reason for
                  why the SQL query is to be done.
                  The exercises must be in german language.
-                 All names of tables or columns should be in single quotation marks.
+                 All names of tables or attributes should be in single quotation marks.
                  You create also a motivating underlying story line which is explaining the structure of the database.""",
     model="gpt-5.6-luna",
     model_settings=ModelSettings(

@@ -9,6 +9,6 @@ Here are the modules related to the database generation and there pages.
 
    db_generation/Gen01ChooseTopicPage
    db_generation/Gen02ChooseTablesPage
-   db_generation/Gen03ChooseColumnsPage
+   db_generation/Gen03ChooseAttributesPage
    db_generation/Gen04CreateDatabasePage
    db_generation/UploadPage

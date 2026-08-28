@@ -7,7 +7,7 @@ This module defines the hierarchy of alle pages. Each function with
 import logger_module
 from licenses import Licenses
 from courses import ChooseCoursePage, CoursePage
-from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseColumnsPage, Gen04CreateDatabasePage, UploadPage
+from db_generation import Gen01ChooseTopicPage, Gen02ChooseTablesPage, Gen03ChooseAttributesPage, Gen04CreateDatabasePage, UploadPage
 import InstructionsPage
 from nicegui import ui, Client, app
 
@@ -155,10 +155,10 @@ def b_licenses(client: Client) -> None:
 
 
 @ui.page(_page_links_experimental_group["choose_attributes"])
-def choose_columns(client: Client) -> None:
+def choose_attributes(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    Gen03ChooseColumnsPage.get_page()
+    Gen03ChooseAttributesPage.get_page()
     footer()
 
 

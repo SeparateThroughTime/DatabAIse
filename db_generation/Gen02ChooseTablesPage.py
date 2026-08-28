@@ -54,7 +54,7 @@ def get_page(control_group: bool = False) -> None:
 
 
 def _next_page(table_inputs: list[Input], control_group: bool) -> None:
-    """Saves tables and redirects to ChooseColumnsPage"""
+    """Saves tables and redirects to :class:`db_generation.ChooseAttributesPage`"""
 
     topic = app.storage.user["database_build"]
     table_strings = []
