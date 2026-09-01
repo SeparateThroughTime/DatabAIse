@@ -47,6 +47,7 @@ def get_page(control_group: bool = False) -> None:
         sql_string = databaise.db_structure_3_to_sql(database)
         app.storage.user["sql_string"] = sql_string
         app.storage.user["database_build"] = database.model_dump_json()
+        app.storage.user["courses"] = {}
 
         download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
         download_button.text = "Download SQL"

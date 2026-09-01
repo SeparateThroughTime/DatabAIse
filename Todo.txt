@@ -3,3 +3,4 @@
 - Update Licenses
 - Remove gui_styles
 - nicegui warning: Event listeners changed after initial definition
+- Fancy loading

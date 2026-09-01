@@ -110,7 +110,7 @@ def a_choose_course(client: Client) -> None:
 def a_course(client: Client) -> None:
     client.content.classes('items-center')
     header()
-    course_page.get_page()
+    course_page.CoursePage()
     footer()
 
 

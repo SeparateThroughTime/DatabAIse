@@ -44,3 +44,4 @@ async def _on_upload(sql_file: FileUpload) -> None:
     app.storage.user["sql_string"] = sql_string
     app.storage.user["database_build"] = databaise.sql_to_db_structure_3(
         sql_string, disable_debug=False).model_dump_json()
+    app.storage.user["courses"] = {}
