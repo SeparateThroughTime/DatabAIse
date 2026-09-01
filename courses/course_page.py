@@ -56,6 +56,7 @@ class CoursePage:
     run_button: Button
     result_table: Table
     result_feedback_label: Label
+    previous_button: Button
     next_button: Button
     database_tables: list[Table]
 
@@ -108,7 +109,9 @@ class CoursePage:
                         self.result_table.set_visibility(False)
                         self.result_feedback_label = ui.label()
                         self.result_feedback_label.set_visibility(False)
-                        self.next_button = ui.button("Warte auf KI-Antwort")
+                        with ui.row():
+                            self.previous_button = ui.button("Warte auf KI-Antwort")
+                            self.next_button = ui.button("Warte auf KI-Antwort")
 
                 with ui.card():
                     with ui.column():
@@ -252,6 +255,8 @@ class CoursePage:
         self.run_button.on("click", self.run_sql)
         self.next_button.text = "Nächste Aufgabe"
         self.next_button.on("click", lambda: self.load_exercise(self.exercise_pointer + 1))
+        self.previous_button.text = "Vorherige Aufgabe"
+        self.previous_button.on("click", lambda: self.load_exercise(self.exercise_pointer - 1))
         logger.info("UI updated.")
 
 
