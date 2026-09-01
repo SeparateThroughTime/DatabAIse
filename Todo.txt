@@ -1,4 +1,5 @@
-- Safe to database.db error
 - Safe course
 - Course navigation
 - Update Licenses
+- Remove gui_styles
+- nicegui warning: Event listeners changed after initial definition

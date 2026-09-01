@@ -57,7 +57,7 @@ def get_page(control_group: bool = False) -> None:
             con = sqlite3.connect("databases.db")
             cur = con.cursor()
             cur.execute(f"""INSERT INTO databases (topic, sql_file)
-                           VALUES ('{app.storage.user["topic"]}', "{app.storage.user["db_json"]}");""")
+                           VALUES ('{database.topic}', '{database.model_dump_json()}');""")
             con.commit()
             con.close()
         else:
