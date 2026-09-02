@@ -8,6 +8,7 @@
 import logging
 import sqlite3
 from enum import Enum
+from typing import Callable
 
 import pandas
 from nicegui import ui, app, events
@@ -17,6 +18,7 @@ from nicegui.elements.button import Button
 from nicegui.elements.input import Input
 from nicegui.elements.label import Label
 from nicegui.elements.markdown import Markdown
+from nicegui.elements.pagination import Pagination
 from nicegui.elements.restructured_text import ReStructuredText
 from nicegui.elements.table import Table
 
@@ -58,6 +60,7 @@ class CoursePage:
     run_button: Button
     result_table: Table
     result_feedback_label: Label
+    pagination: Pagination
     previous_button: Button
     next_button: Button
     database_tables: list[Table]
@@ -102,6 +105,8 @@ class CoursePage:
                         with ui.row():
                             self.previous_button = ui.button("Warte auf KI-Antwort")
                             self.next_button = ui.button("Warte auf KI-Antwort")
+                        self.pagination = ui.pagination(1, len(self.course_template.exercise_solutions),
+                                                        direction_links=False)
                         self.exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
                         self.sql_input = ui.textarea()
                         self.run_button = ui.button("Warte auf KI-Antwort")
@@ -183,10 +188,21 @@ class CoursePage:
 
         self.exercise_pointer = exercise_pointer
         app.storage.user["courses"][self.course_name]["exercise_pointer"] = self.exercise_pointer
+        self.pagination.set_value(self.exercise_pointer)
 
-        if self.exercise_pointer + 1 > len(self.course.exercises):
-            self.next_button.on("click", self.finished_course)
+        if self.exercise_pointer > len(self.course.exercises):
+            self.finished_course()
+            return
+
+        if self.exercise_pointer + 1> len(self.course.exercises):
             self.next_button.text = "Kurs abschließen"
+        else:
+            self.next_button.text = "Nächste Aufgabe"
+
+        if self.exercise_pointer <= 1:
+            self.previous_button.props("disabled")
+        else:
+            self.previous_button.props(remove="disabled")
 
         if self.exercise_pointer > len(self.course.exercises):
             #raise Exception("Exercise " + str(exercise_pointer) + " does not exist in:\n" + str(app.storage.user["exercise_json"]))
@@ -232,6 +248,8 @@ class CoursePage:
             self.course = Course.model_validate_json(course_data["course"])
             self.story_textfield.content = self.course.story
             self.user_answers = course_data["user_answers"]
+            self.exercise_pointer = course_data["exercise_pointer"]
+            self.exercise_pointer = ((self.exercise_pointer - 1) % len(self.course.exercises)) + 1
         except KeyError as e:
             logger.exception(f"{repr(e)}\nError on loading course. Generating new course to proceed.")
             ui.timer(0.1, self.generate_course, once=True)
@@ -259,6 +277,7 @@ class CoursePage:
         self.previous_button.on("click", lambda: self.load_exercise(self.exercise_pointer - 1))
         logger.info("UI updated.")
         self.sql_input.on("change", self.on_sql_input_change)
+        self.pagination.on("click", self.on_pagination_change)
 
 
     def handle_key(self, e: events.KeyEventArguments) -> None:
@@ -274,3 +293,9 @@ class CoursePage:
                 return
         self.user_answers[self.exercise_pointer] = (sql_input_value, Proofreading.NO_PROOFREADING)
         app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
+
+
+    def on_pagination_change(self) -> None:
+        logger.debug("Pagination click detected")
+        exercise_destination = int(self.pagination.value or 0)
+        self.load_exercise(exercise_destination)
