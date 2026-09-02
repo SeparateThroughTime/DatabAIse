@@ -1,6 +1,9 @@
-- Safe course
 - Course navigation
 - Update Licenses
 - Remove gui_styles
 - nicegui warning: Event listeners changed after initial definition
 - Fancy loading
+- Error feedback
+- AI tweaking
+- Design
+- Regenerate button

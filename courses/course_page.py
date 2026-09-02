@@ -47,6 +47,8 @@ class CoursePage:
     sample_solutions: CourseTemplate
     control_group: bool
     course_name: str
+    user_answers: list[tuple[str, Proofreading] | None]
+    exercise_pointer: int
 
     choose_course_button: Button
     topic_markdown: Markdown
@@ -59,9 +61,6 @@ class CoursePage:
     previous_button: Button
     next_button: Button
     database_tables: list[Table]
-
-    user_answers: list[tuple[str, Proofreading] | None]
-    exercise_pointer: int
 
 
     def __init__(self, control_group: bool = False):
@@ -102,7 +101,7 @@ class CoursePage:
                         ui.markdown("Aufgabe").classes("text-h5")
                         self.exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
 
-                        self.sql_input = ui.textarea(on_change=self.on_sql_input_change)
+                        self.sql_input = ui.textarea()
 
                         self.run_button = ui.button("Warte auf KI-Antwort")
                         self.result_table = ui.table(rows=[{}], columns=[{}])
@@ -188,11 +187,6 @@ class CoursePage:
         self.exercise_pointer = exercise_pointer
         app.storage.user["courses"][self.course_name]["exercise_pointer"] = self.exercise_pointer
 
-        logger.debug(f"exercise_pointer: {exercise_pointer}")
-        if self.user_answers[self.exercise_pointer] is not None:
-            self.sql_input.value = self.user_answers[self.exercise_pointer][0]
-            self.run_sql()
-
         if self.exercise_pointer + 1 > len(self.course.exercises):
             self.next_button.on("click", self.finished_course)
             self.next_button.text = "Kurs abschließen"
@@ -207,6 +201,14 @@ class CoursePage:
         self.exercise_textfield.content = self.course.exercises[self.exercise_pointer]
         self.sql_input.value = ""
 
+        if self.user_answers[self.exercise_pointer] is not None:
+            logger.info("Found user answer for exercise.")
+            x: list[tuple[str, int]] = [("", 1)]
+            (a, b) = x[0]
+            (user_input, a) = (self.user_answers[self.exercise_pointer] or (None, None))
+            self.sql_input.value = user_input
+            self.run_sql()
+
 
     async def generate_course(self) -> None:
         """Start prompt and update page afterward."""
@@ -220,6 +222,7 @@ class CoursePage:
         self.course = await databaise.course_create_exercise(self.sample_solutions)
         logger.info("Course generated.")
         app.storage.user["courses"][self.course_name]["course"] = self.course.model_dump_json()
+        self.user_answers = [None for _ in self.course.exercises]
 
         self.ready(0)
 
@@ -232,10 +235,12 @@ class CoursePage:
             self.sample_solutions = CourseTemplate.model_validate_json(course_data["sample_solutions"])
             self.course = Course.model_validate_json(course_data["course"])
             self.story_textfield.content = self.course.story
-            self.ready(course_data["exercise_pointer"])
+            self.user_answers = course_data["user_answers"]
         except KeyError as e:
             logger.exception(f"{repr(e)}\nError on loading course. Generating new course to proceed.")
             ui.timer(0.1, self.generate_course, once=True)
+        else:
+            self.ready(course_data["exercise_pointer"])
 
 
     def ready(self, exercise_pointer: int) -> None:
@@ -247,7 +252,6 @@ class CoursePage:
         generation this method should run to set those variables.
         """
 
-        self.user_answers = [None for _ in self.course.exercises]
         app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
         self.story_textfield.content = self.course.story
         self.load_exercise(exercise_pointer)
@@ -258,6 +262,7 @@ class CoursePage:
         self.previous_button.text = "Vorherige Aufgabe"
         self.previous_button.on("click", lambda: self.load_exercise(self.exercise_pointer - 1))
         logger.info("UI updated.")
+        self.sql_input.on("change", self.on_sql_input_change)
 
 
     def handle_key(self, e: events.KeyEventArguments) -> None:
