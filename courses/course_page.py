@@ -99,18 +99,15 @@ class CoursePage:
                 with ui.card().classes(gui_styles.subcard_classes):
                     with ui.column():
                         ui.markdown("Aufgabe").classes("text-h5")
-                        self.exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
-
-                        self.sql_input = ui.textarea()
-
-                        self.run_button = ui.button("Warte auf KI-Antwort")
-                        self.result_table = ui.table(rows=[{}], columns=[{}])
-                        self.result_table.set_visibility(False)
-                        self.result_feedback_label = ui.label()
-                        self.result_feedback_label.set_visibility(False)
                         with ui.row():
                             self.previous_button = ui.button("Warte auf KI-Antwort")
                             self.next_button = ui.button("Warte auf KI-Antwort")
+                        self.exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
+                        self.sql_input = ui.textarea()
+                        self.run_button = ui.button("Warte auf KI-Antwort")
+                        self.result_feedback_label = ui.label("")
+                        self.result_table = ui.table(rows=[{}], columns=[{}])
+                        self.result_table.set_visibility(False)
 
                 with ui.card():
                     with ui.column():
@@ -196,8 +193,7 @@ class CoursePage:
             return
 
         self.result_table.set_visibility(False)
-        self.result_feedback_label.set_visibility(False)
-        self.result_feedback_label.text = None
+        self.result_feedback_label.text = " "
         self.exercise_textfield.content = self.course.exercises[self.exercise_pointer]
         self.sql_input.value = ""
 
