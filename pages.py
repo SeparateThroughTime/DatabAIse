@@ -6,6 +6,8 @@ This module defines the hierarchy of alle pages. Each function with
 
 from collections.abc import Callable
 from nicegui import ui, Client, app
+
+import gui_styles
 import logger_module
 from licenses import licenses
 from courses import choose_course_page, course_page
@@ -170,9 +172,21 @@ def _header(control_group: bool = False) -> None:
 
 def _page_builder(page: Callable, client: Client, control_group: bool = False):
     client.content.classes('items-center')
+    ui.on_exception(lambda e: _on_exception(e))
     _header(control_group)
     page(control_group)
     _footer(control_group)
+
+
+def _on_exception(e: Exception) -> None:
+    with ui.dialog() as dialog, ui.card(), ui.column():
+        ui.markdown("Fehler")
+        ui.restructured_text("Ein unerwarteter Fehler ist aufgetreten. Falls etwas nicht funktionieren sollte, "
+                             "lade die Seite neu und schaue, ob es danach funktioniert.")
+        error_msg = ui.restructured_text("Fehlermeldung: " + str(e))
+        error_msg.classes(gui_styles.err_msg)
+        ui.button("Ok :(", on_click=dialog.close)
+    dialog.open()
 
 
 #TODO: Only for development. Should be deleted before launch!
