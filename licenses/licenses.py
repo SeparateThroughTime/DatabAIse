@@ -3,7 +3,7 @@
 from nicegui import ui, html, app
 
 
-def get_page():
+def get_page(control_group: bool = False):
     """Function to build the page"""
 
     app.add_static_files("/Lizenzen", "licenses")
