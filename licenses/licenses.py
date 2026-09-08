@@ -17,27 +17,15 @@ def get_page():
 
             with html.tr():
                 with html.td():
-                    ui.link("Deepseek Model", "https://www.deepseek.com/")
-                with html.td():
-                    ui.link("Deepseek License Agreement", "/Lizenzen/DEEPSEEK_MODEL")
-
-            with html.tr():
-                with html.td():
-                    ui.link("Google Gen AI SDK", "https://github.com/googleapis/python-genai")
-                with html.td():
-                    ui.link("MIT License", "/Lizenzen/GOOGLE_API")
-
-            with html.tr():
-                with html.td():
-                    ui.link("Google Gemini Model", "https://gemini.google/de/about/?hl=de")
-                with html.td():
-                    ui.link("Google Terms of Service", "https://ai.google.dev/gemini-api/terms")
-
-            with html.tr():
-                with html.td():
                     ui.link("NiceGUI", "https://nicegui.io/")
                 with html.td():
-                    ui.link("BSD 3-Clause", "/Lizenzen/PANDAS")
+                    ui.link("BSD 3-Clause", "/Lizenzen/NICEGUI")
+
+            with html.tr():
+                with html.td():
+                    ui.link("OpenAI Agents SDK", "github.com/openai/openai-agents-python")
+                with html.td():
+                    ui.link("BSD 3-Clause", "/Lizenzen/OPENAI_AGENTS")
 
             with html.tr():
                 with html.td():
@@ -55,7 +43,7 @@ def get_page():
                 with html.td():
                     ui.link("pandas", "https://pandas.pydata.org/")
                 with html.td():
-                    ui.link("MIT License", "/Lizenzen/NICEGUI")
+                    ui.link("MIT License", "/Lizenzen/PANDAS")
 
             with html.tr():
                 with html.td():
