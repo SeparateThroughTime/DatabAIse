@@ -26,32 +26,32 @@ def get_page(control_group: bool = False) -> None:
                 ui.label(tables[0])
                 with ui.row():
                     attribute_inputs.append([])
-                    attribute_inputs[0].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[0].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[0].append(ui.input(value="Warte auf KI-Antwort"))
+                    attribute_inputs[0].append(ui.input())
+                    attribute_inputs[0].append(ui.input())
+                    attribute_inputs[0].append(ui.input())
             with ui.card():
                 ui.label(tables[1])
                 with ui.row():
                     attribute_inputs.append([])
-                    attribute_inputs[1].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[1].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[1].append(ui.input(value="Warte auf KI-Antwort"))
+                    attribute_inputs[1].append(ui.input())
+                    attribute_inputs[1].append(ui.input())
+                    attribute_inputs[1].append(ui.input())
             with ui.card():
                 ui.label(tables[2])
                 with ui.row():
                     attribute_inputs.append([])
-                    attribute_inputs[2].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[2].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[2].append(ui.input(value="Warte auf KI-Antwort"))
+                    attribute_inputs[2].append(ui.input())
+                    attribute_inputs[2].append(ui.input())
+                    attribute_inputs[2].append(ui.input())
             with ui.card():
                 ui.label(tables[3])
                 with ui.row():
                     attribute_inputs.append([])
-                    attribute_inputs[3].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[3].append(ui.input(value="Warte auf KI-Antwort"))
-                    attribute_inputs[3].append(ui.input(value="Warte auf KI-Antwort"))
+                    attribute_inputs[3].append(ui.input())
+                    attribute_inputs[3].append(ui.input())
+                    attribute_inputs[3].append(ui.input())
 
-            button = ui.button("Warte auf KI-Antwort")
+            button = ui.button("Senden", on_click=lambda: _next_page(attribute_inputs, control_group))
 
     async def start_prompt() -> None:
         response = await databaise.db_create_attributes(database_build)
@@ -65,9 +65,7 @@ def get_page(control_group: bool = False) -> None:
                 attribute_counter = attribute_counter + 1
             table_counter = table_counter + 1
 
-        button.on("click", lambda: _next_page(attribute_inputs, control_group))
-        button.text = "Senden"
-    ui.timer(0.1, start_prompt, once=True)
+    ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(start_prompt), once=True)
 
     def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:

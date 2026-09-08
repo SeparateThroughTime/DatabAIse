@@ -4,8 +4,11 @@ This module defines the hierarchy of alle pages. Each function with
 :code:`@ui.page("path")` builds a page for the specific path.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 from nicegui import ui, Client, app
+from typing_extensions import Awaitable
 
 import gui_styles
 import logger_module
@@ -45,71 +48,6 @@ def build() -> None:
            storage_secret="A>dQ@KgXnXQD0iXs", reconnect_timeout=10.0, reload=False)
 
 
-@ui.page(_page_links_experimental_group["home"])
-def a_instructions(client: Client) -> None:
-    _page_builder(instructions_page.get_page, client)
-
-
-@ui.page(_page_links_experimental_group["choose_course"])
-def a_choose_course(client: Client) -> None:
-    _page_builder(choose_course_page.get_page, client)
-
-
-@ui.page(_page_links_experimental_group["course"])
-def a_course(client: Client) -> None:
-    _page_builder(course_page.CoursePage, client)
-
-
-@ui.page(_page_links_experimental_group["licenses"])
-def a_licenses(client: Client) -> None:
-    _page_builder(licenses.get_page, client)
-
-
-@ui.page(_page_links_control_group["home"])
-def b_instructions(client: Client) -> None:
-    _page_builder(instructions_page.get_page, client, True)
-
-
-@ui.page(_page_links_control_group["choose_course"])
-def b_choose_course(client: Client) -> None:
-    _page_builder(choose_course_page.get_page, client, True)
-
-
-@ui.page(_page_links_control_group["course"])
-def b_course(client: Client) -> None:
-    _page_builder(course_page.CoursePage, client, True)
-
-
-@ui.page(_page_links_control_group["licenses"])
-def b_licenses(client: Client) -> None:
-    _page_builder(licenses.get_page, client, True)
-
-
-@ui.page(_page_links_experimental_group["choose_attributes"])
-def choose_attributes(client: Client) -> None:
-    _page_builder(gen_03_choose_attributes_page.get_page, client)
-
-
-@ui.page(_page_links_experimental_group["choose_tables"])
-def choose_table(client: Client) -> None:
-    _page_builder(gen_02_choose_tables_page.get_page, client)
-
-
-@ui.page(_page_links_experimental_group["choose_topic"])
-def choose_topic(client: Client) -> None:
-    _page_builder(gen_01_choose_topic_page.get_page, client)
-
-
-@ui.page(_page_links_experimental_group["create_database"])
-def create_database(client: Client) -> None:
-    _page_builder(gen_04_create_database_page.get_page, client)
-
-
-@ui.page(_page_links_experimental_group["upload_database"])
-def upload(client: Client) -> None:
-    _page_builder(upload_page.get_page, client)
-
-
 def get_page_link(page_key: str, control_group: bool) -> str:
     """Function to get the link to the pages.
 
@@ -120,6 +58,99 @@ def get_page_link(page_key: str, control_group: bool) -> str:
     """
 
     return _page_links_control_group[page_key] if control_group else _page_links_experimental_group[page_key]
+
+
+async def wait_for_ai_response_dialog(ai_call: Callable[[], Awaitable[Any]]) -> None:
+    """Function to wrap an AI call with a dialog that is closing when the
+    call is finished.
+
+    :param ai_call: async def with no parameter for AI call.
+    :return:
+    """
+
+    with ui.dialog() as dialog, ui.card(), ui.column():
+        ui.markdown("Warte auf KI-Antwort...")
+        ui.spinner("pie", size="xl")
+    # noinspection async-call
+    dialog.props("persistent")
+    # noinspection async-call
+    dialog.open()
+
+    try:
+        await ai_call()
+    except Exception as e:
+        # Ensure that dialog is closed when an error occurs
+        # noinspection async-call
+        dialog.close()
+        raise e
+    else:
+        # noinspection async-call
+        dialog.close()
+
+
+@ui.page(_page_links_experimental_group["home"])
+def _a_instructions(client: Client) -> None:
+    _page_builder(instructions_page.get_page, client)
+
+
+@ui.page(_page_links_experimental_group["choose_course"])
+def _a_choose_course(client: Client) -> None:
+    _page_builder(choose_course_page.get_page, client)
+
+
+@ui.page(_page_links_experimental_group["course"])
+def _a_course(client: Client) -> None:
+    _page_builder(course_page.CoursePage, client)
+
+
+@ui.page(_page_links_experimental_group["licenses"])
+def _a_licenses(client: Client) -> None:
+    _page_builder(licenses.get_page, client)
+
+
+@ui.page(_page_links_control_group["home"])
+def _b_instructions(client: Client) -> None:
+    _page_builder(instructions_page.get_page, client, True)
+
+
+@ui.page(_page_links_control_group["choose_course"])
+def _b_choose_course(client: Client) -> None:
+    _page_builder(choose_course_page.get_page, client, True)
+
+
+@ui.page(_page_links_control_group["course"])
+def _b_course(client: Client) -> None:
+    _page_builder(course_page.CoursePage, client, True)
+
+
+@ui.page(_page_links_control_group["licenses"])
+def _b_licenses(client: Client) -> None:
+    _page_builder(licenses.get_page, client, True)
+
+
+@ui.page(_page_links_experimental_group["choose_attributes"])
+def _choose_attributes(client: Client) -> None:
+    _page_builder(gen_03_choose_attributes_page.get_page, client)
+
+
+@ui.page(_page_links_experimental_group["choose_tables"])
+def _choose_table(client: Client) -> None:
+    _page_builder(gen_02_choose_tables_page.get_page, client)
+
+
+@ui.page(_page_links_experimental_group["choose_topic"])
+def _choose_topic(client: Client) -> None:
+    _page_builder(gen_01_choose_topic_page.get_page, client)
+
+
+@ui.page(_page_links_experimental_group["create_database"])
+def _create_database(client: Client) -> None:
+    _page_builder(gen_04_create_database_page.get_page, client)
+
+
+@ui.page(_page_links_experimental_group["upload_database"])
+def _upload(client: Client) -> None:
+    _page_builder(upload_page.get_page, client)
 
 
 def _footer(control_group:bool = False) -> None:
@@ -170,7 +201,7 @@ def _header(control_group: bool = False) -> None:
         ui.label(" ")
 
 
-def _page_builder(page: Callable, client: Client, control_group: bool = False):
+def _page_builder(page: Callable[[bool], Any], client: Client, control_group: bool = False):
     client.content.classes('items-center')
     ui.on_exception(lambda e: _on_exception(e))
     _header(control_group)
@@ -179,6 +210,12 @@ def _page_builder(page: Callable, client: Client, control_group: bool = False):
 
 
 def _on_exception(e: Exception) -> None:
+    """Handler for on page exceptions.
+
+    :param e: caught exception
+    :return:
+    """
+
     with ui.dialog() as dialog, ui.card(), ui.column():
         ui.markdown("Fehler")
         ui.restructured_text("Ein unerwarteter Fehler ist aufgetreten. Falls etwas nicht funktionieren sollte, "

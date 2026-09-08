@@ -3,6 +3,6 @@
 - Fancy loading
 - AI tweaking
 - Design
-- Regenerate button
+- Regenerate button (indication that it is working missing)
 - User can switch database
 - Object orientation like course_page

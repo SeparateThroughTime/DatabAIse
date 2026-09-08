@@ -33,8 +33,8 @@ def get_page(control_group: bool = False) -> None:
                                     Dieser Schritt kann unter Umständen 1-2 Minuten brauchen.
                                     Im Anschluss kannst du die Datenbank als .sql-Datei herunterladen und zur Kurswahl weitergehen.""")
             with ui.row():
-                download_button = ui.button("Warte auf KI-Antwort")
-                course_button = ui.button("Warte auf KI-Antwort")
+                download_button = ui.button("Download SQL", on_click=lambda: ui.download.content(sql_string, topic + ".sql"))
+                course_button = ui.button("Zur Kurswahl", on_click=lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
     logger.info("Page built.")
 
     async def start_prompt() -> None:
@@ -49,11 +49,6 @@ def get_page(control_group: bool = False) -> None:
         app.storage.user["database_build"] = database.model_dump_json()
         app.storage.user["courses"] = {}
 
-        download_button.on("click", lambda: ui.download.content(sql_string, topic + ".sql"))
-        download_button.text = "Download SQL"
-        course_button.on("click", lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
-        course_button.text = "Zur Kurswahl"
-
         if os.path.isfile("databases.db"):
             con = sqlite3.connect("databases.db")
             cur = con.cursor()
@@ -63,7 +58,7 @@ def get_page(control_group: bool = False) -> None:
             con.close()
         else:
             logger.info("Tried to safe database in 'database.db' but file does not exist.")
-    ui.timer(0.1, start_prompt, once=True)
+    ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(start_prompt), once=True)
 
 
 def _format_database(database: DatabaseStructure3) -> None:

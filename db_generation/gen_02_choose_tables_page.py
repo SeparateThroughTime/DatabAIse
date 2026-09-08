@@ -23,18 +23,18 @@ def get_page(control_group: bool = False) -> None:
             table_inputs = []
             with ui.row():
                 ui.label("Tabelle 1:")
-                table_inputs.append(ui.input(value="Warte auf KI-Antwort"))
+                table_inputs.append(ui.input())
             with ui.row():
                 ui.label("Tabelle 2:")
-                table_inputs.append(ui.input(value="Warte auf KI-Antwort"))
+                table_inputs.append(ui.input())
             with ui.row():
                 ui.label("Tabelle 3:")
-                table_inputs.append(ui.input(value="Warte auf KI-Antwort"))
+                table_inputs.append(ui.input())
             with ui.row():
                 ui.label("Tabelle 4:")
-                table_inputs.append(ui.input(value="Warte auf KI-Antwort"))
+                table_inputs.append(ui.input())
 
-            button = ui.button("Warte auf KI-Antwort")
+            button = ui.button("Senden", on_click=lambda: _next_page(table_inputs, control_group))
 
     async def start_prompt() -> None:
         result = await databaise.db_create_tables(topic)
@@ -43,9 +43,7 @@ def get_page(control_group: bool = False) -> None:
         for i in range(len(tables)):
             table_inputs[i].value = tables[i]
 
-        button.on("click", lambda: _next_page(table_inputs, control_group))
-        button.text = "Senden"
-    ui.timer(0.1, start_prompt, once=True)
+    ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(start_prompt), once=True)
 
     def handle_key(e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:

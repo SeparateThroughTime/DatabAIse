@@ -8,6 +8,7 @@
 import asyncio
 import logging
 import sqlite3
+import sys
 from enum import Enum
 from typing import Callable
 
@@ -93,27 +94,30 @@ class CoursePage:
                 with ui.row().classes("justify-between"):
                     self.choose_course_button = ui.button("Zurück zu Kurswahl",
                         on_click=lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
-                    self.regenerate_button = ui.button("Warte auf KI-Antwort")
+                    self.regenerate_button = ui.button("Kurs neu generieren", on_click=self._regenerate_course)
 
             with ui.column():
                 self.topic_markdown = ui.markdown(self.course_name)
                 with ui.card().classes(gui_styles.subcard_classes):
                     with ui.column():
                         ui.markdown("Hintergrundgeschichte").classes("text-h5")
-                        self.story_textfield = ui.restructured_text("Warte auf KI-Antwort")
+                        self.story_textfield = ui.restructured_text("")
 
 
                 with ui.card().classes(gui_styles.subcard_classes):
                     with ui.column():
                         ui.markdown("Aufgabe").classes("text-h5")
                         with ui.row():
-                            self.previous_button = ui.button("Warte auf KI-Antwort")
-                            self.next_button = ui.button("Warte auf KI-Antwort")
+                            self.previous_button = ui.button("Vorherige Aufgabe",
+                                                        on_click=lambda: self.load_exercise(self.exercise_pointer - 1))
+                            self.next_button = ui.button("Nächste Aufgabe",
+                                                        on_click=lambda: self.load_exercise(self.exercise_pointer + 1))
                         self.pagination = ui.pagination(1, len(self.course_template.exercise_solutions),
                                                         direction_links=False)
+                        self.pagination.on("click", self.on_pagination_change)
                         self.exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
-                        self.sql_input = ui.textarea()
-                        self.run_button = ui.button("Warte auf KI-Antwort")
+                        self.sql_input = ui.textarea(on_change=self.on_sql_input_change)
+                        self.run_button = ui.button("Warte auf KI-Antwort", on_click=self.run_sql)
                         self.result_feedback_label = ui.label("")
                         self.result_table = ui.table(rows=[{}], columns=[{}])
                         self.result_table.set_visibility(False)
@@ -127,15 +131,16 @@ class CoursePage:
                                 = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
                             for table in self.database_structure.tables:
                                 with ui.expansion(table.name):
-                                    self.database_tables.append(ui.table(columns=[{'name': "name", 'label': "Spalte", 'field': "name"},
-                                                                             {'name': "type", 'label': "Typ", 'field': "type"}],
-                                                                    rows=[{"name": attribute.name, "type": attribute.type}
-                                                                          for attribute in table.attributes]))
+                                    self.database_tables.append(ui.table(
+                                        columns=[{'name': "name", 'label': "Spalte", 'field': "name"},
+                                                {'name': "type", 'label': "Typ", 'field': "type"}],
+                                        rows=[{"name": attribute.name, "type": attribute.type}
+                                                for attribute in table.attributes]))
 
         if self.course_name in app.storage.user["courses"]:
             self.load_course_safe()
         else:
-            ui.timer(0.1, self.generate_course, once=True)
+            ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self.generate_course), once=True)
         logger.info("Page built finished.")
 
 
@@ -250,7 +255,9 @@ class CoursePage:
                                  " Der Kurs wird auf Basis der aktuellen Datenbank nochmals von der KI generiert.")
             with ui.row():
                 ui.button("Neu generieren!",
-                          on_click=lambda: (ui.timer(0.1, self.generate_course, once=True), dialog.close()))
+                          on_click=lambda: (ui.timer(0.1,
+                                lambda: pages.wait_for_ai_response_dialog(self.generate_course),
+                                once=True), dialog.close()))
                 ui.button("Abbrechen", on_click=lambda: dialog.close)
         dialog.open()
 
@@ -283,19 +290,9 @@ class CoursePage:
         """
 
         app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
-        self.regenerate_button.text = "Kurs neu generieren"
-        self.regenerate_button.on("click", self._regenerate_course)
         self.story_textfield.content = self.course.story
         self.load_exercise(exercise_pointer)
-        self.run_button.text = "Antwort überprüfen"
-        self.run_button.on("click", self.run_sql)
-        self.next_button.text = "Nächste Aufgabe"
-        self.next_button.on("click", lambda: self.load_exercise(self.exercise_pointer + 1))
-        self.previous_button.text = "Vorherige Aufgabe"
-        self.previous_button.on("click", lambda: self.load_exercise(self.exercise_pointer - 1))
         logger.info("UI updated.")
-        self.sql_input.on("change", self.on_sql_input_change)
-        self.pagination.on("click", self.on_pagination_change)
 
 
     def handle_key(self, e: events.KeyEventArguments) -> None:
