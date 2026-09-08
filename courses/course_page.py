@@ -5,6 +5,7 @@
     Occasionally the Page gets in an endless reload loop. The cause could be a reload on connection loss
     when the AI takes too long. Further investigation necessary.
 """
+import asyncio
 import logging
 import sqlite3
 from enum import Enum
@@ -53,6 +54,7 @@ class CoursePage:
     exercise_pointer: int
 
     choose_course_button: Button
+    regenerate_button: Button
     topic_markdown: Markdown
     story_textfield: ReStructuredText
     exercise_textfield: ReStructuredText
@@ -88,8 +90,10 @@ class CoursePage:
         ui.keyboard(on_key=self.handle_key)
         with (ui.card().style(gui_styles.maincard_style)):
             with ui.column().classes("items-start", remove="items-center"):
-                self.choose_course_button = ui.button("Zurück zu Kurswahl",
+                with ui.row().classes("justify-between"):
+                    self.choose_course_button = ui.button("Zurück zu Kurswahl",
                         on_click=lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
+                    self.regenerate_button = ui.button("Warte auf KI-Antwort")
 
             with ui.column():
                 self.topic_markdown = ui.markdown(self.course_name)
@@ -239,6 +243,18 @@ class CoursePage:
         self.ready(0)
 
 
+    def _regenerate_course(self) -> None:
+        with ui.dialog() as dialog, ui.card(), ui.column():
+            ui.markdown("Kurs neu generieren?")
+            ui.restructured_text("Durch das Neugenerieren des Kurses, gehen alle bisherigen Antworten verloren."
+                                 " Der Kurs wird auf Basis der aktuellen Datenbank nochmals von der KI generiert.")
+            with ui.row():
+                ui.button("Neu generieren!",
+                          on_click=lambda: (ui.timer(0.1, self.generate_course, once=True), dialog.close()))
+                ui.button("Abbrechen", on_click=lambda: dialog.close)
+        dialog.open()
+
+
     def load_course_safe(self) -> None:
         """Load course safe."""
 
@@ -267,6 +283,8 @@ class CoursePage:
         """
 
         app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
+        self.regenerate_button.text = "Kurs neu generieren"
+        self.regenerate_button.on("click", self._regenerate_course)
         self.story_textfield.content = self.course.story
         self.load_exercise(exercise_pointer)
         self.run_button.text = "Antwort überprüfen"

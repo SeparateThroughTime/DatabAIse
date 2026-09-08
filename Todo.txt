@@ -4,4 +4,5 @@
 - AI tweaking
 - Design
 - Regenerate button
+- User can switch database
 - Object orientation like course_page
