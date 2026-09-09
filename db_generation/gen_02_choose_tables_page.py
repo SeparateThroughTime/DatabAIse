@@ -4,7 +4,6 @@ from typing import override
 from nicegui.elements.input import Input
 from nicegui import ui, app, events, elements
 
-import gui_styles
 import databaise
 from base_models import DatabaseStructure0
 import pages
@@ -25,7 +24,7 @@ class ChooseTablesPage(pages.Page):
 
         self._topic = app.storage.user["database_build"]
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.markdown("Tabellen der Datenbank")
                 ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "

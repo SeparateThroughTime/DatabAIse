@@ -3,12 +3,27 @@
 This module defines the hierarchy of alle pages. Each function with
 :code:`@ui.page("path")` builds a page for the specific path.
 """
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
+
+from nicegui.element import Element
+
+import logger_module
+from collections.abc import Awaitable
+
+from nicegui import ui, Client, app
+from nicegui.elements.card import Card
+from nicegui.elements.label import Label
+
+import pages
+
 
 class Page(ABC):
 
     _control_group: bool
 
+    @abstractmethod
     def __init__(self, control_group: bool):
         self._control_group = control_group
         self.get_page()
@@ -18,14 +33,45 @@ class Page(ABC):
         pass
 
 
-from collections.abc import Callable, Coroutine
-from typing import Any
+class ErrorLabel(Label):
 
-from nicegui import ui, Client, app
-from typing_extensions import Awaitable
+    def __init__(self, text: str = ''):
+        super().__init__(text)
+        super().classes('text-negative text-weight-bold')
 
-import gui_styles
-import logger_module
+
+
+class SuccessLabel(Label):
+
+    def __init__(self, text: str = ''):
+        super().__init__(text)
+        super().classes('text-positive')
+
+
+class WrongLabel(Label):
+
+    def __init__(self, text: str = ''):
+        super().__init__(text)
+        super().classes('text-negative')
+
+class MainCard(Card):
+
+    def __init__(self, *,
+                 align_items: Literal['start', 'end', 'center', 'baseline', 'stretch'] | None = None,
+                 ):
+        super().__init__(align_items=align_items)
+        super().style('margin-top: 3%')
+
+
+class SubCard(Card):
+
+    def __init__(self, *,
+                 align_items: Literal['start', 'end', 'center', 'baseline', 'stretch'] | None = None,
+                 ):
+        super().__init__(align_items=align_items)
+        super().classes('w-full')
+
+
 from licenses import licenses
 from courses import choose_course_page, course_page
 from db_generation import gen_01_choose_topic_page, gen_02_choose_tables_page, gen_03_choose_attributes_page, gen_04_create_database_page, upload_page
@@ -183,14 +229,7 @@ def _footer(control_group:bool = False) -> None:
         ui.label("developed by David Seßner")
 
 
-def _header(control_group: bool = False) -> None:
-    """Builds the header for every page and defines default styles.
-
-    This needs to run for every page **before** the actual page.
-
-    :param control_group:
-        Whether the header is for the control or experimental group.
-    """
+def _init_default_styles() -> None:
     ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#80acff", dark="#1d1d1d", dark_page="#0d347a")
 
     ui.button.default_classes('text-center bg-primary q-pa-sm shadow-1')
@@ -209,6 +248,16 @@ def _header(control_group: bool = False) -> None:
     ui.row.default_classes('items-center justify-center')
     ui.textarea.default_style('width: 90%; background-color: gainsboro')
 
+
+def _header(control_group: bool = False) -> None:
+    """Builds the header for every page and defines default styles.
+
+    This needs to run for every page **before** the actual page.
+
+    :param control_group:
+        Whether the header is for the control or experimental group.
+    """
+
     with ui.header(elevated=True):
         ui.image("images/favicon.png").classes('w-8 cursor-pointer').on("click",
                                                                         lambda: ui.navigate.to(get_page_link("home", control_group)))
@@ -219,6 +268,7 @@ def _header(control_group: bool = False) -> None:
 def _page_builder(page: type[Page], client: Client, control_group: bool = False):
     client.content.classes('items-center')
     ui.on_exception(lambda e: _on_exception(e))
+    _init_default_styles()
     _header(control_group)
     page(control_group)
     _footer(control_group)
@@ -235,8 +285,7 @@ def _on_exception(e: Exception) -> None:
         ui.markdown("Fehler")
         ui.restructured_text("Ein unerwarteter Fehler ist aufgetreten. Falls etwas nicht funktionieren sollte, "
                              "lade die Seite neu und schaue, ob es danach funktioniert.")
-        error_msg = ui.restructured_text("Fehlermeldung: " + str(e))
-        error_msg.classes(gui_styles.err_msg)
+        pages.ErrorLabel("Fehlermeldung: " + str(e))
         ui.button("Ok :(", on_click=dialog.close)
     dialog.open()
 

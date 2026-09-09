@@ -4,7 +4,6 @@ from typing import override
 from nicegui.elements.input import Input
 from nicegui import ui, app, events
 
-import gui_styles
 import databaise
 from base_models import DatabaseStructure0, DatabaseStructure1, _Table1
 import pages
@@ -27,7 +26,7 @@ class ChooseAttributesPage(pages.Page):
         topic = self._database_build.topic
         tables = self._database_build.tables
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.markdown("Attribute der Tabellen")
                 ui.restructured_text("Überprüfe, ob die Attribute für die Tabellen sinnvoll sind. "

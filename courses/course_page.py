@@ -22,7 +22,6 @@ from nicegui.elements.pagination import Pagination
 from nicegui.elements.restructured_text import ReStructuredText
 from nicegui.elements.table import Table
 
-import gui_styles
 import databaise
 import logger_module
 from base_models import DatabaseStructure3, CourseTemplate, Course
@@ -60,7 +59,9 @@ class CoursePage(pages.Page):
     _sql_input: Input
     _run_button: Button
     _result_table: Table
-    _result_feedback_label: Label
+    _error_feedback_label: Label
+    _success_feedback_label: Label
+    _wrong_feedback_label: Label
     _pagination: Pagination
     _previous_button: Button
     _next_button: Button
@@ -91,7 +92,7 @@ class CoursePage(pages.Page):
         logger.info("Virtual database connected.")
 
         ui.keyboard(on_key=self._handle_key)
-        with (ui.card().style(gui_styles.maincard_style)):
+        with pages.MainCard():
             with ui.column().classes("items-start", remove="items-center"):
                 with ui.row().classes("justify-between"):
                     self._choose_course_button = ui.button("Zurück zu Kurswahl",
@@ -101,13 +102,13 @@ class CoursePage(pages.Page):
 
             with ui.column():
                 self._topic_markdown = ui.markdown(self._course_name)
-                with ui.card().classes(gui_styles.subcard_classes):
+                with pages.SubCard():
                     with ui.column():
                         ui.markdown("Hintergrundgeschichte").classes("text-h5")
                         self._story_textfield = ui.restructured_text("")
 
 
-                with ui.card().classes(gui_styles.subcard_classes):
+                with pages.SubCard():
                     with ui.column():
                         ui.markdown("Aufgabe").classes("text-h5")
                         with ui.row():
@@ -118,10 +119,12 @@ class CoursePage(pages.Page):
                         self._pagination = ui.pagination(1, len(self._course_template.exercise_solutions),
                                                          direction_links=False)
                         self._pagination.on("click", self._on_pagination_change)
-                        self._exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
+                        self._exercise_textfield = ui.restructured_text("")
                         self._sql_input = ui.textarea(on_change=self._on_sql_input_change)
-                        self._run_button = ui.button("Warte auf KI-Antwort", on_click=self._run_sql)
-                        self._result_feedback_label = ui.label("")
+                        self._run_button = ui.button("Antwort überprüfen", on_click=self._run_sql)
+                        self._success_feedback_label = pages.SuccessLabel("").set_visibility(False)
+                        self._error_feedback_label = pages.ErrorLabel("").set_visibility(False)
+                        self._wrong_feedback_label = pages.WrongLabel("").set_visibility(False)
                         self._result_table = ui.table(rows=[{}], columns=[{}])
                         self._result_table.set_visibility(False)
 
@@ -166,29 +169,33 @@ class CoursePage(pages.Page):
         correct_result = pandas.read_sql_query(correct_query, self._database_instance)
         user_input = str(self._sql_input.value or "")
 
+        self._error_feedback_label.text = ""
+        self._error_feedback_label.set_visibility(False)
+        self._success_feedback_label.text = ""
+        self._success_feedback_label.set_visibility(False)
+        self._wrong_feedback_label.text = ""
+        self._wrong_feedback_label.set_visibility(False)
+
         try:
             user_result = pandas.read_sql_query(user_input, self._database_instance)
         except pandas.errors.DatabaseError as e:
-            self._result_feedback_label.text = str(e)
-            self._result_feedback_label._classes.clear()
-            self._result_feedback_label.classes(gui_styles.err_msg)
+            self._error_feedback_label.text = str(e)
+            self._error_feedback_label.set_visibility(True)
             self._result_table.set_visibility(False)
             self._user_answers[self._exercise_pointer] = (user_input, Proofreading.SYNTAX)
         else:
             self._result_table.columns = [{'name': col, 'label': col, 'field': col} for col in user_result]
             self._result_table.rows = user_result.to_dict('records')
             if correct_result.equals(user_result):
-                self._result_feedback_label.text = "Deine Antwort ist richtig!"
-                self._result_feedback_label._classes.clear()
-                self._result_feedback_label.classes(gui_styles.success_msg_classes)
+                self._success_feedback_label.text = "Deine Antwort ist richtig!"
+                self._success_feedback_label.set_visibility(True)
                 self._user_answers[self._exercise_pointer] = (user_input, Proofreading.CORRECT)
             else:
-                self._result_feedback_label.text = ("Dein Ergebnis stimmt noch nicht mit den Lösungen überein.\n"
+                self._wrong_feedback_label.text = ("Dein Ergebnis stimmt noch nicht mit den Lösungen überein.\n"
                                             "Überprüfe, ob du einen Fehler gemacht hast. Falls du trotzdem glaubst, "
                                             "dass deine Eingabe korrekt ist, frage bei deiner Lehrkraft nach. Da "
                                             "die Aufgaben KI-generiert sind, könnte auch die Lösung falsch sein.")
-                self._result_feedback_label._classes.clear()
-                self._result_feedback_label.classes(gui_styles.wrong_msg_classes)
+                self._wrong_feedback_label.set_visibility(True)
                 self._user_answers[self._exercise_pointer] = (user_input, Proofreading.WRONG)
             self._result_table.set_visibility(True)
         finally:
@@ -221,7 +228,12 @@ class CoursePage(pages.Page):
             return
 
         self._result_table.set_visibility(False)
-        self._result_feedback_label.text = " "
+        self._error_feedback_label.text = ""
+        self._error_feedback_label.set_visibility(False)
+        self._success_feedback_label.text = ""
+        self._success_feedback_label.set_visibility(False)
+        self._wrong_feedback_label.text = ""
+        self._wrong_feedback_label.set_visibility(False)
         self._exercise_textfield.content = self._course.exercises[self._exercise_pointer]
         self._sql_input.value = ""
 

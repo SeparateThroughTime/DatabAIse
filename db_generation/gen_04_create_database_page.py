@@ -10,7 +10,6 @@ import sqlite3
 
 from nicegui.elements.button import Button
 
-import gui_styles
 import databaise
 import logger_module
 from base_models import DatabaseStructure1, DatabaseStructure3
@@ -35,7 +34,7 @@ class CreateDatabasePage(pages.Page):
         logger.info("Start page build.")
         self._database_build = DatabaseStructure1.model_validate(app.storage.user["database_build"])
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.markdown("Erstellen der Datenbank")
                 ui.restructured_text("""Du hast es fast geschafft!

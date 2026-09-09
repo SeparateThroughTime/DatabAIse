@@ -2,5 +2,5 @@
 - nicegui warning: Event listeners changed after initial definition
 - AI tweaking
 - Design
-- Regenerate button (indication that it is working missing)
 - User can switch database
+- Multi primary keys

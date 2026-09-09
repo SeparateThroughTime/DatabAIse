@@ -4,7 +4,6 @@ from typing import override
 
 from nicegui import ui, app
 
-import gui_styles
 import databaise
 import logger_module
 import pages
@@ -24,7 +23,7 @@ class ChooseCoursePage(pages.Page):
     def get_page(self) -> None:
         """Function to build the page."""
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.markdown("Kurswahl")
                 ui.restructured_text("Du kannst jetzt einen Kurs auswählen. Die KI wird dann Aufgaben passend zu deiner Datenbank erstellen.\n"

@@ -21,8 +21,6 @@ from base_models import DatabaseStructure0, DatabaseStructure1, DatabaseStructur
     _Attribute, _DataEntry, CourseTemplate, Course
 
 
-
-
 _course_create_sample_solutions_agent = Agent(
     name="sample solution generator",
     instructions="""You are transforming abstract SQL queries to concrete SQL queries for a specific database.

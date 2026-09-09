@@ -4,7 +4,6 @@ from typing import override
 from nicegui import ui, app, events
 from nicegui.elements.input import Input
 
-import gui_styles
 import pages
 
 
@@ -20,7 +19,7 @@ class ChooseTopicPage(pages.Page):
     def get_page(self) -> None:
         """Function to build the page"""
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.markdown("Thema der Datenbank")
                 ui.label("Gib zuerst das Thema der Datenbank an.")

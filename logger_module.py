@@ -2,7 +2,7 @@
 
 import logging
 
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL = logging.WARNING
 
 
 def create_logger(name: str) -> logging.Logger:

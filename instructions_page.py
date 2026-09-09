@@ -3,7 +3,6 @@ from typing import override
 
 from nicegui import ui
 
-import gui_styles
 import pages
 
 class InstructionPage(pages.Page):
@@ -16,7 +15,7 @@ class InstructionPage(pages.Page):
     def get_page(self):
         """Function to build the page"""
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.image("images/logo.png").props("width=60%")
                 group_designation = "B" if self._control_group else "A"

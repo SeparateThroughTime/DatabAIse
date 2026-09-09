@@ -22,7 +22,7 @@ class UploadPage(pages.Page):
     def get_page(self) -> None:
         """Function to build the page"""
 
-        with ui.card().style(gui_styles.maincard_style):
+        with pages.MainCard():
             with ui.column():
                 ui.markdown("Datenbank hochladen")
                 ui.restructured_text("Hier kannst du deine bereits erstellte Datenbank hochladen. Bitte beachte, dass nur Datenbanken funktionieren, die mit diesem Tool erstellt wurden.")
