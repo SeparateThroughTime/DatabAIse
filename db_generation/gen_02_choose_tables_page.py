@@ -1,4 +1,5 @@
 """Module for page where user can choose tables."""
+from typing import override
 
 from nicegui.elements.input import Input
 from nicegui import ui, app, events, elements
@@ -9,56 +10,67 @@ from base_models import DatabaseStructure0
 import pages
 
 
-def get_page(control_group: bool = False) -> None:
-    """Function to build the page"""
+class ChooseTablesPage(pages.Page):
 
-    topic = app.storage.user["database_build"]
+    _table_inputs: list[Input]
+    _topic: str
 
-    with ui.card().style(gui_styles.maincard_style):
-        with ui.column():
-            ui.markdown("Tabellen der Datenbank")
-            ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "
-                                 "Du kannst sie vor dem nächsten Schritt noch abändern.")
+    def __init__(self, control_group: bool):
+        super().__init__(control_group)
 
-            table_inputs = []
-            with ui.row():
-                ui.label("Tabelle 1:")
-                table_inputs.append(ui.input())
-            with ui.row():
-                ui.label("Tabelle 2:")
-                table_inputs.append(ui.input())
-            with ui.row():
-                ui.label("Tabelle 3:")
-                table_inputs.append(ui.input())
-            with ui.row():
-                ui.label("Tabelle 4:")
-                table_inputs.append(ui.input())
 
-            button = ui.button("Senden", on_click=lambda: _next_page(table_inputs, control_group))
+    @override
+    def get_page(self) -> None:
+        """Function to build the page"""
 
-    async def start_prompt() -> None:
-        result = await databaise.db_create_tables(topic)
+        self._topic = app.storage.user["database_build"]
+
+        with ui.card().style(gui_styles.maincard_style):
+            with ui.column():
+                ui.markdown("Tabellen der Datenbank")
+                ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "
+                                     "Du kannst sie vor dem nächsten Schritt noch abändern.")
+
+                self._table_inputs = []
+                with ui.row():
+                    ui.label("Tabelle 1:")
+                    self._table_inputs.append(ui.input())
+                with ui.row():
+                    ui.label("Tabelle 2:")
+                    self._table_inputs.append(ui.input())
+                with ui.row():
+                    ui.label("Tabelle 3:")
+                    self._table_inputs.append(ui.input())
+                with ui.row():
+                    ui.label("Tabelle 4:")
+                    self._table_inputs.append(ui.input())
+
+                ui.button("Senden", on_click=lambda: self._next_page())
+                ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self._start_prompt), once=True)
+                ui.keyboard(on_key=self._handle_key, ignore=[])
+
+
+    async def _start_prompt(self) -> None:
+        result = await databaise.db_create_tables(self._topic)
         tables = result.tables
 
         for i in range(len(tables)):
-            table_inputs[i].value = tables[i]
+            self._table_inputs[i].value = tables[i]
 
-    ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(start_prompt), once=True)
 
-    def handle_key(e: events.KeyEventArguments) -> None:
+    def _handle_key(self, e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
-            _next_page(topic, table_inputs)
-    ui.keyboard(on_key=handle_key, ignore=[])
+            self._next_page()
 
 
-def _next_page(table_inputs: list[Input], control_group: bool) -> None:
-    """Saves tables and redirects to :class:`db_generation.gen_03_choose_attributes_page`"""
+    def _next_page(self) -> None:
+        """Saves tables and redirects to :class:`db_generation.gen_03_choose_attributes_page`"""
 
-    topic = app.storage.user["database_build"]
-    table_strings = []
-    for table_input in table_inputs:
-        table_strings.append(table_input.value)
-    tables = DatabaseStructure0(topic=topic, tables=table_strings)
-    app.storage.user["database_build"] = tables.model_dump()
+        topic = app.storage.user["database_build"]
+        table_strings = []
+        for table_input in self._table_inputs:
+            table_strings.append(table_input.value)
+        tables = DatabaseStructure0(topic=topic, tables=table_strings)
+        app.storage.user["database_build"] = tables.model_dump()
 
-    ui.navigate.to(pages.get_page_link("choose_attributes", control_group))
+        ui.navigate.to(pages.get_page_link("choose_attributes", self._control_group))

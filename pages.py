@@ -3,6 +3,20 @@
 This module defines the hierarchy of alle pages. Each function with
 :code:`@ui.page("path")` builds a page for the specific path.
 """
+from abc import ABC, abstractmethod, abstractproperty
+
+class Page(ABC):
+
+    _control_group: bool
+
+    def __init__(self, control_group: bool):
+        self._control_group = control_group
+        self.get_page()
+
+
+    def get_page(self):
+        pass
+
 
 from collections.abc import Callable, Coroutine
 from typing import Any
@@ -40,6 +54,7 @@ _page_links_control_group = {
     "course": "/b/Kurs",
     "licenses": "/b/Lizenzen"
 }
+
 
 def build() -> None:
     """Starts NiceGUI."""
@@ -90,12 +105,12 @@ async def wait_for_ai_response_dialog(ai_call: Callable[[], Awaitable[Any]]) -> 
 
 @ui.page(_page_links_experimental_group["home"])
 def _a_instructions(client: Client) -> None:
-    _page_builder(instructions_page.get_page, client)
+    _page_builder(instructions_page.InstructionPage, client)
 
 
 @ui.page(_page_links_experimental_group["choose_course"])
 def _a_choose_course(client: Client) -> None:
-    _page_builder(choose_course_page.get_page, client)
+    _page_builder(choose_course_page.ChooseCoursePage, client)
 
 
 @ui.page(_page_links_experimental_group["course"])
@@ -105,17 +120,17 @@ def _a_course(client: Client) -> None:
 
 @ui.page(_page_links_experimental_group["licenses"])
 def _a_licenses(client: Client) -> None:
-    _page_builder(licenses.get_page, client)
+    _page_builder(licenses.LicensesPage, client)
 
 
 @ui.page(_page_links_control_group["home"])
 def _b_instructions(client: Client) -> None:
-    _page_builder(instructions_page.get_page, client, True)
+    _page_builder(instructions_page.InstructionPage, client, True)
 
 
 @ui.page(_page_links_control_group["choose_course"])
 def _b_choose_course(client: Client) -> None:
-    _page_builder(choose_course_page.get_page, client, True)
+    _page_builder(choose_course_page.ChooseCoursePage, client, True)
 
 
 @ui.page(_page_links_control_group["course"])
@@ -125,32 +140,32 @@ def _b_course(client: Client) -> None:
 
 @ui.page(_page_links_control_group["licenses"])
 def _b_licenses(client: Client) -> None:
-    _page_builder(licenses.get_page, client, True)
+    _page_builder(licenses.LicensesPage, client, True)
 
 
 @ui.page(_page_links_experimental_group["choose_attributes"])
 def _choose_attributes(client: Client) -> None:
-    _page_builder(gen_03_choose_attributes_page.get_page, client)
+    _page_builder(gen_03_choose_attributes_page.ChooseAttributesPage, client)
 
 
 @ui.page(_page_links_experimental_group["choose_tables"])
 def _choose_table(client: Client) -> None:
-    _page_builder(gen_02_choose_tables_page.get_page, client)
+    _page_builder(gen_02_choose_tables_page.ChooseTablesPage, client)
 
 
 @ui.page(_page_links_experimental_group["choose_topic"])
 def _choose_topic(client: Client) -> None:
-    _page_builder(gen_01_choose_topic_page.get_page, client)
+    _page_builder(gen_01_choose_topic_page.ChooseTopicPage, client)
 
 
 @ui.page(_page_links_experimental_group["create_database"])
 def _create_database(client: Client) -> None:
-    _page_builder(gen_04_create_database_page.get_page, client)
+    _page_builder(gen_04_create_database_page.CreateDatabasePage, client)
 
 
 @ui.page(_page_links_experimental_group["upload_database"])
 def _upload(client: Client) -> None:
-    _page_builder(upload_page.get_page, client)
+    _page_builder(upload_page.UploadPage, client)
 
 
 def _footer(control_group:bool = False) -> None:
@@ -201,7 +216,7 @@ def _header(control_group: bool = False) -> None:
         ui.label(" ")
 
 
-def _page_builder(page: Callable[[bool], Any], client: Client, control_group: bool = False):
+def _page_builder(page: type[Page], client: Client, control_group: bool = False):
     client.content.classes('items-center')
     ui.on_exception(lambda e: _on_exception(e))
     _header(control_group)

@@ -5,12 +5,10 @@
     Occasionally the Page gets in an endless reload loop. The cause could be a reload on connection loss
     when the AI takes too long. Further investigation necessary.
 """
-import asyncio
 import logging
 import sqlite3
-import sys
 from enum import Enum
-from typing import Callable
+from typing import override
 
 import pandas
 from nicegui import ui, app, events
@@ -40,117 +38,122 @@ class Proofreading(Enum):
     SYNTAX = 3
 
 
-class CoursePage:
+class CoursePage(pages.Page):
     """Class to build the page"""
 
-    database_instance: Connection
+    _database_instance: Connection
 
-    sql_string: str
-    database_structure: DatabaseStructure3
-    course: Course
-    sample_solutions: CourseTemplate
-    control_group: bool
-    course_name: str
-    user_answers: list[tuple[str, Proofreading] | None]
-    exercise_pointer: int
+    _sql_string: str
+    _database_structure: DatabaseStructure3
+    _course: Course
+    _sample_solutions: CourseTemplate
+    _course_name: str
+    _user_answers: list[tuple[str, Proofreading] | None]
+    _exercise_pointer: int
+    _course_template: CourseTemplate
 
-    choose_course_button: Button
-    regenerate_button: Button
-    topic_markdown: Markdown
-    story_textfield: ReStructuredText
-    exercise_textfield: ReStructuredText
-    sql_input: Input
-    run_button: Button
-    result_table: Table
-    result_feedback_label: Label
-    pagination: Pagination
-    previous_button: Button
-    next_button: Button
-    database_tables: list[Table]
+    _choose_course_button: Button
+    _regenerate_button: Button
+    _topic_markdown: Markdown
+    _story_textfield: ReStructuredText
+    _exercise_textfield: ReStructuredText
+    _sql_input: Input
+    _run_button: Button
+    _result_table: Table
+    _result_feedback_label: Label
+    _pagination: Pagination
+    _previous_button: Button
+    _next_button: Button
+    _database_tables: list[Table]
 
 
     def __init__(self, control_group: bool = False):
+        super().__init__(control_group)
+
+
+    @override
+    def get_page(self):
         logger.info("Start loading page.")
-        self.control_group = control_group
-        self.course_name = app.storage.user["course_name"]
-        self.sql_string = app.storage.user["sql_string"]
-        self.database_structure = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
-        self.course_template \
+        self._course_name = app.storage.user["course_name"]
+        self._sql_string = app.storage.user["sql_string"]
+        self._database_structure = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
+        self._course_template \
             = CourseTemplate.model_validate_json(app.storage.user["course_template"])
 
-        logger.debug(f"Creating virtual database with SQL file:\n{self.sql_string}")
-        self.database_instance = sqlite3.connect(":memory:")
-        for query in self.sql_string.splitlines()[2:]:
+        logger.debug(f"Creating virtual database with SQL file:\n{self._sql_string}")
+        self._database_instance = sqlite3.connect(":memory:")
+        for query in self._sql_string.splitlines()[2:]:
             try:
-                self.database_instance.execute(query)
+                self._database_instance.execute(query)
             except Exception as e:
                 raise Exception("SQL Error for '" + query + "':", e)
-        self.database_instance.commit()
+        self._database_instance.commit()
         logger.info("Virtual database connected.")
 
-        ui.keyboard(on_key=self.handle_key)
+        ui.keyboard(on_key=self._handle_key)
         with (ui.card().style(gui_styles.maincard_style)):
             with ui.column().classes("items-start", remove="items-center"):
                 with ui.row().classes("justify-between"):
-                    self.choose_course_button = ui.button("Zurück zu Kurswahl",
-                        on_click=lambda: ui.navigate.to(pages.get_page_link("choose_course", control_group)))
-                    self.regenerate_button = ui.button("Kurs neu generieren", on_click=self._regenerate_course)
+                    self._choose_course_button = ui.button("Zurück zu Kurswahl",
+                                                           on_click=lambda: ui.navigate.to(pages.get_page_link(
+                                                               "choose_course", self._control_group)))
+                    self._regenerate_button = ui.button("Kurs neu generieren", on_click=self._regenerate_course)
 
             with ui.column():
-                self.topic_markdown = ui.markdown(self.course_name)
+                self._topic_markdown = ui.markdown(self._course_name)
                 with ui.card().classes(gui_styles.subcard_classes):
                     with ui.column():
                         ui.markdown("Hintergrundgeschichte").classes("text-h5")
-                        self.story_textfield = ui.restructured_text("")
+                        self._story_textfield = ui.restructured_text("")
 
 
                 with ui.card().classes(gui_styles.subcard_classes):
                     with ui.column():
                         ui.markdown("Aufgabe").classes("text-h5")
                         with ui.row():
-                            self.previous_button = ui.button("Vorherige Aufgabe",
-                                                        on_click=lambda: self.load_exercise(self.exercise_pointer - 1))
-                            self.next_button = ui.button("Nächste Aufgabe",
-                                                        on_click=lambda: self.load_exercise(self.exercise_pointer + 1))
-                        self.pagination = ui.pagination(1, len(self.course_template.exercise_solutions),
-                                                        direction_links=False)
-                        self.pagination.on("click", self.on_pagination_change)
-                        self.exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
-                        self.sql_input = ui.textarea(on_change=self.on_sql_input_change)
-                        self.run_button = ui.button("Warte auf KI-Antwort", on_click=self.run_sql)
-                        self.result_feedback_label = ui.label("")
-                        self.result_table = ui.table(rows=[{}], columns=[{}])
-                        self.result_table.set_visibility(False)
+                            self._previous_button = ui.button("Vorherige Aufgabe",
+                                                    on_click=lambda: self._load_exercise(self._exercise_pointer - 1))
+                            self._next_button = ui.button("Nächste Aufgabe",
+                                                    on_click=lambda: self._load_exercise(self._exercise_pointer + 1))
+                        self._pagination = ui.pagination(1, len(self._course_template.exercise_solutions),
+                                                         direction_links=False)
+                        self._pagination.on("click", self._on_pagination_change)
+                        self._exercise_textfield = ui.restructured_text("Warte auf KI-Antwort")
+                        self._sql_input = ui.textarea(on_change=self._on_sql_input_change)
+                        self._run_button = ui.button("Warte auf KI-Antwort", on_click=self._run_sql)
+                        self._result_feedback_label = ui.label("")
+                        self._result_table = ui.table(rows=[{}], columns=[{}])
+                        self._result_table.set_visibility(False)
 
                 with ui.card():
                     with ui.column():
                         ui.markdown("Tabellen der Datenbank").classes("text-h5")
                         with ui.row():
-                            self.database_tables = []
-                            self.database_structure \
+                            self._database_tables = []
+                            self._database_structure \
                                 = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
-                            for table in self.database_structure.tables:
+                            for table in self._database_structure.tables:
                                 with ui.expansion(table.name):
-                                    self.database_tables.append(ui.table(
+                                    self._database_tables.append(ui.table(
                                         columns=[{'name': "name", 'label': "Spalte", 'field': "name"},
                                                 {'name': "type", 'label': "Typ", 'field': "type"}],
                                         rows=[{"name": attribute.name, "type": attribute.type}
                                                 for attribute in table.attributes]))
 
-        if self.course_name in app.storage.user["courses"]:
-            self.load_course_safe()
+        if self._course_name in app.storage.user["courses"]:
+            self._load_course_safe()
         else:
-            ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self.generate_course), once=True)
+            ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self._generate_course), once=True)
         logger.info("Page built finished.")
 
 
-    def finished_course(self) -> None:
+    def _finished_course(self) -> None:
         """Triggered from the next_button after the last exercise to return to ChooseCoursePage."""
 
-        ui.navigate.to(pages.get_page_link("choose_course", self.control_group))
+        ui.navigate.to(pages.get_page_link("choose_course", self._control_group))
 
 
-    def run_sql(self) -> None:
+    def _run_sql(self) -> None:
         """Triggered from the run_button to run sql query.
 
         User query is executed on database. If it runs an error the error will
@@ -159,93 +162,93 @@ class CoursePage:
         feedback whether there answer is correct.
         """
 
-        correct_query = self.sample_solutions.exercise_solutions[self.exercise_pointer].sql_query
-        correct_result = pandas.read_sql_query(correct_query, self.database_instance)
-        user_input = str(self.sql_input.value or "")
+        correct_query = self._sample_solutions.exercise_solutions[self._exercise_pointer].sql_query
+        correct_result = pandas.read_sql_query(correct_query, self._database_instance)
+        user_input = str(self._sql_input.value or "")
 
         try:
-            user_result = pandas.read_sql_query(user_input, self.database_instance)
+            user_result = pandas.read_sql_query(user_input, self._database_instance)
         except pandas.errors.DatabaseError as e:
-            self.result_feedback_label.text = str(e)
-            self.result_feedback_label._classes.clear()
-            self.result_feedback_label.classes(gui_styles.err_msg)
-            self.result_table.set_visibility(False)
-            self.user_answers[self.exercise_pointer] = (user_input, Proofreading.SYNTAX)
+            self._result_feedback_label.text = str(e)
+            self._result_feedback_label._classes.clear()
+            self._result_feedback_label.classes(gui_styles.err_msg)
+            self._result_table.set_visibility(False)
+            self._user_answers[self._exercise_pointer] = (user_input, Proofreading.SYNTAX)
         else:
-            self.result_table.columns = [{'name': col, 'label': col, 'field': col} for col in user_result]
-            self.result_table.rows = user_result.to_dict('records')
+            self._result_table.columns = [{'name': col, 'label': col, 'field': col} for col in user_result]
+            self._result_table.rows = user_result.to_dict('records')
             if correct_result.equals(user_result):
-                self.result_feedback_label.text = "Deine Antwort ist richtig!"
-                self.result_feedback_label._classes.clear()
-                self.result_feedback_label.classes(gui_styles.success_msg_classes)
-                self.user_answers[self.exercise_pointer] = (user_input, Proofreading.CORRECT)
+                self._result_feedback_label.text = "Deine Antwort ist richtig!"
+                self._result_feedback_label._classes.clear()
+                self._result_feedback_label.classes(gui_styles.success_msg_classes)
+                self._user_answers[self._exercise_pointer] = (user_input, Proofreading.CORRECT)
             else:
-                self.result_feedback_label.text = ("Dein Ergebnis stimmt noch nicht mit den Lösungen überein.\n"
+                self._result_feedback_label.text = ("Dein Ergebnis stimmt noch nicht mit den Lösungen überein.\n"
                                             "Überprüfe, ob du einen Fehler gemacht hast. Falls du trotzdem glaubst, "
                                             "dass deine Eingabe korrekt ist, frage bei deiner Lehrkraft nach. Da "
                                             "die Aufgaben KI-generiert sind, könnte auch die Lösung falsch sein.")
-                self.result_feedback_label._classes.clear()
-                self.result_feedback_label.classes(gui_styles.wrong_msg_classes)
-                self.user_answers[self.exercise_pointer] = (user_input, Proofreading.WRONG)
-            self.result_table.set_visibility(True)
+                self._result_feedback_label._classes.clear()
+                self._result_feedback_label.classes(gui_styles.wrong_msg_classes)
+                self._user_answers[self._exercise_pointer] = (user_input, Proofreading.WRONG)
+            self._result_table.set_visibility(True)
         finally:
-            app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
+            app.storage.user["courses"][self._course_name]["user_answers"] = self._user_answers
 
 
-    def load_exercise(self, exercise_pointer: int) -> None:
+    def _load_exercise(self, exercise_pointer: int) -> None:
         """Triggered from the next_button to display next exercise."""
 
-        self.exercise_pointer = exercise_pointer
-        app.storage.user["courses"][self.course_name]["exercise_pointer"] = self.exercise_pointer
-        self.pagination.set_value(self.exercise_pointer)
+        self._exercise_pointer = exercise_pointer
+        app.storage.user["courses"][self._course_name]["exercise_pointer"] = self._exercise_pointer
+        self._pagination.set_value(self._exercise_pointer)
 
-        if self.exercise_pointer > len(self.course.exercises):
-            self.finished_course()
+        if self._exercise_pointer > len(self._course.exercises):
+            self._finished_course()
             return
 
-        if self.exercise_pointer + 1> len(self.course.exercises):
-            self.next_button.text = "Kurs abschließen"
+        if self._exercise_pointer + 1> len(self._course.exercises):
+            self._next_button.text = "Kurs abschließen"
         else:
-            self.next_button.text = "Nächste Aufgabe"
+            self._next_button.text = "Nächste Aufgabe"
 
-        if self.exercise_pointer <= 1:
-            self.previous_button.props("disabled")
+        if self._exercise_pointer <= 1:
+            self._previous_button.props("disabled")
         else:
-            self.previous_button.props(remove="disabled")
+            self._previous_button.props(remove="disabled")
 
-        if self.exercise_pointer > len(self.course.exercises):
+        if self._exercise_pointer > len(self._course.exercises):
             #raise Exception("Exercise " + str(exercise_pointer) + " does not exist in:\n" + str(app.storage.user["exercise_json"]))
             return
 
-        self.result_table.set_visibility(False)
-        self.result_feedback_label.text = " "
-        self.exercise_textfield.content = self.course.exercises[self.exercise_pointer]
-        self.sql_input.value = ""
+        self._result_table.set_visibility(False)
+        self._result_feedback_label.text = " "
+        self._exercise_textfield.content = self._course.exercises[self._exercise_pointer]
+        self._sql_input.value = ""
 
-        if self.user_answers[self.exercise_pointer] is not None:
+        if self._user_answers[self._exercise_pointer] is not None:
             logger.info("Found user answer for exercise.")
             x: list[tuple[str, int]] = [("", 1)]
             (a, b) = x[0]
-            (user_input, a) = (self.user_answers[self.exercise_pointer] or (None, None))
-            self.sql_input.value = user_input
-            self.run_sql()
+            (user_input, a) = (self._user_answers[self._exercise_pointer] or (None, None))
+            self._sql_input.value = user_input
+            self._run_sql()
 
 
-    async def generate_course(self) -> None:
+    async def _generate_course(self) -> None:
         """Start prompt and update page afterward."""
 
-        app.storage.user["courses"][self.course_name] = {}
+        app.storage.user["courses"][self._course_name] = {}
         logger.info("Start AI call for sample solutions.")
-        self.sample_solutions = await databaise.course_create_sample_solutions(self.database_structure, self.course_template)
+        self._sample_solutions = await databaise.course_create_sample_solutions(self._database_structure, self._course_template)
         logger.info("Sample solutions generated.")
-        app.storage.user["courses"][self.course_name]["sample_solutions"] = self.sample_solutions.model_dump_json()
+        app.storage.user["courses"][self._course_name]["sample_solutions"] = self._sample_solutions.model_dump_json()
         logger.info("Start AI call for course generation.")
-        self.course = await databaise.course_create_exercise(self.sample_solutions)
+        self._course = await databaise.course_create_exercise(self._sample_solutions)
         logger.info("Course generated.")
-        app.storage.user["courses"][self.course_name]["course"] = self.course.model_dump_json()
-        self.user_answers = [None for _ in self.course.exercises]
+        app.storage.user["courses"][self._course_name]["course"] = self._course.model_dump_json()
+        self._user_answers = [None for _ in self._course.exercises]
 
-        self.ready(0)
+        self._ready(0)
 
 
     def _regenerate_course(self) -> None:
@@ -256,31 +259,31 @@ class CoursePage:
             with ui.row():
                 ui.button("Neu generieren!",
                           on_click=lambda: (ui.timer(0.1,
-                                lambda: pages.wait_for_ai_response_dialog(self.generate_course),
-                                once=True), dialog.close()))
+                                                     lambda: pages.wait_for_ai_response_dialog(self._generate_course),
+                                                     once=True), dialog.close()))
                 ui.button("Abbrechen", on_click=lambda: dialog.close)
         dialog.open()
 
 
-    def load_course_safe(self) -> None:
+    def _load_course_safe(self) -> None:
         """Load course safe."""
 
         try:
-            course_data = app.storage.user["courses"][self.course_name]
-            self.sample_solutions = CourseTemplate.model_validate_json(course_data["sample_solutions"])
-            self.course = Course.model_validate_json(course_data["course"])
-            self.story_textfield.content = self.course.story
-            self.user_answers = course_data["user_answers"]
-            self.exercise_pointer = course_data["exercise_pointer"]
-            self.exercise_pointer = ((self.exercise_pointer - 1) % len(self.course.exercises)) + 1
+            course_data = app.storage.user["courses"][self._course_name]
+            self._sample_solutions = CourseTemplate.model_validate_json(course_data["sample_solutions"])
+            self._course = Course.model_validate_json(course_data["course"])
+            self._story_textfield.content = self._course.story
+            self._user_answers = course_data["user_answers"]
+            self._exercise_pointer = course_data["exercise_pointer"]
+            self._exercise_pointer = ((self._exercise_pointer - 1) % len(self._course.exercises)) + 1
         except KeyError as e:
             logger.exception(f"{repr(e)}\nError on loading course. Generating new course to proceed.")
-            ui.timer(0.1, self.generate_course, once=True)
+            ui.timer(0.1, self._generate_course, once=True)
         else:
-            self.ready(course_data["exercise_pointer"])
+            self._ready(course_data["exercise_pointer"])
 
 
-    def ready(self, exercise_pointer: int) -> None:
+    def _ready(self, exercise_pointer: int) -> None:
         """Run after all data is ready to use.
 
         As the AI prompts need to run in a different thread than the page
@@ -289,28 +292,28 @@ class CoursePage:
         generation this method should run to set those variables.
         """
 
-        app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
-        self.story_textfield.content = self.course.story
-        self.load_exercise(exercise_pointer)
+        app.storage.user["courses"][self._course_name]["user_answers"] = self._user_answers
+        self._story_textfield.content = self._course.story
+        self._load_exercise(exercise_pointer)
         logger.info("UI updated.")
 
 
-    def handle_key(self, e: events.KeyEventArguments) -> None:
+    def _handle_key(self, e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
-            self.run_sql()
+            self._run_sql()
 
 
-    def on_sql_input_change(self) -> None:
-        sql_input_value = str(self.sql_input.value or "")
-        app.storage.user["courses"][self.course_name]["sql_input_value"] = sql_input_value
-        if self.user_answers[self.exercise_pointer] is not None:
-            if self.user_answers[self.exercise_pointer][1] != Proofreading.NO_PROOFREADING:
+    def _on_sql_input_change(self) -> None:
+        sql_input_value = str(self._sql_input.value or "")
+        app.storage.user["courses"][self._course_name]["sql_input_value"] = sql_input_value
+        if self._user_answers[self._exercise_pointer] is not None:
+            if self._user_answers[self._exercise_pointer][1] != Proofreading.NO_PROOFREADING:
                 return
-        self.user_answers[self.exercise_pointer] = (sql_input_value, Proofreading.NO_PROOFREADING)
-        app.storage.user["courses"][self.course_name]["user_answers"] = self.user_answers
+        self._user_answers[self._exercise_pointer] = (sql_input_value, Proofreading.NO_PROOFREADING)
+        app.storage.user["courses"][self._course_name]["user_answers"] = self._user_answers
 
 
-    def on_pagination_change(self) -> None:
+    def _on_pagination_change(self) -> None:
         logger.debug("Pagination click detected")
-        exercise_destination = int(self.pagination.value or 0)
-        self.load_exercise(exercise_destination)
+        exercise_destination = int(self._pagination.value or 0)
+        self._load_exercise(exercise_destination)

@@ -1,8 +1,6 @@
 - Remove gui_styles
 - nicegui warning: Event listeners changed after initial definition
-- Fancy loading
 - AI tweaking
 - Design
 - Regenerate button (indication that it is working missing)
 - User can switch database
-- Object orientation like course_page
