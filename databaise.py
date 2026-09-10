@@ -212,7 +212,7 @@ _db_create_attributes_agent = Agent(
                  one table with two attributes with type Varchar and
                  one table with one attribute with type Integer and one attribute with type Varchar.
                  The output should only include the name of the attribute and not the type.
-                 All data must be german or be loanwords for german language.""",
+                 All data must be german or be loanwords for german language and follow SQL naming conventions.""",
     model="gpt-5.6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
@@ -284,7 +284,8 @@ _db_create_relations_agent = Agent(
                  There has to be at least one many-to-many relation, two 1-to-many relations and one recursive relation.
                  You are not allowed to add any table to the database.
                  1-to-many relations are implemented with foreign keys.
-                 many-to-many relations are implemented with a relation-table.
+                 many-to-many relations are implemented with a relation-tables which need a composite primary key.
+                 This is represented with to IDs of type "INT PRIMARY KEY"
                  All data must be german or be loanwords for german language.
                  """,
     model="gpt-5.6-luna",
@@ -308,7 +309,8 @@ _db_verify_relations_agent = Agent(
                     two 1-to-many relations and one recursive relation.
                     If something is missing, add that relation type in the most reasonable way possible.
                     1-to-many relations are implemented with foreign keys.
-                    many-to-many relations are implemented with a relation-table.
+                    many-to-many relations are implemented with a relation-table which need a composite primary key.
+                    This is represented with to IDs of type "INT PRIMARY KEY".
                     All data must be german or be loanwords for german language.""",
     model="gpt-5.6-luna",
     model_settings=ModelSettings(
@@ -416,12 +418,14 @@ def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
                 primary_keys.append(attribute)
             create_table_string += ", "
         if len(primary_keys) == 0:
-            logger.error(ValueError(f"No primary keys in table {table.name} of database {database.topic}!"))
-        create_table_string += "PRIMARY KEY ("
-        for primary_key in primary_keys:
-            create_table_string += f"'{primary_key.name}', "
-        create_table_string = create_table_string[:-2]
-        create_table_string += "))"
+            logger.error(repr(ValueError(f"No primary keys in table {table.name} of database {database.topic}!")))
+        else:
+            create_table_string += "PRIMARY KEY ("
+            for primary_key in primary_keys:
+                create_table_string += f"'{primary_key.name}', "
+            create_table_string = create_table_string[:-2]
+            create_table_string += ")"
+        create_table_string += ")"
         sql_list.append(create_table_string)
 
         logger.debug("Iterate data entries")
