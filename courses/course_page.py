@@ -168,6 +168,9 @@ class CoursePage(pages.Page):
         correct_query = self._sample_solutions.exercise_solutions[self._exercise_pointer].sql_query
         correct_result = pandas.read_sql_query(correct_query, self._database_instance)
         user_input = str(self._sql_input.value or "")
+        if user_input == "":
+            logger.debug("Method ran with empty user_input and aborts.")
+            return
 
         self._error_feedback_label.text = ""
         self._error_feedback_label.set_visibility(False)
@@ -237,13 +240,13 @@ class CoursePage(pages.Page):
         self._exercise_textfield.content = self._course.exercises[self._exercise_pointer]
         self._sql_input.value = ""
 
-        if self._user_answers[self._exercise_pointer] is not None:
-            logger.info("Found user answer for exercise.")
-            x: list[tuple[str, int]] = [("", 1)]
-            (a, b) = x[0]
-            (user_input, a) = (self._user_answers[self._exercise_pointer] or (None, None))
-            self._sql_input.value = user_input
-            self._run_sql()
+        user_answer = self._user_answers[self._exercise_pointer]
+        if user_answer is not None:
+            (user_input, _) = (self._user_answers[self._exercise_pointer] or (None, None))
+            if user_input is not None:
+                logger.info("Found user answer for exercise.")
+                self._sql_input.value = user_input
+                self._run_sql()
 
 
     async def _generate_course(self) -> None:
