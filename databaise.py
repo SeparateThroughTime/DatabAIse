@@ -217,7 +217,7 @@ _db_create_attributes_agent = Agent(
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="none"
+            effort="high"
         )
     ),
     output_type=DatabaseStructure1
