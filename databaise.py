@@ -292,7 +292,7 @@ _db_create_relations_agent = Agent(
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="none"
+            effort="high"
         )
     ),
     output_type=DatabaseStructure2
@@ -302,26 +302,6 @@ _db_create_relations_agent = Agent(
 The agent is instructed to generate at leas one many-to-many relation, two
 1-to-many relations and one recursive relation.
 """
-
-_db_verify_relations_agent = Agent(
-    name="relation verifier",
-    instructions="""Verify if a database contains at least one many-to-many relation,
-                    two 1-to-many relations and one recursive relation.
-                    If something is missing, add that relation type in the most reasonable way possible.
-                    1-to-many relations are implemented with foreign keys.
-                    many-to-many relations are implemented with a relation-table which need a composite primary key.
-                    This is represented with to IDs of type "INT PRIMARY KEY".
-                    All data must be german or be loanwords for german language.""",
-    model="gpt-5.6-luna",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(
-            context="current_turn",
-            effort="none"
-        )
-    ),
-    output_type=DatabaseStructure2
-)
-"""Agent for verifying the generated relations, used in :func:`db_finalize_structure`."""
 
 async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructure2:
     """Generates relations and keys for a given database.
@@ -336,8 +316,6 @@ async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructu
     logger.debug(f"_db_create_primary_keys_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_db_create_relations_agent, result.final_output.model_dump_json())
     logger.debug(f"_db_create_relations_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
-    result = await Runner.run(_db_verify_relations_agent, result.final_output.model_dump_json())
-    logger.debug(f"_db_verify_relations_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
