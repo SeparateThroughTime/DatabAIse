@@ -97,12 +97,15 @@ async def course_create_sample_solutions(database: DatabaseStructure3, course_te
     result = await Runner.run(_course_create_sample_solutions_agent,
                               f"Generate sample solutions for database: {database.model_dump_json()} with the "
                               f"abstract SQL queries: {course_template.model_dump_json()}.")
+    logger.debug(f"_course_create_sample_solutions_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_course_verify_sample_solutions_to_course_template_agent,
                               f"abstract SQL queries: {course_template.model_dump_json()}, "
-                              f"concrete SQL queries: {result.final_output.model_dump_json}")
+                              f"concrete SQL queries: {result.final_output.model_dump_json()}")
+    logger.debug(f"_course_verify_sample_solutions_to_course_template_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_course_verify_sample_solutions_to_database_agent,
-                              f"SQL queries: {result.final_output.model_dump_json}, "
+                              f"SQL queries: {result.final_output.model_dump_json()}, "
                               f"database: {database.model_dump_json()}")
+    logger.debug(f"_course_verify_sample_solutions_top_database_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
@@ -152,9 +155,11 @@ async def course_create_exercise(sample_solutions: CourseTemplate) -> Course:
     """
 
     result = await Runner.run(_course_create_exercise_agent,sample_solutions.model_dump_json())
+    logger.debug(f"_course_create_exercise_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_course_verify_exercise_agent,
                               f"""Sample solutions: {sample_solutions.model_dump_json()}
-                              f"Exercises: {result.final_output.model_dump_json}""")
+                              f"Exercises: {result.final_output.model_dump_json()}""")
+    logger.debug(f"_course_verify_exercise_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
@@ -191,6 +196,7 @@ async def db_create_tables(topic: str, amount_tables: int = 4) -> DatabaseStruct
 
     result = await Runner.run(_db_create_tables_agent,
                               f"Generate {amount_tables} tables for a database with the topic '{topic}'.")
+    logger.debug(f"_db_create_tables_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
@@ -233,6 +239,7 @@ async def db_create_attributes(database: DatabaseStructure0, amount_attributes: 
 
     input_string = f"Generate {amount_attributes} attributes for: {database.model_dump_json()}"
     result = await Runner.run(_db_create_attributes_agent, input_string)
+    logger.debug(f"_db_create_attributes_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
@@ -322,9 +329,13 @@ async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructu
     """
 
     result = await Runner.run(_db_create_attribute_types_agent,database.model_dump_json())
+    logger.debug(f"_db_create_attribute_types_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_db_create_primary_keys_agent, result.final_output.model_dump_json())
+    logger.debug(f"_db_create_primary_keys_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_db_create_relations_agent, result.final_output.model_dump_json())
+    logger.debug(f"_db_create_relations_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     result = await Runner.run(_db_verify_relations_agent, result.final_output.model_dump_json())
+    logger.debug(f"_db_verify_relations_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
@@ -366,7 +377,7 @@ def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
 
     logger.info("Converting DatabaseStructure3 object to string")
     if logger.getEffectiveLevel() == logging.DEBUG:
-        db_wo_data = {
+        db_without_data = {
             "topic": database.topic,
             "tables": [{
                 "name": table.name,
@@ -378,7 +389,7 @@ def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
                 } for attribute in table.attributes]
             } for table in database.tables]
         }
-        logger.debug(f"DatabaseStructure3 object:\n{json.dumps(db_wo_data, indent=2)}")
+        logger.debug(f"DatabaseStructure3 object:\n{json.dumps(db_without_data, indent=2)}")
 
     sql_list = []
     sql_list.append(f"CREATE DATABASE '{database.topic}'")
