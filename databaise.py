@@ -121,31 +121,16 @@ _course_create_exercise_agent = Agent(
                  The exercises must be in german language.
                  All names of tables or attributes should be in single quotation marks.
                  You create also a motivating underlying story line which is explaining the structure of the database.""",
-    model="gpt-5.6-luna",
+    model="gpt-5.6-terra",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="low"
+            effort="high"
         )
     ),
     output_type=Course
 )
 """Agent to generate exercises based on SQL queries."""
-
-_course_verify_exercise_agent = Agent(
-    name="exercise verifier",
-    instructions="""Verify if a list of exercises match the corresponding sample solutions.
-                 If it does not match, alter the exercise.""",
-    model="gpt-5.6-luna",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(
-            context="current_turn",
-            effort="low"
-        )
-    ),
-    output_type=Course
-)
-"""Agent to verify that exercises and sample solutions fit."""
 
 async def course_create_exercise(sample_solutions: CourseTemplate) -> Course:
     """Generates underlying story and exercises with sample solutions.
@@ -156,10 +141,6 @@ async def course_create_exercise(sample_solutions: CourseTemplate) -> Course:
 
     result = await Runner.run(_course_create_exercise_agent,sample_solutions.model_dump_json())
     logger.debug(f"_course_create_exercise_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
-    result = await Runner.run(_course_verify_exercise_agent,
-                              f"""Sample solutions: {sample_solutions.model_dump_json()}
-                              f"Exercises: {result.final_output.model_dump_json()}""")
-    logger.debug(f"_course_verify_exercise_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
