@@ -217,7 +217,7 @@ _db_create_attributes_agent = Agent(
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="high"
+            effort="xhigh"
         )
     ),
     output_type=DatabaseStructure1
@@ -288,7 +288,7 @@ _db_create_relations_agent = Agent(
                  This is represented with to IDs of type "INT PRIMARY KEY"
                  All data must be german or be loanwords for german language.
                  """,
-    model="gpt-5.6-luna",
+    model="gpt-5.6-terra",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
