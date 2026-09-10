@@ -1,6 +1,4 @@
-- Remove gui_styles
 - nicegui warning: Event listeners changed after initial definition
 - AI tweaking
 - Design
 - User can switch database
-- Multi primary keys

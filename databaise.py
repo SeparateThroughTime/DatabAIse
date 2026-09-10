@@ -391,6 +391,7 @@ def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
         logger.debug(f"Table '{table.name}'")
         create_table_string = f"CREATE TABLE '{table.name}' ("
         logger.debug("Iterate attributes")
+        primary_keys: list[_Attribute] = []
         for attribute in table.attributes:
             logger.debug(f"Attribute '{attribute.name}'")
             create_table_string += f"'{attribute.name}' {attribute.type}"
@@ -398,9 +399,18 @@ def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
                 create_table_string += f"({attribute.x})"
             elif attribute.type == Type.DEC and attribute.x != None and attribute.y != None:
                 create_table_string += f"({attribute.x},{attribute.y})"
+            elif attribute.type == Type.INT_PRIMARY_KEY:
+                # Remove " PRIMARY KEY"
+                create_table_string = create_table_string[:-12]
+                primary_keys.append(attribute)
             create_table_string += ", "
+        if len(primary_keys) == 0:
+            logger.error(ValueError(f"No primary keys in table {table.name} of database {database.topic}!"))
+        create_table_string += "PRIMARY KEY ("
+        for primary_key in primary_keys:
+            create_table_string += f"'{primary_key.name}', "
         create_table_string = create_table_string[:-2]
-        create_table_string += ")"
+        create_table_string += "))"
         sql_list.append(create_table_string)
 
         logger.debug("Iterate data entries")
@@ -425,18 +435,18 @@ def sql_to_db_structure_3(sql_string: str, disable_debug: bool = True) -> Databa
         :language: sql
 
     :param sql_string:
-        | Must have exact format:
+        | Must have exact format (Including spaces before parentheses!):
         | :sql:`CREATE DATABASE db_name;`
         | :sql:`USE db_name;`
-        | :sql:`CREATE TABLE table_1(Attributes);`
-        | :sql:`INSERT INTO table_1 VALUES(dataset_1);`
+        | :sql:`CREATE TABLE table_1 (List of Attributes, PRIMARY KEYS (List of Primary Keys));`
+        | :sql:`INSERT INTO table_1 VALUES (dataset_1);`
         | ...
-        | :sql:`INSERT INTO table_1 VALUES(dataset_n);`
+        | :sql:`INSERT INTO table_1 VALUES (dataset_n);`
         | ...
         | :sql:`CREATE TABLE table_n(Attributes);`
-        | :sql:`INSERT INTO table_n VALUES(dataset_1);`
+        | :sql:`INSERT INTO table_n VALUES (dataset_1);`
         | ...
-        | :sql:`INSERT INTO table_n VALUES(dataset_n);`
+        | :sql:`INSERT INTO table_n VALUES (dataset_n);`
     :param disable_debug: Prevent log clustering in debug logging level.
     :return: transformed DatabaseStructure3 object.
     """
@@ -479,37 +489,55 @@ def sql_to_db_structure_3(sql_string: str, disable_debug: bool = True) -> Databa
             logger.debug("Getting attributes")
             word_pointer = 3
             while word_pointer < len(words):
-                attribute_name = re.sub("['(]", "", words[word_pointer])
-                logger.debug(f"Attribute name: {attribute_name}")
-                # attribute_full_type is with paremeters. I.e. VARCHAR(255)
-                attribute_full_type = words[word_pointer + 1]
-                logger.debug(f"Attribute type: {attribute_full_type}")
-                attribute_full_type_split = re.split("[(,]", attribute_full_type)
-                attribute_full_type_split = [s for s in attribute_full_type_split if s != ""]
-                attribute_type_string = attribute_full_type_split[0]
-                attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(";") else attribute_type_string
-                attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(")") else attribute_type_string
-                attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(",") else attribute_type_string
-                attribute_type = Type(attribute_type_string)
-                attribute_x = None
-                attribute_y = None
-                if len(attribute_full_type_split) > 1:
-                    attribute_x_string = re.sub("[^0-9]", "", attribute_full_type_split[1])
-                    attribute_x = int(attribute_x_string)
-                if len(attribute_full_type_split) > 2:
-                    attribute_y_string = re.sub("[^0-9]", "", attribute_full_type_split[2])
-                    attribute_y = int(attribute_y_string)
-                if word_pointer + 2 >= len(words):
-                    word_pointer = word_pointer + 2
-                elif words[word_pointer + 2] == "PRIMARY":
-                    attribute_type = Type.INT_PRIMARY_KEY
-                    word_pointer = word_pointer + 4
-                else:
+                # Check if attribute or list of primary keys
+                if words[word_pointer] != "PRIMARY":
+                    attribute_name = re.sub("['(]", "", words[word_pointer])
+                    logger.debug(f"Attribute name: {attribute_name}")
+                    # attribute_full_type is with paremeters. I.e. VARCHAR(255)
+                    attribute_full_type = words[word_pointer + 1]
+                    logger.debug(f"Attribute type: {attribute_full_type}")
+                    attribute_full_type_split = re.split("[(,]", attribute_full_type)
+                    attribute_full_type_split = [s for s in attribute_full_type_split if s != ""]
+                    attribute_type_string = attribute_full_type_split[0]
+                    attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(")") \
+                        else attribute_type_string
+                    attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(",") \
+                        else attribute_type_string
+                    attribute_type = Type(attribute_type_string)
+                    attribute_x = None
+                    attribute_y = None
+                    if len(attribute_full_type_split) > 1:
+                        attribute_x_string = re.sub("[^0-9]", "", attribute_full_type_split[1])
+                        attribute_x = int(attribute_x_string)
+                    if len(attribute_full_type_split) > 2:
+                        attribute_y_string = re.sub("[^0-9]", "", attribute_full_type_split[2])
+                        attribute_y = int(attribute_y_string)
                     word_pointer = word_pointer + 2
 
-                # Create attribute
-                attribute = _Attribute(name=attribute_name, type=attribute_type, x=attribute_x, y=attribute_y)
-                attributes.append(attribute)
+                    # Create attribute
+                    attribute = _Attribute(name=attribute_name, type=attribute_type, x=attribute_x, y=attribute_y)
+                    attributes.append(attribute)
+
+                # List of primary keys
+                else:
+                    logger.debug(f"Primary Keys: {" ".join(words[word_pointer - len(words):])}")
+                    word_pointer = word_pointer + 2
+                    while True:
+                        attribute_name = re.sub("['();,]", "", words[word_pointer])
+                        logger.debug(f"Setting attribute '{attribute_name}' as primary key.")
+                        key_found: bool = False
+                        for attribute in attributes:
+                            if attribute.name == attribute_name:
+                                attribute.type = Type.INT_PRIMARY_KEY
+                                key_found = True
+                                break
+                        if not key_found:
+                            raise ValueError(f"Attribute '{attribute_name}' is listed as primary key but was not found"
+                                             f" in attributes:\n{str(attributes)}")
+                        if words[word_pointer].endswith(";"):
+                            word_pointer = word_pointer + 3
+                            break
+                        word_pointer = word_pointer + 1
 
             # Get data entries
             logger.debug("Getting data")
