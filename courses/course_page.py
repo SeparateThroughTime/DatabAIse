@@ -7,9 +7,13 @@
 """
 import logging
 import sqlite3
+import warnings
 from enum import Enum
-from typing import override
+from typing import override, Dict, Hashable, Any
+from warnings import warn
 
+import itertools
+import numpy
 import pandas
 from nicegui import ui, app, events
 
@@ -21,6 +25,7 @@ from nicegui.elements.markdown import Markdown
 from nicegui.elements.pagination import Pagination
 from nicegui.elements.restructured_text import ReStructuredText
 from nicegui.elements.table import Table
+from pandas.core.frame import DataFrame
 
 import databaise
 import logger_module
@@ -156,6 +161,61 @@ class CoursePage(pages.Page):
         ui.navigate.to(pages.get_page_link("choose_course", self._control_group))
 
 
+    @staticmethod
+    def _pandas_df_to_rows_and_columns(df: DataFrame) -> tuple[list[dict], list[dict]]:
+        """Method copied and edited from nicegui.elements.table.
+
+        If the change will be included to nicegui, this will be deprecated."""
+
+        import pandas as pd  # pylint: disable=import-outside-toplevel
+        from numpy.typing import NDArray
+
+        if not isinstance(df.index, pd.RangeIndex) or df.index.name is not None:
+            df = df.reset_index()
+
+        def is_special_dtype(dtype):
+            return (pd.api.types.is_datetime64_any_dtype(dtype) or
+                    pd.api.types.is_timedelta64_dtype(dtype) or
+                    pd.api.types.is_complex_dtype(dtype) or
+                    pd.api.types.is_object_dtype(dtype) or
+                    isinstance(dtype, (pd.PeriodDtype, pd.IntervalDtype)))
+        special_cols = df.columns[df.dtypes.apply(is_special_dtype)]
+        if not special_cols.empty:
+            df = df.copy()
+            df[special_cols] = df[special_cols].astype(str)
+
+        if isinstance(df.columns, pd.MultiIndex):
+            raise ValueError('MultiIndex columns are not supported. '
+                             'You can convert them to strings using something like '
+                             '`df.columns = ["_".join(col) for col in df.columns.values]`.')
+
+        duplicate_column_labels: list[bool] = df.columns.duplicated(False).tolist()
+
+        if not any(duplicate_column_labels):
+            # Short way when no columns have duplicate names
+            return df.to_dict('records'), [{'name': col, 'label': col, 'field': col} for col in df.columns]
+
+        warn('A pandas DataFrame with duplicate column names is converted to a NiceGUI table. The duplicate label '
+             'names of the DataFrame columns are kept but all duplicates names are numbered as "name_of_the_column_x '
+             'where x is a incremental number for all duplicates starting at 0. If the duplicates are intended, you '
+             'can suppress this warning.')
+
+        new_column_names: list[str] = []
+        duplicate_counter: int = 0
+        for column_label, is_duplicate in itertools.zip_longest(df.columns, duplicate_column_labels):
+            column_suffix: str = ""
+            if is_duplicate:
+                column_suffix = f"_{duplicate_counter}"
+                duplicate_counter += 1
+            new_column_names.append(column_label + column_suffix)
+
+        rows = [{name: val for name, val in itertools.zip_longest(new_column_names, row)}
+                for row in df.itertuples(index=False)]
+        columns = [{'name': name, 'label': label, 'field': name}
+                   for name, label in itertools.zip_longest(new_column_names, df.columns)]
+        return rows, columns
+
+
     def _run_sql(self) -> None:
         """Triggered from the run_button to run sql query.
 
@@ -180,15 +240,16 @@ class CoursePage(pages.Page):
         self._wrong_feedback_label.set_visibility(False)
 
         try:
-            user_result = pandas.read_sql_query(user_input, self._database_instance)
+            user_result: DataFrame = pandas.read_sql_query(user_input, self._database_instance)
         except pandas.errors.DatabaseError as e:
             self._error_feedback_label.text = str(e)
             self._error_feedback_label.set_visibility(True)
             self._result_table.set_visibility(False)
             self._user_answers[self._exercise_pointer] = (user_input, Proofreading.SYNTAX)
         else:
-            self._result_table.columns = [{'name': col, 'label': col, 'field': col} for col in user_result]
-            self._result_table.rows = user_result.to_dict('records')
+            with warnings.catch_warnings(record=False):
+                warnings.simplefilter("ignore")
+                self._result_table.rows, self._result_table.columns = self._pandas_df_to_rows_and_columns(user_result)
             if correct_result.equals(user_result):
                 self._success_feedback_label.text = "Deine Antwort ist richtig!"
                 self._success_feedback_label.set_visibility(True)

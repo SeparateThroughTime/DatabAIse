@@ -1,3 +1,5 @@
 - nicegui warning: Event listeners changed after initial definition
 - AI tweaking
 - Design
+- Add remove tables/attributes
+- Background story: Boring af
