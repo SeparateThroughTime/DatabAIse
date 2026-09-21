@@ -271,7 +271,7 @@ class CoursePage(pages.Page):
 
         self._exercise_pointer = exercise_pointer
         app.storage.user["courses"][self._course_name]["exercise_pointer"] = self._exercise_pointer
-        self._pagination.set_value(self._exercise_pointer)
+        self._pagination.set_value(self._exercise_pointer + 1)
 
         if self._exercise_pointer > len(self._course.exercises):
             self._finished_course()
@@ -282,7 +282,7 @@ class CoursePage(pages.Page):
         else:
             self._next_button.text = "Nächste Aufgabe"
 
-        if self._exercise_pointer <= 1:
+        if self._exercise_pointer <= 0:
             self._previous_button.props("disabled")
         else:
             self._previous_button.props(remove="disabled")
@@ -391,5 +391,5 @@ class CoursePage(pages.Page):
 
     def _on_pagination_change(self) -> None:
         logger.debug("Pagination click detected")
-        exercise_destination = int(self._pagination.value or 0)
-        self._load_exercise(exercise_destination)
+        pagination_value = int(self._pagination.value or 0) - 1
+        self._load_exercise(pagination_value)
