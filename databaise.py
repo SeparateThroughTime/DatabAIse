@@ -21,6 +21,11 @@ from base_models import DatabaseStructure0, DatabaseStructure1, DatabaseStructur
     _Attribute, _DataEntry, CourseTemplate, Course
 
 
+MAX_TABLES: int = 8
+
+MAX_ATTRIBUTES: int = 5
+
+
 _course_create_sample_solutions_agent = Agent(
     name="sample solution generator",
     instructions="""You are transforming abstract SQL queries to concrete SQL queries for a specific database.
@@ -167,16 +172,16 @@ The agent is instructed to take into account that the database should have
 two 1-to-many relations, one many-to-many-relation and one recursive relation.
 """
 
-async def db_create_tables(topic: str, amount_tables: int = 4) -> DatabaseStructure0:
+async def db_create_tables(topic: str, max_tables: int = MAX_TABLES) -> DatabaseStructure0:
     """Generates tables to a given topic.
 
     :param topic: Topic for the database.
-    :param amount_tables: Amount of tables to be generated.
+    :param max_tables: Amount of tables to be generated.
     :return: Generated Tables
     """
 
     result = await Runner.run(_db_create_tables_agent,
-                              f"Generate {amount_tables} tables for a database with the topic '{topic}'.")
+                              f"Generate up to {max_tables} tables for a database with the topic '{topic}'.")
     logger.debug(f"_db_create_tables_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
@@ -210,7 +215,7 @@ database should have a table with two integers, a table with two varchar and
 a table with one integer and one varchar.
 """
 
-async def db_create_attributes(database: DatabaseStructure0, amount_attributes: int = 3) -> DatabaseStructure1:
+async def db_create_attributes(database: DatabaseStructure0, max_attributes: int = MAX_ATTRIBUTES) -> DatabaseStructure1:
     """Generates attributes for each of a collection of tables for a given topic.
 
     :param database: Database including topic and table names.
@@ -218,7 +223,7 @@ async def db_create_attributes(database: DatabaseStructure0, amount_attributes: 
     :return: Database with generated attributes.
     """
 
-    input_string = f"Generate {amount_attributes} attributes for: {database.model_dump_json()}"
+    input_string = f"Generate up to {max_attributes} attributes per table for: {database.model_dump_json()}"
     result = await Runner.run(_db_create_attributes_agent, input_string)
     logger.debug(f"_db_create_attributes_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
@@ -262,11 +267,11 @@ _db_create_relations_agent = Agent(
     instructions="""Generate relations for the tables of an unfinished database.
                  The relations should be reasonable.
                  But More important are the following conditions:
-                 There has to be at least one many-to-many relation, two 1-to-many relations and one recursive relation.
-                 You are not allowed to add any table to the database.
+                 There has to be at least three many-to-many relations, four 1-to-many relations and two recursive relations.
+                 You are not allowed to add any table to the database except relation-tables.
                  1-to-many relations are implemented with foreign keys.
                  many-to-many relations are implemented with a relation-tables which need a composite primary key.
-                 This is represented with to IDs of type "INT PRIMARY KEY"
+                 This is represented with two IDs of type "INT PRIMARY KEY"
                  All data must be german or be loanwords for german language.
                  """,
     model="gpt-5.6-terra",
@@ -302,14 +307,15 @@ async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructu
 
 _db_fill_agent = Agent(
     name="database filler",
-    instructions="""Fill an empty database with fictive data.
-                 The database should have 100 entries total.
+    instructions="""Fill an empty database with authentic data.
+                 The database should have 200 entries total.
+                 The ratio of entries for each table should comply with the ratio in a real database.
                  All data must be german or be loanwords for german language.""",
     model="gpt-5.6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="none"
+            effort="low"
         )
     ),
     output_type=DatabaseStructure3

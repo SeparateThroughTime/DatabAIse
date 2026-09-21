@@ -240,12 +240,13 @@ def _init_default_styles() -> None:
     ui.upload.default_classes('text-center shadow-1')
     ui.table.default_classes('text-left shadow-1')
     ui.markdown.default_classes('text-h3')
-    ui.card.default_classes('items-center col-9')
+    ui.card.default_classes('items-center')
     ui.image.default_classes('')
     ui.header.default_classes('bg-primary fixed-top justify-between')
     ui.footer.default_classes('bg-secondary fixed-bottom justify-between')
     ui.column.default_classes('items-center w-full')
     ui.row.default_classes('items-center justify-center')
+    ui.grid.default_classes('items-center w-full')
     ui.textarea.default_style('width: 90%; background-color: gainsboro')
 
 

@@ -1,6 +1,7 @@
 """Module for page where user can choose attributes"""
 from typing import override
 
+from nicegui.elements.grid import Grid
 from nicegui.elements.input import Input
 from nicegui import ui, app, events
 
@@ -13,6 +14,7 @@ class ChooseAttributesPage(pages.Page):
 
     _attribute_inputs: list[list[Input]]
     _database_build: DatabaseStructure0
+    _tables_grid: Grid
 
     def __init__(self, control_group: bool):
         super().__init__(control_group)
@@ -23,43 +25,17 @@ class ChooseAttributesPage(pages.Page):
         """Function to build the page"""
 
         self._database_build = DatabaseStructure0.model_validate(app.storage.user["database_build"])
+        self._attribute_inputs = []
         topic = self._database_build.topic
         tables = self._database_build.tables
 
         with pages.MainCard():
             with ui.column():
-                ui.markdown("Attribute der Tabellen")
+                ui.markdown(f"Attribute der Tabellen für die Datenbank {topic}")
                 ui.restructured_text("Überprüfe, ob die Attribute für die Tabellen sinnvoll sind. "
                                       "Du kannst sie auch noch anpassen vor dem nächsten Schritt.")
-                self._attribute_inputs = []
-                with ui.card():
-                    ui.label(tables[0])
-                    with ui.row():
-                        self._attribute_inputs.append([])
-                        self._attribute_inputs[0].append(ui.input())
-                        self._attribute_inputs[0].append(ui.input())
-                        self._attribute_inputs[0].append(ui.input())
-                with ui.card():
-                    ui.label(tables[1])
-                    with ui.row():
-                        self._attribute_inputs.append([])
-                        self._attribute_inputs[1].append(ui.input())
-                        self._attribute_inputs[1].append(ui.input())
-                        self._attribute_inputs[1].append(ui.input())
-                with ui.card():
-                    ui.label(tables[2])
-                    with ui.row():
-                        self._attribute_inputs.append([])
-                        self._attribute_inputs[2].append(ui.input())
-                        self._attribute_inputs[2].append(ui.input())
-                        self._attribute_inputs[2].append(ui.input())
-                with ui.card():
-                    ui.label(tables[3])
-                    with ui.row():
-                        self._attribute_inputs.append([])
-                        self._attribute_inputs[3].append(ui.input())
-                        self._attribute_inputs[3].append(ui.input())
-                        self._attribute_inputs[3].append(ui.input())
+
+                self._tables_grid = ui.grid(columns=3)
 
                 ui.button("Senden", on_click=lambda: self._next_page())
                 ui.keyboard(on_key=self._handle_key, ignore=[])
@@ -67,16 +43,23 @@ class ChooseAttributesPage(pages.Page):
 
 
     async def _start_prompt(self) -> None:
-        response = await databaise.db_create_attributes(self._database_build)
-        tables_with_attributes = response.tables
+        generated_database_build: DatabaseStructure1 = await databaise.db_create_attributes(self._database_build)
+        tables = generated_database_build.tables
 
         table_counter = 0
-        for table in tables_with_attributes:
-            attribute_counter = 0
-            for attribute in table.attributes:
-                self._attribute_inputs[table_counter][attribute_counter].value = attribute
-                attribute_counter = attribute_counter + 1
-            table_counter = table_counter + 1
+        for table in tables:
+            with self._tables_grid:
+                with ui.card():
+                    ui.label(table.name)
+                    with ui.column():
+                        self._attribute_inputs.append([])
+                        attribute_counter = 0
+                        for attribute in table.attributes:
+                            attribute_input: Input = ui.input(f"Attribut {attribute_counter + 1}")
+                            attribute_input.value = attribute
+                            self._attribute_inputs[table_counter].append(attribute_input)
+                            attribute_counter += 1
+            table_counter += 1
 
 
     def _handle_key(self, e: events.KeyEventArguments) -> None:
