@@ -167,11 +167,14 @@ class CoursePage(pages.Page):
 
         If the change will be included to nicegui, this will be deprecated."""
 
-        import pandas as pd  # pylint: disable=import-outside-toplevel
-        from numpy.typing import NDArray
+        import itertools
 
-        if not isinstance(df.index, pd.RangeIndex) or df.index.name is not None:
-            df = df.reset_index()
+        import pandas as pd  # pylint: disable=import-outside-toplevel
+
+        if isinstance(df.columns, pd.MultiIndex):
+            raise ValueError('MultiIndex columns are not supported. '
+                             'You can convert them to strings using something like '
+                             '`df.columns = ["_".join(col) for col in df.columns.values]`.')
 
         def is_special_dtype(dtype):
             return (pd.api.types.is_datetime64_any_dtype(dtype) or
@@ -180,40 +183,44 @@ class CoursePage(pages.Page):
                     pd.api.types.is_object_dtype(dtype) or
                     isinstance(dtype, (pd.PeriodDtype, pd.IntervalDtype)))
         special_cols = df.columns[df.dtypes.apply(is_special_dtype)]
-        if not special_cols.empty:
+
+        duplicate_columns: list[bool] = df.columns.duplicated(False).tolist()
+
+        # Any condition where df will be changed
+        if (not special_cols.empty or any(duplicate_columns) or
+                not isinstance(df.index, pd.RangeIndex) or df.index.name is not None):
             df = df.copy()
+
+        if not isinstance(df.index, pd.RangeIndex) or df.index.name is not None:
+            df = df.reset_index()
+            duplicate_columns = df.columns.duplicated(False).tolist()
+
+        col_labels = df.columns.copy()
+        if any(duplicate_columns):
+            new_col_names: list[str] = []
+            duplicate_counter: int = 0
+            for col, is_duplicate in itertools.zip_longest(df.columns, duplicate_columns):
+                column_suffix: str = ''
+                if is_duplicate:
+                    column_suffix = f'_{duplicate_counter}'
+                    duplicate_counter += 1
+                new_col_names.append(f'{col}{column_suffix}')
+            df.columns = new_col_names
+            duplicate_labels = sorted({str(label) for label, is_dup in zip(col_labels, duplicate_columns) if is_dup})
+            logger.warn(f'The pandas DataFrame has duplicate column names ({duplicate_labels}). '
+                      f'The row fields are numbered to keep them unique, while the column labels stay unchanged.')
+
+            # special_cols need update due to changes
+            special_cols = df.columns[df.dtypes.apply(is_special_dtype)]
+
+        if not special_cols.empty:
             df[special_cols] = df[special_cols].astype(str)
 
-        if isinstance(df.columns, pd.MultiIndex):
-            raise ValueError('MultiIndex columns are not supported. '
-                             'You can convert them to strings using something like '
-                             '`df.columns = ["_".join(col) for col in df.columns.values]`.')
-
-        duplicate_column_labels: list[bool] = df.columns.duplicated(False).tolist()
-
-        if not any(duplicate_column_labels):
-            # Short way when no columns have duplicate names
-            return df.to_dict('records'), [{'name': col, 'label': col, 'field': col} for col in df.columns]
-
-        warn('A pandas DataFrame with duplicate column names is converted to a NiceGUI table. The duplicate label '
-             'names of the DataFrame columns are kept but all duplicates names are numbered as "name_of_the_column_x '
-             'where x is a incremental number for all duplicates starting at 0. If the duplicates are intended, you '
-             'can suppress this warning.')
-
-        new_column_names: list[str] = []
-        duplicate_counter: int = 0
-        for column_label, is_duplicate in itertools.zip_longest(df.columns, duplicate_column_labels):
-            column_suffix: str = ""
-            if is_duplicate:
-                column_suffix = f"_{duplicate_counter}"
-                duplicate_counter += 1
-            new_column_names.append(column_label + column_suffix)
-
-        rows = [{name: val for name, val in itertools.zip_longest(new_column_names, row)}
+        rows = [{name: val for name, val in itertools.zip_longest(df.columns, row)}
                 for row in df.itertuples(index=False)]
-        columns = [{'name': name, 'label': label, 'field': name}
-                   for name, label in itertools.zip_longest(new_column_names, df.columns)]
-        return rows, columns
+        cols = [{'name': name, 'label': label, 'field': name}
+                for name, label in itertools.zip_longest(df.columns, col_labels)]
+        return rows, cols
 
 
     def _run_sql(self) -> None:
