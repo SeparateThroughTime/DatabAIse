@@ -12,12 +12,12 @@ from enum import Enum
 from typing import override, Dict, Hashable, Any
 from warnings import warn
 
-import itertools
 import numpy
 import pandas
 from nicegui import ui, app, events
 
 from sqlite3 import Connection
+from sqlite3 import DatabaseError
 from nicegui.elements.button import Button
 from nicegui.elements.input import Input
 from nicegui.elements.label import Label
@@ -46,6 +46,7 @@ class CoursePage(pages.Page):
     """Class to build the page"""
 
     _database_instance: Connection
+    _sql_errors: list[tuple[str, DatabaseError]]
 
     _sql_string: str
     _database_structure: DatabaseStructure3
@@ -88,11 +89,14 @@ class CoursePage(pages.Page):
 
         logger.debug(f"Creating virtual database with SQL file:\n{self._sql_string}")
         self._database_instance = sqlite3.connect(":memory:")
+        self._sql_errors = []
         for query in self._sql_string.splitlines()[2:]:
             try:
                 self._database_instance.execute(query)
-            except Exception as e:
-                raise Exception("SQL Error for '" + query + "':", e)
+            except DatabaseError as e:
+                # raising error here would lead to error on page loading. Sql errors are mostly due to an error of
+                # AI content. The error is raised later, so the user will get a notification but can proceed if possible.
+                self._sql_errors.append((query, e))
         self._database_instance.commit()
         logger.info("Virtual database connected.")
 
@@ -319,6 +323,21 @@ class CoursePage(pages.Page):
 
     async def _generate_course(self) -> None:
         """Start prompt and update page afterward."""
+
+        if self._sql_errors:
+            with ui.dialog() as dialog, ui.card(), ui.column():
+                ui.markdown("Fehler beim Laden der Datenbank")
+                ui.restructured_text("Ein oder mehrere Fehler sind beim Ausführen der SQL-Datei aufgetreten. "
+                                     "Vermutlich liegt dies an einem Fehler der KI während dem Erstellen der "
+                                     "Datenbank. "
+                                     "Die könnte sich auf die Funktionsweise des Kurses auswirken. "
+                                     "Falls es zu schwerwiegenden Problemen kommt, muss eine neue Datenbank generiert "
+                                     "werden.\n\n"
+                                     "Fehler:")
+                for query, error in self._sql_errors:
+                    pages.ErrorLabel(f"Query: '{query}'\nError: '{error}'")
+                ui.button("Ok :(", on_click=dialog.close)
+            await dialog.open()
 
         app.storage.user["courses"][self._course_name] = {}
         logger.info("Start AI call for sample solutions.")
