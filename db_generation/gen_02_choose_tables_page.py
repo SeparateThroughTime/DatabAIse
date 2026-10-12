@@ -1,21 +1,20 @@
 """Module for page where user can choose tables."""
+import logging
 from typing import override
 
-from nicegui.elements.grid import Grid
-from nicegui.elements.input import Input
-from nicegui import ui, app, events, elements
-from nicegui.elements.row import Row
+from nicegui import ui, app, events
 
 import databaise
+import logger_module
 from base_models import DatabaseStructure0
 import pages
 
+logger: logging.Logger = logger_module.create_logger(__name__)
 
 class ChooseTablesPage(pages.Page):
 
-    _table_inputs: list[Input]
     _topic: str
-    _tables_grid: Grid
+    _tables: list[str]
 
     def __init__(self, control_group: bool):
         super().__init__(control_group)
@@ -26,31 +25,41 @@ class ChooseTablesPage(pages.Page):
         """Function to build the page"""
 
         self._topic = app.storage.user["database_build"]
-        self._table_inputs = []
+        self._tables = []
 
-        with pages.MainCard():
-            with ui.column():
-                ui.markdown("Tabellen der Datenbank")
-                ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "
-                                     "Du kannst sie vor dem nächsten Schritt noch abändern.")
+        with pages.MainCard(), ui.column():
+            ui.markdown("Tabellen der Datenbank")
+            ui.restructured_text("Überprüfe, ob du folgende Tabellen für die Datenbank nutzen möchtest. "
+                                 "Du kannst sie vor dem nächsten Schritt noch abändern.")
 
-                with pages.SubCard():
-                    self._tables_grid = ui.grid(columns=4)
+            with pages.SubCard():
+                with ui.grid(columns=4):
+                    self._tables_ui()
 
-                ui.button("Senden", on_click=lambda: self._next_page())
-                ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self._start_prompt), once=True)
-                ui.keyboard(on_key=self._handle_key, ignore=[])
+            ui.button("Senden", on_click=lambda: self._next_page())
+            ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self._start_prompt), once=True)
+            ui.keyboard(on_key=self._handle_key, ignore=[])
 
 
     async def _start_prompt(self) -> None:
         result = await databaise.db_create_tables(self._topic)
-        tables = result.tables
+        self._tables = result.tables
+        await self._tables_ui.refresh()
 
-        for i in range(len(tables)):
-            table_input = ui.input(f"Tabelle {i + 1}")
-            table_input.value = tables[i]
-            table_input.move(self._tables_grid)
-            self._table_inputs.append(table_input)
+
+    @ui.refreshable
+    def _tables_ui(self):
+        for i in range(len(self._tables)):
+            with ui.card(), ui.row():
+                table_input = ui.input(f"Tabelle {i + 1}")
+                table_input.value = self._tables[i]
+                table_input.on("change", lambda e, index=i: self._on_table_input_change(index, e.args))
+                remove_button = ui.button(icon="delete").props("color=negative")
+                remove_button.on("click", lambda index=i: self._on_remove_button_click(index))
+
+        with ui.card():
+            self._add_button = ui.button(icon="add").props("color=positive").classes("w-full")
+            self._add_button.on("click", self._on_add_button_click)
 
 
     def _handle_key(self, e: events.KeyEventArguments) -> None:
@@ -62,10 +71,22 @@ class ChooseTablesPage(pages.Page):
         """Saves tables and redirects to :class:`db_generation.gen_03_choose_attributes_page`"""
 
         topic = app.storage.user["database_build"]
-        table_strings = []
-        for table_input in self._table_inputs:
-            table_strings.append(table_input.value)
-        tables = DatabaseStructure0(topic=topic, tables=table_strings)
+        tables = DatabaseStructure0(topic=topic, tables=self._tables)
         app.storage.user["database_build"] = tables.model_dump()
 
         ui.navigate.to(pages.get_page_link("choose_attributes", self._control_group))
+
+
+    async def _on_remove_button_click(self, index: int) -> None:
+        print(index)
+        self._tables.pop(index)
+        await self._tables_ui.refresh()
+
+
+    async def _on_add_button_click(self):
+        self._tables.append("")
+        await self._tables_ui.refresh()
+
+
+    def _on_table_input_change(self, index: int, value: str):
+        self._tables[index] = value

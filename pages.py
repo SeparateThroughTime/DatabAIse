@@ -16,8 +16,6 @@ from nicegui import ui, Client, app
 from nicegui.elements.card import Card
 from nicegui.elements.label import Label
 
-import pages
-
 
 class Page(ABC):
 
@@ -286,7 +284,7 @@ def _on_exception(e: Exception) -> None:
         ui.markdown("Fehler")
         ui.restructured_text("Ein unerwarteter Fehler ist aufgetreten. Falls etwas nicht funktionieren sollte, "
                              "lade die Seite neu und schaue, ob es danach funktioniert.")
-        pages.ErrorLabel("Fehlermeldung: " + str(e))
+        ErrorLabel("Fehlermeldung: " + str(e))
         ui.button("Ok :(", on_click=dialog.close)
     dialog.open()
 

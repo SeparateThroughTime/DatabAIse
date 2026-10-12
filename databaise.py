@@ -21,7 +21,7 @@ from base_models import DatabaseStructure0, DatabaseStructure1, DatabaseStructur
     _Attribute, _DataEntry, CourseTemplate, Course
 
 
-MAX_TABLES: int = 8
+MAX_TABLES: int = 100
 
 MAX_ATTRIBUTES: int = 5
 
@@ -152,16 +152,19 @@ async def course_create_exercise(sample_solutions: CourseTemplate) -> Course:
 # TODO: Check if conditions are fulfilled.
 _db_create_tables_agent = Agent(
     name="table generator",
-    instructions="""Generate table names for a database to a given topic.
-                 It must be reasonable to have at least two 1-to-many relations, one
-                 many-to-many relation and one recursive relation between the tables.
-                 The generated tables must not be relational tables.
-                 All data must be german or be loanwords for german language.""",
+    instructions="""Generate table names for a database to a given topic. 
+                 You get a maximum of tables to generate. 
+                 Do not use this value as an orientation but decide independently how many tables are necessary to
+                 fulfill the following conditions and generate a minimal solution:
+                 1. It must be reasonable to have at least 5 1-to-many relations, 3
+                 many-to-many relation and 2 recursive relation between the tables.
+                 2. The generated tables must not be relational tables, even if they do not sound like ones at first glance.
+                 3. All data must be german or be loanwords for german language.""",
     model="gpt-5.6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="low"
+            effort="high"
         )
     ),
     output_type=DatabaseStructure0
@@ -308,14 +311,14 @@ async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructu
 _db_fill_agent = Agent(
     name="database filler",
     instructions="""Fill an empty database with authentic data.
-                 The database should have 200 entries total.
+                 The database should have 300 entries total.
                  The ratio of entries for each table should comply with the ratio in a real database.
                  All data must be german or be loanwords for german language.""",
-    model="gpt-5.6-luna",
+    model="gpt-5.6-terra",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="low"
+            effort="high"
         )
     ),
     output_type=DatabaseStructure3
