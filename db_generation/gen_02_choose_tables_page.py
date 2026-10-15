@@ -8,6 +8,7 @@ import databaise
 import logger_module
 from base_models import DatabaseStructure0
 import pages
+import re
 
 logger: logging.Logger = logger_module.create_logger(__name__)
 
@@ -48,7 +49,7 @@ class ChooseTablesPage(pages.Page):
 
 
     @ui.refreshable
-    def _tables_ui(self):
+    def _tables_ui(self) -> None:
         for i in range(len(self._tables)):
             with ui.card(), ui.row():
                 table_input = ui.input(f"Tabelle {i + 1}")
@@ -70,6 +71,22 @@ class ChooseTablesPage(pages.Page):
     def _next_page(self) -> None:
         """Saves tables and redirects to :class:`db_generation.gen_03_choose_attributes_page`"""
 
+        if len(self._tables) < 1:
+            with ui.dialog() as dialog, ui.card(), ui.column():
+                ui.label("Es sind keine Tabellen vorhanden. Bitte füge Tabellen hinzu und versuche es erneut. "
+                         "Alternativ kannst du auch diese Seite neu laden, damit erneut Tabellennamen generiert werden.")
+                ui.button("Ok", on_click=dialog.close)
+            dialog.open()
+            return
+
+        if any([re.sub("[_]", "", databaise.namingConventions(table)) == "" for table in self._tables]):
+            with ui.dialog() as dialog, ui.card(), ui.column():
+                ui.label("Eine oder mehrere Tabellen haben keinen gültigen Namen. Bitte überprüfe die Tabellennamen "
+                         "und versuche es erneut.")
+                ui.button("Ok", on_click=dialog.close)
+            dialog.open()
+            return
+
         topic = app.storage.user["database_build"]
         tables = DatabaseStructure0(topic=topic, tables=self._tables)
         app.storage.user["database_build"] = tables.model_dump()
@@ -78,7 +95,6 @@ class ChooseTablesPage(pages.Page):
 
 
     async def _on_remove_button_click(self, index: int) -> None:
-        print(index)
         self._tables.pop(index)
         await self._tables_ui.refresh()
 
