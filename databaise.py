@@ -155,7 +155,7 @@ _db_create_tables_agent = Agent(
     instructions="""Generate table names for a database to a given topic. 
                  You get a maximum of tables to generate. 
                  Do not use this value as an orientation but decide independently how many tables are necessary to
-                 fulfill the following conditions and generate a minimal solution:
+                 fulfill the following conditions and generate a solution with as few tables as possible:
                  1. It must be reasonable to have at least 5 1-to-many relations, 3
                  many-to-many relation and 2 recursive relation between the tables.
                  2. The generated tables must not be relational tables, even if they do not sound like ones at first glance.
