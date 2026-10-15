@@ -565,6 +565,38 @@ def _check_databases_exist():
         logger.warning("""'databases.db' does not exist. Run 'create_database.py' to create file and log all databases
                         created with DatabAIse.""")
 
+
+def namingConventions(s: str) -> str:
+    """Tries to fit str to SQL naming conventions
+
+    Spaces are replaced with uncerscores, uppercase letters with lowercase
+    letters and then everything except numbers, letters and underscores
+    removed.
+    """
+    if type(s is str):
+        s = re.sub("[ ]", "_", s.lower())
+        return re.sub("[^0123456789abcdefghijklmnopqrstuvwxyz_]", "", s)
+    else:
+        return s
+
+
+def removeApostrophes(s: str) -> str:
+    """Removes all apostrophes"""
+
+    if type(s) is str:
+        return re.sub("[']", "", s)
+    else:
+        return s
+
+
+def replaceUmlauts(s: str) -> str:
+    """Replaces all german umlauts with transliterations"""
+
+    if type(s) is str:
+        return re.sub("[Ä]", "Ae", re.sub("[Ö]", "Oe", re.sub("[Ü]", "Ue", re.sub("[ä]", "ae", re.sub("[ö]", "oe", re.sub("[ü]", "ue", re.sub("[ß]", "ss", s)))))))
+    else:
+        return s
+
 logger = logger_module.create_logger("")
 # Load files
 try:

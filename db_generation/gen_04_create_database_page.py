@@ -5,7 +5,6 @@ import os.path
 from typing import override
 
 from nicegui import ui, app
-import re
 import sqlite3
 
 from nicegui.elements.button import Button
@@ -91,47 +90,15 @@ class CreateDatabasePage(pages.Page):
         if not isinstance(self._database_build, DatabaseStructure3):
             raise TypeError(f"Expected DatabaseStructure3 but got {type(self._database_build)}")
 
-        self._database_build.topic = self._namingConventions(self._replaceUmlauts(self._database_build.topic))
+        self._database_build.topic = databaise.namingConventions(databaise.replaceUmlauts(self._database_build.topic))
 
         for table in self._database_build.tables:
-            table.name = self._namingConventions(self._replaceUmlauts(table.name))
+            table.name = databaise.namingConventions(databaise.replaceUmlauts(table.name))
             for attribute in table.attributes:
-                attribute.name = self._namingConventions(self._replaceUmlauts(attribute.name))
+                attribute.name = databaise.namingConventions(databaise.replaceUmlauts(attribute.name))
             for entry in table.data_entries:
                 for i in range(len(entry.data_points)):
-                    entry.data_points[i] = self._replaceUmlauts(self._removeApostrophes(entry.data_points[i]))
+                    entry.data_points[i] = databaise.replaceUmlauts(databaise.removeApostrophes(entry.data_points[i]))
 
 
-    @staticmethod
-    def _namingConventions(s: str) -> str:
-        """Tries to fit str to SQL naming conventions
 
-        Spaces are replaced with uncerscores, uppercase letters with lowercase
-        letters and then everything except numbers, letters and underscores
-        removed.
-        """
-        if type(s is str):
-            s = re.sub("[ ]", "_", s.lower())
-            return re.sub("[^0123456789abcdefghijklmnopqrstuvwxyz_]", "", s)
-        else:
-            return s
-
-
-    @staticmethod
-    def _removeApostrophes(s: str) -> str:
-        """Removes all apostrophes"""
-
-        if type(s) is str:
-            return re.sub("[']", "", s)
-        else:
-            return s
-
-
-    @staticmethod
-    def _replaceUmlauts(s: str) -> str:
-        """Replaces all german umlauts with transliterations"""
-
-        if type(s) is str:
-            return re.sub("[Ä]", "Ae", re.sub("[Ö]", "Oe", re.sub("[Ü]", "Ue", re.sub("[ä]", "ae", re.sub("[ö]", "oe", re.sub("[ü]", "ue", re.sub("[ß]", "ss", s)))))))
-        else:
-            return s
