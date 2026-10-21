@@ -345,7 +345,7 @@ class CoursePage(pages.Page):
         logger.info("Sample solutions generated.")
         app.storage.user["courses"][self._course_name]["sample_solutions"] = self._sample_solutions.model_dump_json()
         logger.info("Start AI call for course generation.")
-        self._course = await databaise.course_create_exercise(self._sample_solutions)
+        self._course = await databaise.course_create_exercise(self._sample_solutions, self._database_structure)
         logger.info("Course generated.")
         app.storage.user["courses"][self._course_name]["course"] = self._course.model_dump_json()
         self._user_answers = [None for _ in self._course.exercises]

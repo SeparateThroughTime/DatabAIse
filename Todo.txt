@@ -1,4 +1,3 @@
 - nicegui warning: Event listeners changed after initial definition
 - AI tweaking
 - Design
-- Background story: Boring af

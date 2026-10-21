@@ -114,18 +114,34 @@ async def course_create_sample_solutions(database: DatabaseStructure3, course_te
     return result.final_output
 
 
+_course_create_story_agent = Agent(
+    name="story generator",
+    instructions="""You get a database to a specific topic which is used for learning purpose.
+                 Your task is to generate a motivating underlying story line for the database.
+                 The story must be in german language and should not exceed 100 words.""",
+    model="gpt-5.6-luna",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(
+            context="current_turn",
+            effort="none"
+        )
+    ),
+    output_type=str
+)
+
+
 _course_create_exercise_agent = Agent(
     name="exercise generator",
     instructions="""You are creating exercises for students learning SQL.
-                 You get a list of SQL queries which are the solutions for the exercises you have to generate.
+                 You get a background story for the database and 
+                 a list of SQL queries which are the solutions for the exercises you have to generate.
                  For SQL queries where the 'text' variable is false the exercise should simply ask for a query by
                  describing the desired result with the tables and attributes.
                  For SQL queries where the 'text' variable is true the exercise should not use explicitly the names of 
                  tables and attributes but give a description a non-technical person would give and a fictive reason for
                  why the SQL query is to be done.
                  The exercises must be in german language.
-                 All names of tables or attributes should be in single quotation marks.
-                 You create also a motivating underlying story line which is explaining the structure of the database.""",
+                 All names of tables or attributes should be in single quotation marks.""",
     model="gpt-5.6-terra",
     model_settings=ModelSettings(
         reasoning=Reasoning(
@@ -137,14 +153,19 @@ _course_create_exercise_agent = Agent(
 )
 """Agent to generate exercises based on SQL queries."""
 
-async def course_create_exercise(sample_solutions: CourseTemplate) -> Course:
-    """Generates underlying story and exercises with sample solutions.
+async def course_create_exercise(sample_solutions: CourseTemplate, database: DatabaseStructure3) -> Course:
+    """Generates exercises with sample solutions.
 
     :param sample_solutions: Concrete sample solutions for the course.
+    :param database: Database structure.
     :return: Course with underlying story and exercises.
     """
 
-    result = await Runner.run(_course_create_exercise_agent,sample_solutions.model_dump_json())
+
+    story = await Runner.run(_course_create_story_agent, database.model_dump_json())
+    logger.debug(f"_course_create_story_agent produced:\n{story.final_output}")
+    result = await Runner.run(_course_create_exercise_agent,f"story: '{story.final_output}'; SQL queries: "
+                                                            f"'{sample_solutions.model_dump_json()}';")
     logger.debug(f"_course_create_exercise_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
