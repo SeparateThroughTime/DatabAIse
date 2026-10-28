@@ -1,3 +1,4 @@
 - nicegui warning: Event listeners changed after initial definition
 - AI tweaking
 - Design
+- db creation: save steps to jump back

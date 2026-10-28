@@ -5,7 +5,7 @@ is necessary to instantiate them to instantiate a DatabaseStructureX class.
 """
 
 from enum import StrEnum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 
 class Course(BaseModel):
@@ -52,7 +52,9 @@ class _DataEntry(BaseModel):
     :ivar data_points: List of data points.
     """
 
-    data_points: list[str]
+    data_points: list[str] = Field(
+        description="One value for each table attribute, in the same order as the attributes."
+    )
 
 
 class Type(StrEnum):
@@ -102,7 +104,12 @@ class _Table2(_Table1):
     :ivar attributes: List of attributes.
     """
 
-    attributes: list[_Attribute]
+    attributes: list[_Attribute] = Field(
+        description=(
+            "The table attributes. Every data entry must contain exactly one value "
+            "for each attribute, in this order."
+        )
+    )
 
 
 class _Table3(_Table2):
@@ -112,6 +119,17 @@ class _Table3(_Table2):
     """
 
     data_entries: list[_DataEntry]
+
+    @model_validator(mode="after")
+    def validate_data_entry_len(self) -> "_Table3":
+        attribute_count = len(self.attributes)
+        for index, entry in enumerate(self.data_entries):
+            if len(entry.data_points) != attribute_count:
+                raise ValueError(
+                    f"data_entries[{index}] has {len(entry.data_points)} values, "
+                    f"but table {self.name!r} has {attribute_count} attributes"
+                )
+        return self
 
 
 class DatabaseStructure0(BaseModel):
