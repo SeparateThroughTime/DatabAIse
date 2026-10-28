@@ -1,5 +1,5 @@
 {
-  "exercise_solutions":[
+  "exercise_solutions": [
     {
       "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];",
       "text": false
@@ -57,7 +57,8 @@
       "text": true
     },
     {
-      "sql_query": "SELECT [Spalte1], [Spalte1] FROM [Tabelle1];",
+      "sql_query": "SELECT [Tabelle1].[Spalte1], [Tabelle1].[Spalte2] FROM [Tabelle1];",
       "text": true
-    }]
+    }
+  ]
 }
