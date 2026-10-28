@@ -51,14 +51,14 @@ class ChooseTablesPage(pages.Page):
     @ui.refreshable
     def _tables_ui(self) -> None:
         for i in range(len(self._tables)):
-            with ui.card(), ui.row():
+            with pages.MiniCard(), ui.row():
                 table_input = ui.input(f"Tabelle {i + 1}")
                 table_input.value = self._tables[i]
                 table_input.on("change", lambda e, index=i: self._on_table_input_change(index, e.args))
                 remove_button = ui.button(icon="delete").props("color=negative")
                 remove_button.on("click", lambda index=i: self._on_remove_button_click(index))
 
-        with ui.card():
+        with pages.MiniCard():
             self._add_button = ui.button(icon="add").props("color=positive").classes("w-full")
             self._add_button.on("click", self._on_add_button_click)
 

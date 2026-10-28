@@ -54,20 +54,24 @@ class WrongLabel(Label):
 
 class MainCard(Card):
 
-    def __init__(self, *,
-                 align_items: Literal['start', 'end', 'center', 'baseline', 'stretch'] | None = None,
-                 ):
-        super().__init__(align_items=align_items)
-        super().style('margin-top: 3%')
+    def __init__(self):
+        super().__init__(align_items='center')
+        super().style('margin-top: 3%; margin-left: 1%; margin-right: 1%;')
+        super().classes('w-full')
 
 
 class SubCard(Card):
 
-    def __init__(self, *,
-                 align_items: Literal['start', 'end', 'center', 'baseline', 'stretch'] | None = None,
-                 ):
-        super().__init__(align_items=align_items)
+    def __init__(self):
+        super().__init__(align_items='center')
         super().classes('w-full')
+
+
+class MiniCard(Card):
+
+    def __init__(self):
+        super().__init__()
+        super().classes('bg-secondary')
 
 
 from licenses import licenses

@@ -35,7 +35,7 @@ class InstructionPage(pages.Page):
                 ui.button("Teilnahme an der Vorumfrage",
                           on_click=lambda: ui.navigate.to(pages.PRETEST_LINK, new_tab=True))
 
-                with ui.card().classes("col-6", remove="col-9"):
+                with pages.SubCard():
                     if self._control_group:
                         self._get_control_group_page()
                     else:

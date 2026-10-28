@@ -145,7 +145,7 @@ class CoursePage(pages.Page):
                             self._database_structure \
                                 = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
                             for table in self._database_structure.tables:
-                                with ui.expansion(table.name):
+                                with ui.expansion(table.name).classes('bg-secondary'):
                                     self._database_tables.append(ui.table(
                                         columns=[{'name': "name", 'label': "Spalte", 'field': "name"},
                                                 {'name': "type", 'label': "Typ", 'field': "type"}],

@@ -73,7 +73,7 @@ class ChooseAttributesPage(pages.Page):
 
         @ui.refreshable
         def _table_ui(self) -> None:
-            with ui.card(), ui.column():
+            with pages.MiniCard(), ui.column():
                 ui.label(self.table_name)
                 attribute_counter = 0
                 for attribute in self.table_attributes:
