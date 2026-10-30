@@ -37,57 +37,18 @@ _course_create_sample_solutions_agent = Agent(
                  Executing the SQL query must return at least 1 entry.
                  If the query contains ordering it must return at least 3 entries.
                  The input of the abstract SQL queries contain a 'text' boolean
-                 which must be kept for the concrete queries.""",
-    model="gpt-5.6-luna",
+                 which must be kept for the output.""",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
-            effort="low"
+            effort="high"
         )
     ),
     output_type=CourseTemplate
 )
 """Agent for generating sample solutions."""
 
-_course_verify_sample_solutions_to_database_agent = Agent(
-    name="sample solution database verifier",
-    instructions="""Verify if a list of queries is executable for a specific database.
-                 Especially check if the table and attribute names match.
-                 Verify if the execution return at least 3 entries for queries that contain ordering and otherwise 
-                 at least 1 entry.
-                 Replace the queries that do not fulfill the conditions with similar queries that fulfill it.
-                 The list of SQL queries contain a 'text' boolean which should also be included unchanged in 
-                 your response.""",
-    model="gpt-5.6-luna",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(
-            context="current_turn",
-            effort="low"
-        )
-    ),
-    output_type=CourseTemplate
-)
-"""Agent for verifying if sample solutions match with database."""
-
-_course_verify_sample_solutions_to_course_template_agent = Agent(
-    name="sample solution verifier",
-    instructions="""Verify if a list of concrete SQL queries match a list of abstract SQL queries.
-                 The abstract queries contain instructions inside of square brackets which should be fulfilled
-                 in the concrete queries.
-                 The concrete queries must not have any additions that are not in the abstracts queries.
-                 Alter queries that do not fulfill the condition with similar queries that fulfill it and 
-                 return the new concrete queries.
-                 The data contain a 'text' boolean which should also be included unchanged in your response.""",
-    model="gpt-5.6-luna",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(
-            context="current_turn",
-            effort="low"
-        )
-    ),
-    output_type=CourseTemplate
-)
-"""Agent for verifying if sample solutions match with course template."""
 
 async def course_create_sample_solutions(database: DatabaseStructure3, course_template: CourseTemplate) -> CourseTemplate:
     """Generates SQL statements with a given database and course template.
@@ -103,14 +64,6 @@ async def course_create_sample_solutions(database: DatabaseStructure3, course_te
                               f"Generate sample solutions for database: {database.model_dump_json()} with the "
                               f"abstract SQL queries: {course_template.model_dump_json()}.")
     logger.debug(f"_course_create_sample_solutions_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
-    result = await Runner.run(_course_verify_sample_solutions_to_course_template_agent,
-                              f"abstract SQL queries: {course_template.model_dump_json()}, "
-                              f"concrete SQL queries: {result.final_output.model_dump_json()}")
-    logger.debug(f"_course_verify_sample_solutions_to_course_template_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
-    result = await Runner.run(_course_verify_sample_solutions_to_database_agent,
-                              f"SQL queries: {result.final_output.model_dump_json()}, "
-                              f"database: {database.model_dump_json()}")
-    logger.debug(f"_course_verify_sample_solutions_top_database_agent produced:\n{result.final_output.model_dump_json(indent=2)}")
     return result.final_output
 
 
@@ -119,7 +72,7 @@ _course_create_story_agent = Agent(
     instructions="""You get a database to a specific topic which is used for learning purpose.
                  Your task is to generate a motivating underlying story line for the database.
                  The story must be in german language and should not exceed 100 words.""",
-    model="gpt-5.6-luna",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -142,7 +95,7 @@ _course_create_exercise_agent = Agent(
                  why the SQL query is to be done.
                  The exercises must be in german language.
                  All names of tables or attributes should be in single quotation marks.""",
-    model="gpt-5.6-terra",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -179,9 +132,9 @@ _db_create_tables_agent = Agent(
                  fulfill the following conditions and generate a solution with as few tables as possible:
                  1. It must be reasonable to have at least 5 1-to-many relations, 3
                  many-to-many relation and 2 recursive relation between the tables.
-                 2. The generated tables must not be relational tables, even if they do not sound like ones at first glance.
+                 2. The generated tables must not be junction tables, even if they do not sound like ones at first glance.
                  3. All data must be german or be loanwords for german language.""",
-    model="gpt-5.6-luna",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -223,7 +176,7 @@ _db_create_attributes_agent = Agent(
                  one table with one attribute with type Integer and one attribute with type Varchar.
                  The output should only include the name of the attribute and not the type.
                  All data must be german or be loanwords for german language and follow SQL naming conventions.""",
-    model="gpt-5.6-luna",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -259,7 +212,7 @@ _db_create_attribute_types_agent = Agent(
                  You are only allowed to use following types: VARCHAR, BOOL, INT, DEC, DATE, DATETIME, TIME and YEAR.
                  The x and y values in the attributes are for the parameters of the type.
                  For example an attribute of type DEC(4, 2) has type=DEC, x=4 and y=2.""",
-    model="gpt-5.6-luna",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -275,7 +228,7 @@ _db_create_primary_keys_agent = Agent(
     instructions="""Generate primary keys for every table of an unfinished database.
                  The keys should be IDs with sql naming convention.
                  All data must be german or be loanwords for german language.""",
-    model="gpt-5.6-luna",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -298,7 +251,7 @@ _db_create_relations_agent = Agent(
                  This is represented with two IDs of type "INT PRIMARY KEY"
                  All data must be german or be loanwords for german language.
                  """,
-    model="gpt-5.6-terra",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
@@ -335,7 +288,7 @@ _db_fill_agent = Agent(
                  The database should have 300 entries total.
                  The ratio of entries for each table should comply with the ratio in a real database.
                  All data must be german or be loanwords for german language.""",
-    model="gpt-5.6-terra",
+    model="gpt-6-luna",
     model_settings=ModelSettings(
         reasoning=Reasoning(
             context="current_turn",
