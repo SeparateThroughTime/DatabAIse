@@ -38,7 +38,7 @@ class ChooseTopicPage(pages.Page):
         """Saves topic that user chose and redirects to :class:`db_generation.gen_02_choose_tables_page`"""
 
         topic = str(self._topic_input.value or "")
-        app.storage.user["database_build"] = topic
+        app.storage.user["database_build"] = {"topic": topic}
         ui.navigate.to(pages.get_page_link("choose_tables", self._control_group))
 
 

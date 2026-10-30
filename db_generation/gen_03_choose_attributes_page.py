@@ -26,7 +26,7 @@ class ChooseAttributesPage(pages.Page):
     def get_page(self, control_group: bool = False) -> None:
         """Function to build the page"""
 
-        self._pre_database_build = DatabaseStructure0.model_validate(app.storage.user["database_build"])
+        self._pre_database_build = DatabaseStructure0.model_validate(app.storage.user["database_build"]["tables"])
         self._table_uis = []
         topic = self._pre_database_build.topic
         tables = self._pre_database_build.tables
@@ -130,5 +130,5 @@ class ChooseAttributesPage(pages.Page):
             dialog.open()
             return
 
-        app.storage.user["database_build"] = self._post_database_build.model_dump()
+        app.storage.user["database_build"]["attributes"] = self._post_database_build.model_dump()
         ui.navigate.to(pages.get_page_link("create_database", self._control_group))

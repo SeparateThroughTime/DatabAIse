@@ -25,7 +25,7 @@ class ChooseTablesPage(pages.Page):
     def get_page(self) -> None:
         """Function to build the page"""
 
-        self._topic = app.storage.user["database_build"]
+        self._topic = app.storage.user["database_build"]["topic"]
         self._tables = []
 
         with pages.MainCard(), ui.column():
@@ -87,9 +87,8 @@ class ChooseTablesPage(pages.Page):
             dialog.open()
             return
 
-        topic = app.storage.user["database_build"]
-        tables = DatabaseStructure0(topic=topic, tables=self._tables)
-        app.storage.user["database_build"] = tables.model_dump()
+        tables = DatabaseStructure0(topic=self._topic, tables=self._tables)
+        app.storage.user["database_build"]["tables"] = tables.model_dump()
 
         ui.navigate.to(pages.get_page_link("choose_attributes", self._control_group))
 

@@ -31,7 +31,7 @@ class CreateDatabasePage(pages.Page):
         """Function to build the page"""
 
         logger.info("Start page build.")
-        self._database_build = DatabaseStructure1.model_validate(app.storage.user["database_build"])
+        self._database_build = DatabaseStructure1.model_validate(app.storage.user["database_build"]["attributes"])
 
         with pages.MainCard():
             with ui.column():
