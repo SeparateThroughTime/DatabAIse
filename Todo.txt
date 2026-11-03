@@ -2,3 +2,5 @@
 - AI tweaking
 - Design
 - db creation: save steps to jump back
+- diversification of data
+- orphaned and unreferenced data

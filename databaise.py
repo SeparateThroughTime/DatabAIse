@@ -18,8 +18,7 @@ from openai.types import Reasoning
 import pages
 import logger_module
 from base_models import DatabaseStructure0, DatabaseStructure1, DatabaseStructure3, DatabaseStructure2, Type, _Table3, \
-    _Attribute, _DataEntry, CourseTemplate, Course
-
+    _Attribute, _DataEntry, CourseTemplate, Course, ORPHANED_MIN, ORPHANED_MAX, UNREFERENCED_MIN, UNREFERRED_MAX
 
 MAX_TABLES: int = 100
 
@@ -36,6 +35,9 @@ _course_create_sample_solutions_agent = Agent(
                  You must not add any other additions to the queries.
                  Executing the SQL query must return at least 1 entry.
                  If the query contains ordering it must return at least 3 entries.
+                 The SQL query must not return the same result as an reduction of it.
+                 For this you have to check for example if a query which is filtering orphaned records actually relates
+                 to a dataset with existing orphaned records.
                  The input of the abstract SQL queries contain a 'text' boolean
                  which must be kept for the output.""",
     model="gpt-6-luna",
@@ -284,9 +286,13 @@ async def db_finalize_structure(database: DatabaseStructure1) -> DatabaseStructu
 
 _db_fill_agent = Agent(
     name="database filler",
-    instructions="""Fill an empty database with authentic data.
+    instructions=f"""Fill an empty database with authentic data.
                  The database should have 300 entries total.
                  The ratio of entries for each table should comply with the ratio in a real database.
+                 The database should contain {ORPHANED_MIN} to {ORPHANED_MAX} orphaned records in a 
+                 one-to-many relation and a many-to-many relation each.
+                 The database should contain {UNREFERENCED_MIN} to {UNREFERRED_MAX} unreferenced records 
+                 in a one-to-many relation and a many-to-many relation each.
                  All data must be german or be loanwords for german language.""",
     model="gpt-6-luna",
     model_settings=ModelSettings(
@@ -310,226 +316,6 @@ async def db_fill(db_structure: DatabaseStructure2) -> DatabaseStructure3:
 
     result = await Runner.run(_db_fill_agent,db_structure.model_dump_json())
     return result.final_output
-
-
-def db_structure_3_to_sql(database: DatabaseStructure3) -> str:
-    """Converts a DatabaseStructure3 object to a sql string.
-
-    :param database: database with data.
-    :return: String of sql statements to create database.
-    """
-
-    logger.info("Converting DatabaseStructure3 object to string")
-    if logger.getEffectiveLevel() == logging.DEBUG:
-        db_without_data = {
-            "topic": database.topic,
-            "tables": [{
-                "name": table.name,
-                "attributes": [{
-                    "name": attribute.name,
-                    "type": attribute.type,
-                    "x": attribute.x,
-                    "y": attribute.y
-                } for attribute in table.attributes]
-            } for table in database.tables]
-        }
-        logger.debug(f"DatabaseStructure3 object:\n{json.dumps(db_without_data, indent=2)}")
-
-    sql_list = []
-    sql_list.append(f"CREATE DATABASE '{database.topic}'")
-    sql_list.append(f"USE '{database.topic}'")
-    logger.debug("Create database")
-
-    foreign_keys = []
-    logger.debug("Iterate tables")
-    for table in database.tables:
-        logger.debug(f"Table '{table.name}'")
-        create_table_string = f"CREATE TABLE '{table.name}' ("
-        logger.debug("Iterate attributes")
-        primary_keys: list[_Attribute] = []
-        for attribute in table.attributes:
-            logger.debug(f"Attribute '{attribute.name}'")
-            create_table_string += f"'{attribute.name}' {attribute.type}"
-            if (attribute.type == Type.VARCHAR or attribute.type == Type.INT) and attribute.x != None:
-                create_table_string += f"({attribute.x})"
-            elif attribute.type == Type.DEC and attribute.x != None and attribute.y != None:
-                create_table_string += f"({attribute.x},{attribute.y})"
-            elif attribute.type == Type.INT_PRIMARY_KEY:
-                # Remove " PRIMARY KEY"
-                create_table_string = create_table_string[:-12]
-                primary_keys.append(attribute)
-            create_table_string += ", "
-        if len(primary_keys) == 0:
-            logger.error(repr(ValueError(f"No primary keys in table {table.name} of database {database.topic}!")))
-        else:
-            create_table_string += "PRIMARY KEY ("
-            for primary_key in primary_keys:
-                create_table_string += f"'{primary_key.name}', "
-            create_table_string = create_table_string[:-2]
-            create_table_string += ")"
-        create_table_string += ")"
-        sql_list.append(create_table_string)
-
-        logger.debug("Iterate data entries")
-        for entry in table.data_entries:
-            insert_entry_string = f"INSERT INTO '{table.name}' VALUES ("
-            for value in entry.data_points:
-                insert_entry_string += f"'{value}', "
-            insert_entry_string = insert_entry_string[:-2]
-            insert_entry_string += ")"
-            sql_list.append(insert_entry_string)
-
-    sql_string = ""
-    for sql_command in sql_list:
-        sql_string += f"{sql_command};\n"
-    return sql_string
-
-
-def sql_to_db_structure_3(sql_string: str, disable_debug: bool = True) -> DatabaseStructure3:
-    """Converts a sql string to a DatababaseStructure3 object.
-
-    .. role:: sql(code)
-        :language: sql
-
-    :param sql_string:
-        | Must have exact format (Including spaces before parentheses!):
-        | :sql:`CREATE DATABASE db_name;`
-        | :sql:`USE db_name;`
-        | :sql:`CREATE TABLE table_1 (List of Attributes, PRIMARY KEYS (List of Primary Keys));`
-        | :sql:`INSERT INTO table_1 VALUES (dataset_1);`
-        | ...
-        | :sql:`INSERT INTO table_1 VALUES (dataset_n);`
-        | ...
-        | :sql:`CREATE TABLE table_n(Attributes);`
-        | :sql:`INSERT INTO table_n VALUES (dataset_1);`
-        | ...
-        | :sql:`INSERT INTO table_n VALUES (dataset_n);`
-    :param disable_debug: Prevent log clustering in debug logging level.
-    :return: transformed DatabaseStructure3 object.
-    """
-
-    logger_level_changed = False
-    logger_level: int
-    if disable_debug and logger.getEffectiveLevel() == logging.DEBUG:
-        logger_level_changed = True
-        logger_level = logger.level
-        logger.setLevel(logging.INFO)
-
-
-    logger.info("Converting sql string to DatabaseStructure3 object.")
-    logger.debug(f"SQL string:\n{sql_string}")
-    topic = ""
-    tables: list[_Table3] = []
-
-    # Start of Loop
-    queries = sql_string.splitlines()
-    query_pointer = 0
-    while query_pointer < len(queries):
-        query = queries[query_pointer]
-        logger.debug(f"Query: {query}")
-        words = query.split()
-
-        # Get topic
-        if words[0] == "CREATE" and words[1] == "DATABASE":
-            logger.debug("Create database")
-            topic = re.sub("'", "", words[2])
-            query_pointer = query_pointer + 2
-
-        # Get tables
-        elif words[0] == "CREATE" and words[1] == "TABLE":
-            logger.debug("Create table")
-            table_name = words[2].replace("'", "")
-            logger.debug(f"table name: {table_name}")
-            attributes: list[_Attribute] = []
-
-            # Get attributes
-            logger.debug("Getting attributes")
-            word_pointer = 3
-            while word_pointer < len(words):
-                # Check if attribute or list of primary keys
-                if words[word_pointer] != "PRIMARY":
-                    attribute_name = re.sub("['(]", "", words[word_pointer])
-                    logger.debug(f"Attribute name: {attribute_name}")
-                    # attribute_full_type is with paremeters. I.e. VARCHAR(255)
-                    attribute_full_type = words[word_pointer + 1]
-                    logger.debug(f"Attribute type: {attribute_full_type}")
-                    attribute_full_type_split = re.split("[(,]", attribute_full_type)
-                    attribute_full_type_split = [s for s in attribute_full_type_split if s != ""]
-                    attribute_type_string = attribute_full_type_split[0]
-                    attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(")") \
-                        else attribute_type_string
-                    attribute_type_string = attribute_type_string[:-1] if attribute_type_string.endswith(",") \
-                        else attribute_type_string
-                    attribute_type = Type(attribute_type_string)
-                    attribute_x = None
-                    attribute_y = None
-                    if len(attribute_full_type_split) > 1:
-                        attribute_x_string = re.sub("[^0-9]", "", attribute_full_type_split[1])
-                        attribute_x = int(attribute_x_string)
-                    if len(attribute_full_type_split) > 2:
-                        attribute_y_string = re.sub("[^0-9]", "", attribute_full_type_split[2])
-                        attribute_y = int(attribute_y_string)
-                    word_pointer = word_pointer + 2
-
-                    # Create attribute
-                    attribute = _Attribute(name=attribute_name, type=attribute_type, x=attribute_x, y=attribute_y)
-                    attributes.append(attribute)
-
-                # List of primary keys
-                else:
-                    logger.debug(f"Primary Keys: {" ".join(words[word_pointer - len(words):])}")
-                    word_pointer = word_pointer + 2
-                    while True:
-                        attribute_name = re.sub("['();,]", "", words[word_pointer])
-                        logger.debug(f"Setting attribute '{attribute_name}' as primary key.")
-                        key_found: bool = False
-                        for attribute in attributes:
-                            if attribute.name == attribute_name:
-                                attribute.type = Type.INT_PRIMARY_KEY
-                                key_found = True
-                                break
-                        if not key_found:
-                            raise ValueError(f"Attribute '{attribute_name}' is listed as primary key but was not found"
-                                             f" in attributes:\n{str(attributes)}")
-                        if words[word_pointer].endswith(";"):
-                            word_pointer = word_pointer + 3
-                            break
-                        word_pointer = word_pointer + 1
-
-            # Get data entries
-            logger.debug("Getting data")
-            data_entries: list[_DataEntry] = []
-            while True:
-                query_pointer = query_pointer + 1
-                if query_pointer >= len(queries):
-                    break
-                query = queries[query_pointer]
-                logger.debug(f"Query: {query}")
-                words = query.split()
-                if words[0] != "INSERT":
-                    break
-
-                #Get data points
-                data_points: list[str] = []
-                for word_pointer in range(4, len(attributes) + 4):
-                    data_points.append(re.sub("[()',;]", "", words[word_pointer]))
-
-                # Create data entry
-                data_entry = _DataEntry(data_points=data_points)
-                data_entries.append(data_entry)
-
-            # Create table
-            table = _Table3(name=table_name, attributes=attributes, data_entries=data_entries)
-            tables.append(table)
-
-    # Create database
-    database = DatabaseStructure3(topic=topic, tables=tables)
-    logger.info("Finished conversion.")
-
-    if logger_level_changed:
-        logger.setLevel(logger_level)
-
-    return database
 
 
 def _check_databases_exist():

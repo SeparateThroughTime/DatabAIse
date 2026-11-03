@@ -71,7 +71,7 @@ class MiniCard(Card):
 
     def __init__(self):
         super().__init__()
-        super().classes('bg-secondary')
+        super().classes('bg-secondary rounded-borders')
 
 
 from licenses import licenses
@@ -232,7 +232,7 @@ def _footer(control_group:bool = False) -> None:
 
 
 def _init_default_styles() -> None:
-    ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#80acff", dark="#1d1d1d", dark_page="#0d347a")
+    ui.colors(primary="#8fb6ff", secondary="#e3b36f", accent="#48300e", dark="#1d1d1d", dark_page="#0d347a")
 
     ui.button.default_classes('text-center bg-primary q-pa-sm shadow-1')
     ui.input.default_classes('')
@@ -240,7 +240,8 @@ def _init_default_styles() -> None:
     ui.restructured_text.default_classes('text-center')
     ui.restructured_text.default_style('')
     ui.upload.default_classes('text-center shadow-1')
-    ui.table.default_classes('text-left shadow-1')
+    ui.table.default_classes('text-left shadow-1 bg-secondary')
+    ui.expansion.default_classes('bg-secondary rounded-borders')
     ui.markdown.default_classes('text-h3')
     ui.card.default_classes('items-center')
     ui.image.default_classes('')
