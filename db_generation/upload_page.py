@@ -1,4 +1,5 @@
 """Module for page where user can upload a database."""
+
 from typing import override
 
 from nicegui.elements.button import Button
@@ -15,8 +16,8 @@ class UploadPage(pages.Page):
     _err_label: Label
     _course_button: Button
 
-    def __init__(self, control_group: bool):
-        super().__init__(control_group)
+    def _nav_list_setter(self, val):
+        self._nav_list = [pages.Pages.HOME, pages.Pages.UPLOAD_DATABASE]
 
 
     @override
@@ -35,6 +36,11 @@ class UploadPage(pages.Page):
                 ui.keyboard(on_key=self._handle_key)
 
 
+    @override
+    def save_progress(self):
+        pass
+
+
     def _handle_key(self, e: events.KeyEventArguments) -> None:
         if e.action.keydown and e.key.enter:
             self._next_page()
@@ -47,7 +53,7 @@ class UploadPage(pages.Page):
             self._err_label.visible = True
             return
 
-        ui.navigate.to(pages.get_page_link("choose_course", self._control_group))
+        self.navigate_to(pages.Pages.CHOOSE_COURSE)
 
 
     async def _on_upload(self, sql_file: FileUpload) -> None:
@@ -55,8 +61,8 @@ class UploadPage(pages.Page):
 
         sql_string = await sql_file.text()
         app.storage.user["sql_string"] = sql_string
-        app.storage.user["database_build"] = databaise.sql_to_db_structure_3(
-            sql_string, disable_debug=False).model_dump_json()
+        app.storage.user["database_build"] = {pages.Pages.UPLOAD_DATABASE: databaise.sql_to_db_structure_3(
+            sql_string, disable_debug=False).model_dump()}
         app.storage.user["courses"] = {}
         self._course_button.props(remove="disable")
         self._err_label.visible = False

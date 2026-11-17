@@ -1,9 +1,7 @@
 """Module for page where user can choose attributes"""
-from typing import override
+from typing import override, overload
 import re
-import numpy
 
-from nicegui.elements.grid import Grid
 from nicegui.elements.input import Input
 from nicegui import ui, app, events
 
@@ -18,18 +16,29 @@ class ChooseAttributesPage(pages.Page):
     _post_database_build: DatabaseStructure1
     _table_uis: list["ChooseAttributesPage.TableUI"]
 
-    def __init__(self, control_group: bool):
-        super().__init__(control_group)
+    def _nav_list_setter(self, val):
+        self._nav_list = pages.generate_dynamic_db_generation_nav_list(pages.Pages.CHOOSE_ATTRIBUTES)
+
+
+    @override
+    def save_progress(self):
+        app.storage.user["database_build"][pages.Pages.CHOOSE_ATTRIBUTES] = self._post_database_build.model_dump()
 
 
     @override
     def get_page(self, control_group: bool = False) -> None:
         """Function to build the page"""
 
-        self._pre_database_build = DatabaseStructure0.model_validate(app.storage.user["database_build"]["tables"])
+        self._pre_database_build = DatabaseStructure0.model_validate(app.storage.user["database_build"][pages.Pages.CHOOSE_TABLES])
         self._table_uis = []
         topic = self._pre_database_build.topic
         tables = self._pre_database_build.tables
+
+        if pages.Pages.CHOOSE_ATTRIBUTES in app.storage.user["database_build"] and not self.prompt:
+            self._post_database_build = DatabaseStructure1.model_validate(
+                app.storage.user["database_build"][pages.Pages.CHOOSE_ATTRIBUTES])
+            topic = self._post_database_build.topic
+            tables = self._post_database_build.tables
 
         with pages.MainCard():
             with ui.column():
@@ -43,7 +52,8 @@ class ChooseAttributesPage(pages.Page):
 
                 ui.button("Senden", on_click=lambda: self._next_page())
         ui.keyboard(on_key=self._handle_key, ignore=[])
-        ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self._start_prompt), once=True)
+        if self.prompt:
+            ui.timer(0.1, lambda: pages.wait_for_ai_response_dialog(self._start_prompt), once=True)
 
 
     async def _start_prompt(self) -> None:
@@ -59,11 +69,25 @@ class ChooseAttributesPage(pages.Page):
         table_name: str
         table_attributes: list[str]
 
-        def __init__(self, choose_attribute_page: "ChooseAttributesPage", table_number: int, table_name: str) -> None:
+        @overload
+        def __init__(self, choose_attribute_page: "ChooseAttributesPage", table_number: int, table: _Table1):
+            pass
+
+        @overload
+        def __init__(self, choose_attribute_page: "ChooseAttributesPage", table_number: int, table: str):
+            pass
+
+        def __init__(self, choose_attribute_page, table_number, table):
             self._choose_attribute_page = choose_attribute_page
             self.table_number = table_number
-            self.table_name = table_name
-            self.table_attributes = []
+            if isinstance(table, str):
+                self.table_name = table
+                self.table_attributes = []
+            elif isinstance(table, _Table1):
+                self.table_name = table.name
+                self.table_attributes = table.attributes
+            else:
+                raise TypeError(f"table needs to be str or _Table1 but is {type(table)}.")
             self._table_ui()
 
 
@@ -130,5 +154,4 @@ class ChooseAttributesPage(pages.Page):
             dialog.open()
             return
 
-        app.storage.user["database_build"]["attributes"] = self._post_database_build.model_dump()
-        ui.navigate.to(pages.get_page_link("create_database", self._control_group))
+        self.navigate_to(pages.Pages.CREATE_DATABASE, prompt=True)

@@ -1,4 +1,14 @@
 - nicegui warning: Event listeners changed after initial definition
 - AI tweaking
-- Design
-- db creation: save steps to jump back
+- Token analyse
+- Shortcuts
+- Repair footer-Links (progress is not saved currently)
+
+- Farben hässlich!
+- Attribute durchklicken?
+- Zu viele Tabellen -> max. 10
+	-> dynamisch für Kurse?
+- Daten in Selection -> Musterlösung überprüfen
+- Buttons für Sonderzeichen
+
+- Voname/Nachname Dictionary zum Verhindern von DSGVO stuff

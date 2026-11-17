@@ -21,7 +21,7 @@ from base_models import DatabaseStructure0, DatabaseStructure1, DatabaseStructur
     _Attribute, _DataEntry, CourseTemplate, Course
 
 
-MAX_TABLES: int = 100
+MAX_TABLES: int = 10
 
 MAX_ATTRIBUTES: int = 5
 

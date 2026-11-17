@@ -7,8 +7,13 @@ from nicegui import ui, html, app
 
 class LicensesPage(pages.Page):
 
-    def __init__(self, control_group: bool):
-        super().__init__(control_group)
+    def _nav_list_setter(self, val):
+        self._nav_list = [pages.Pages.HOME, pages.Pages.LICENSES]
+
+
+    @override
+    def save_progress(self):
+        pass
 
 
     @override

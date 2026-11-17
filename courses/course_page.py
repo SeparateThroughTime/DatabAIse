@@ -9,10 +9,8 @@ import logging
 import sqlite3
 import warnings
 from enum import Enum
-from typing import override, Dict, Hashable, Any
-from warnings import warn
+from typing import override
 
-import numpy
 import pandas
 from nicegui import ui, app, events
 
@@ -73,9 +71,14 @@ class CoursePage(pages.Page):
     _next_button: Button
     _database_tables: list[Table]
 
+    def _nav_list_setter(self, val):
+        self._nav_list = [pages.Pages.HOME, pages.Pages.CHOOSE_COURSE, pages.Pages.COURSE]
 
-    def __init__(self, control_group: bool = False):
-        super().__init__(control_group)
+
+    @override
+    def save_progress(self):
+        # The progress is saved dynamically whenever any value is changed.
+        pass
 
 
     @override
@@ -83,7 +86,9 @@ class CoursePage(pages.Page):
         logger.info("Start loading page.")
         self._course_name = app.storage.user["course_name"]
         self._sql_string = app.storage.user["sql_string"]
-        self._database_structure = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
+        self._database_structure = DatabaseStructure3.model_validate(app.storage.user["database_build"][pages.Pages.CREATE_DATABASE]) \
+            if pages.Pages.CREATE_DATABASE in app.storage.user["database_build"] \
+            else DatabaseStructure3.model_validate(app.storage.user["database_build"][pages.Pages.UPLOAD_DATABASE])
         self._course_template \
             = CourseTemplate.model_validate_json(app.storage.user["course_template"])
 
@@ -104,9 +109,6 @@ class CoursePage(pages.Page):
         with pages.MainCard():
             with ui.column().classes("items-start", remove="items-center"):
                 with ui.row().classes("justify-between"):
-                    self._choose_course_button = ui.button("Zurück zu Kurswahl",
-                                                           on_click=lambda: ui.navigate.to(pages.get_page_link(
-                                                               "choose_course", self._control_group)))
                     self._regenerate_button = ui.button("Kurs neu generieren", on_click=self._regenerate_course)
 
             with ui.column():
@@ -142,8 +144,10 @@ class CoursePage(pages.Page):
                         ui.markdown("Tabellen der Datenbank").classes("text-h5")
                         with ui.row():
                             self._database_tables = []
-                            self._database_structure \
-                                = DatabaseStructure3.model_validate_json(app.storage.user["database_build"])
+                            db_source = pages.Pages.CREATE_DATABASE if pages.Pages.CREATE_DATABASE in \
+                                app.storage.user["database_build"] else pages.Pages.UPLOAD_DATABASE
+                            self._database_structure = DatabaseStructure3.model_validate(
+                                app.storage.user["database_build"][db_source])
                             for table in self._database_structure.tables:
                                 with ui.expansion(table.name).classes('bg-secondary'):
                                     self._database_tables.append(ui.table(
@@ -162,7 +166,7 @@ class CoursePage(pages.Page):
     def _finished_course(self) -> None:
         """Triggered from the next_button after the last exercise to return to ChooseCoursePage."""
 
-        ui.navigate.to(pages.get_page_link("choose_course", self._control_group))
+        self.navigate_to(pages.Pages.CHOOSE_COURSE)
 
 
     @staticmethod
@@ -210,8 +214,9 @@ class CoursePage(pages.Page):
                     duplicate_counter += 1
                 new_col_names.append(f'{col}{column_suffix}')
             df.columns = new_col_names
-            duplicate_labels = sorted({str(label) for label, is_dup in zip(col_labels, duplicate_columns) if is_dup})
-            logger.warn(f'The pandas DataFrame has duplicate column names ({duplicate_labels}). '
+            duplicate_labels = sorted({str(label)
+                                    for label, is_dup in zip(col_labels, duplicate_columns) if is_dup})
+            logger.warning(f'The pandas DataFrame has duplicate column names ({duplicate_labels}). '
                       f'The row fields are numbered to keep them unique, while the column labels stay unchanged.')
 
             # special_cols need update due to changes

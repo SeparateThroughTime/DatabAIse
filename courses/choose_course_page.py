@@ -14,54 +14,16 @@ logger: logging.Logger = logger_module.create_logger(__name__)
 
 class ChooseCoursePage(pages.Page):
 
+    _course_number: int
+    _course_name: str
 
-    def __init__(self, control_group: bool):
-        super().__init__(control_group)
-
+    def _nav_list_setter(self, val):
+        self._nav_list = [pages.Pages.HOME, pages.Pages.CHOOSE_COURSE]
 
     @override
-    def get_page(self) -> None:
-        """Function to build the page."""
-
-        with pages.MainCard():
-            with ui.column():
-                ui.markdown("Kurswahl")
-                ui.restructured_text("Du kannst jetzt einen Kurs auswählen. Die KI wird dann Aufgaben passend zu deiner Datenbank erstellen.\n"
-                                     "Falls du noch nie mit Datenbanken gearbeitet hast, solltest du die Kurse der Reihe nach bearbeiten. "
-                                     "Falls du bereits Erfahrungen hast, mache da weiter, wo du gerade stehst oder über die Themen, mit denen du noch "
-                                     "die größten Schwierigkeiten hast.")
-                with ui.row():
-                    ui.button("Kurs 1: Projektion", on_click=lambda: self._on_course_x(1,
-                                                                                "Kurs 1: Projektion",
-                                                                                       self._control_group))
-                    ui.button("Kurs 2: Selektion", on_click=lambda: self._on_course_x(2,
-                                                                                "Kurs 2: Selektion",
-                                                                                      self._control_group))
-                    ui.button("Kurs 3: Sortierung", on_click=lambda: self._on_course_x(3,
-                                                                                "Kurs 3: Sortierung",
-                                                                                       self._control_group))
-                    ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: self._on_course_x(4,
-                                                                                "Kurs 4: Aggregatsfunktionen",
-                                                                                                self._control_group))
-                    ui.button("Kurs 5: Join", on_click=lambda: self._on_course_x(5,
-                                                                                "Kurs 5: Join",
-                                                                                 self._control_group))
-                    ui.button("Kurs 6: Unterabfragen", on_click=lambda: self._on_course_x(6,
-                                                                                "Kurs 6: Unterabfragen",
-                                                                                          self._control_group))
-
-
-    @staticmethod
-    def _on_course_x(course_number: int, course_name: str, control_group: bool) -> None:
-        """Function is triggered when any course button is clicked.
-
-        :param course_number: Number of the course.
-        :param course_name:
-            Name of the course for the title of the next page.
-        """
-
+    def save_progress(self):
         try:
-            match course_number:
+            match self._course_number:
                 case 1:
                     app.storage.user["course_template"] = databaise.course_template_1.model_dump_json()
                 case 2:
@@ -75,16 +37,16 @@ class ChooseCoursePage(pages.Page):
                 case 6:
                     app.storage.user["course_template"] = databaise.course_template_6.model_dump_json()
                 case _:
-                    raise ValueError(f"Expected course_number between 1 and 6 but got {course_number}.")
+                    raise ValueError(f"Expected course_number between 1 and 6 but got {self._course_number}.")
         except ValueError as e:
             logger.exception(repr(e))
             raise
 
-        app.storage.user["course_name"] = course_name
+        app.storage.user["course_name"] = self._course_name
 
-        if control_group:
+        if self._control_group:
             try:
-                match course_number:
+                match self._course_number:
                     case 1:
                         app.storage.user["sql_string"] = databaise.course_1_db
                     case 2:
@@ -98,10 +60,49 @@ class ChooseCoursePage(pages.Page):
                     case 6:
                         app.storage.user["sql_string"] = databaise.course_6_db
                     case _:
-                        raise ValueError(f"Expected course_number between 1 and 6 but got {course_number}.")
+                        raise ValueError(f"Expected course_number between 1 and 6 but got {self._course_number}.")
             except ValueError as e:
                 logger.exception(repr(e))
                 raise
 
-        ui.navigate.to(pages.get_page_link("course", control_group))
+
+    @override
+    def get_page(self) -> None:
+        """Function to build the page."""
+
+        self._course_name = ""
+        self._course_number = 0
+
+        with pages.MainCard():
+            with ui.column():
+                ui.markdown("Kurswahl")
+                ui.restructured_text("Du kannst jetzt einen Kurs auswählen. Die KI wird dann Aufgaben passend zu deiner Datenbank erstellen.\n"
+                                     "Falls du noch nie mit Datenbanken gearbeitet hast, solltest du die Kurse der Reihe nach bearbeiten. "
+                                     "Falls du bereits Erfahrungen hast, mache da weiter, wo du gerade stehst oder über die Themen, mit denen du noch "
+                                     "die größten Schwierigkeiten hast.")
+                with ui.row():
+                    ui.button("Kurs 1: Projektion", on_click=lambda: self._on_course_x(1,
+                                                                                "Kurs 1: Projektion"))
+                    ui.button("Kurs 2: Selektion", on_click=lambda: self._on_course_x(2,
+                                                                                "Kurs 2: Selektion"))
+                    ui.button("Kurs 3: Sortierung", on_click=lambda: self._on_course_x(3,
+                                                                                "Kurs 3: Sortierung"))
+                    ui.button("Kurs 4: Aggregatsfunktionen", on_click=lambda: self._on_course_x(4,
+                                                                                "Kurs 4: Aggregatsfunktionen"))
+                    ui.button("Kurs 5: Join", on_click=lambda: self._on_course_x(5,
+                                                                                "Kurs 5: Join"))
+                    ui.button("Kurs 6: Unterabfragen", on_click=lambda: self._on_course_x(6,
+                                                                                "Kurs 6: Unterabfragen"))
+
+
+    def _on_course_x(self, course_number: int, course_name: str) -> None:
+        """Function is triggered when any course button is clicked.
+
+        :param course_number: Number of the course.
+        :param course_name:
+            Name of the course for the title of the next page.
+        """
+        self._course_number = course_number
+        self._course_name = course_name
+        self.navigate_to(pages.Pages.COURSE)
 
