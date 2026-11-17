@@ -6,6 +6,7 @@ This module defines the hierarchy of alle pages. Each function with
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, Optional, overload
 
 import logger_module
@@ -22,6 +23,7 @@ class Pages(StrEnum):
     CHOOSE_COURSE = "choose_course"
     COURSE = "course"
     LICENSES = "licenses"
+    LICENSE_FILE = "license_file"
     CHOOSE_TOPIC = "choose_topic"
     CHOOSE_TABLES = "choose_tables"
     CHOOSE_ATTRIBUTES = "choose_attributes"
@@ -166,14 +168,11 @@ class Page(ABC):
         """Builds the footer for every page.
 
         Needs to run for every page **after** the actual page.
-
-        :param control_group:
-            Whether the header is for the control or experimental group.
         """
         with ui.footer(elevated=True):
-            app.add_static_file(local_file="LICENSE", url_path="/Lizenz")
-            ui.link("released under the MIT-License", "/Lizenz", new_tab=True)
-            ui.link("utilized software", get_page_link(Pages.LICENSES, self._control_group))
+            ui.link("released under the MIT-License").on(
+                "click", lambda: self.navigate_to(Pages.LICENSE_FILE, new_tab=True))
+            ui.link("utilized software").on("click", lambda: self.navigate_to(Pages.LICENSES))
             ui.label("developed by David Seßner")
 
 
@@ -264,6 +263,7 @@ _PAGE_LINKS_EXPERIMENTAL_GROUP = {
     Pages.CHOOSE_COURSE: "/a/Kurswahl",
     Pages.COURSE: "/a/Kurs",
     Pages.LICENSES: "/a/Lizenzen",
+    Pages.LICENSE_FILE: "/Lizenz",
     Pages.CHOOSE_TOPIC: "/a/Themenwahl",
     Pages.CHOOSE_TABLES: "/a/Tabellenwahl",
     Pages.CHOOSE_ATTRIBUTES: "/a/Attributswahl",
@@ -275,7 +275,8 @@ _PAGE_LINKS_CONTROL_GROUP = {
     Pages.HOME: "/b",
     Pages.CHOOSE_COURSE: "/b/Kurswahl",
     Pages.COURSE: "/b/Kurs",
-    Pages.LICENSES: "/b/Lizenzen"
+    Pages.LICENSES: "/b/Lizenzen",
+    Pages.LICENSE_FILE: "/Lizenz",
 }
 
 _PAGE_TITLE = {
@@ -424,6 +425,12 @@ def _create_database(client: Client) -> None:
 @ui.page(_PAGE_LINKS_EXPERIMENTAL_GROUP[Pages.UPLOAD_DATABASE])
 def _upload(client: Client) -> None:
     upload_page.UploadPage(client=client)
+
+
+@ui.page(_PAGE_LINKS_EXPERIMENTAL_GROUP[Pages.LICENSE_FILE])
+def _license_file() -> None:
+    license_str = Path("LICENSE").read_text(encoding="UTF-8").replace("\n", "<br>")
+    ui.html(license_str)
 
 
 #TODO: Only for development. Should be deleted before launch!

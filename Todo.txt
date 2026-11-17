@@ -2,7 +2,6 @@
 - AI tweaking
 - Token analyse
 - Shortcuts
-- Repair footer-Links (progress is not saved currently)
 
 - Farben hässlich!
 - Attribute durchklicken?
